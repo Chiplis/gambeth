@@ -127,7 +127,8 @@ span {
 
 .error {
     border: 2px solid rgb(250, 50, 50);
-    color: rgb(250, 50, 50);
+    background-color: rgb(250, 50, 50);
+    color: white;
     transition: opacity 200ms linear, visibility 200ms linear;
 }
 
