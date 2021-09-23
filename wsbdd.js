@@ -50,7 +50,9 @@ const queryTesterUrl = document.getElementById("query-tester-url");
 const queryTesterResult = document.getElementById("query-tester-result");
 const newBet = document.getElementById("new-bet");
 searchBetId.onkeydown = searchTriggered;
-
+let activeBet = null;
+let placedBets = {};
+let processing = null;
 
 let currentBetUrl = null;
 
@@ -65,28 +67,27 @@ if (window.ethereum) {
 }
 
 const provider = window.ethereum ? new ethers.providers.Web3Provider(window.ethereum) : null;
-const address = "0x627457453d1eb3c6a812F089809813f7979d53ea";
+const address = "0x2Af2bf286d90b20D9691ED56556005DC2F885294";
 const signer = provider ? provider.getSigner() : null;
 const contract = provider ? new ethers.Contract(address, contractAbi, provider) : null;
 const signedContract = contract ? contract.connect(signer) : null;
+(async () => {
+    if (contract) {
+        const owner = await signer.getAddress();
+        contract.on("LackingFunds", async (sender, funds) => { if (sender == owner) triggerError(`Insufficient query funds, requiring ${weiToEth(funds)} ETH`) });
+        contract.on("CreatedBet", async (_, __, betId) => { if (betId == activeBet) triggerSuccess(`Bet created!`, () => { searchBet(betId) }) });
+        contract.on("PlacedBets", async (sender, _, __, betId) => { if (sender == owner) triggerSuccess(`Bet placed!`, () => searchBet(betId))});
+        contract.on("LostBet", async (sender) => { if (sender == owner) triggerSuccess("Bet lost, better luck next time!", () => searchBet(activeBet)) });
+        contract.on("UnwonBet", async (sender) => { if (sender == owner) triggerSuccess("Bet unwon, your funds have been refunded", () => searchBet(activeBet)) });
+        contract.on("WonBet", async (sender, amount) => { if (sender == owner) triggerSuccess(`Bet won! ${weiToEth(amount.toString())} ETH transferred to account`, () => searchBet(activeBet)) });
+        //loadBetCarousel();
+    }
+})()
 
-if (contract) {
-    contract.on("LackingFunds", (sender, funds) => triggerError(`Insufficient query funds, requiring ${weiToEth(funds)} ETH`));
-    contract.on("CreatedBet", (_, betId) => triggerSuccess(`Bet created!`, () => { searchBet(betId) }));
-    contract.on("PlacedBet", (_, __, betId) => triggerSuccess(`Bet placed!`, () => searchBet(betId)));
-    contract.on("LostBet", (sender) => triggerSuccess("Bet lost, better luck next time!", () => searchBet(activeBet)));
-    contract.on("UnwonBet", (sender) => triggerSuccess("Bet unwon, your funds have been refunded", () => searchBet(activeBet)));
-    contract.on("WonBet", (sender, amount) => triggerSuccess(`Bet won! ${weiToEth(amount.toString())} ETH transferred to account`, () => searchBet(activeBet)));
-    //loadBetCarousel();
-}
 
 
 const ethToWei = (eth) => ethers.utils.parseEther(eth);
 const weiToEth = (wei) => (wei / Math.pow(10, 18)).toString();
-
-let activeBet = null;
-let placedBets = {};
-let processing = null;
 
 const createBetAmountTitle = `Provable's oracle service used by WSBDD needs to be paid for by the bet's creator.`;
 createBetAmount.title = createBetAmountTitle;
@@ -231,7 +232,7 @@ async function searchBet(id) {
         betUrl.innerHTML = url || currentBetUrl;
         schemaPath.innerHTML = path || "Unknown";
         betDeadline.innerHTML = new Date(await contract.betDeadlines(activeBet) * 1000).toISOString().replace("T", " ").split(".")[0].slice(0, -3);
-        const schedule = new Date((await contract.queryFilter(contract.filters.CreatedBet(activeBet)))[0].args[2].toString() * 1000);
+        const schedule = new Date((await contract.queryFilter(contract.filters.CreatedBet(null, activeBet)))[0].args[3].toString() * 1000);
         betSchedule.innerHTML = schedule.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
         betInnerDescription.innerHTML = description;
         betDescription.style.display = description ? "flex" : "none";
@@ -299,9 +300,9 @@ async function createBet() {
             triggerError("Need to specify query's schema", betQuery);
             return;
         }
-
+        activeBet = betId.value.toLowerCase().trim();
         triggerProcessing("Creating bet", createBetQueryResult);
-        await signedContract.createBet(betId.value.toLowerCase().trim(), query, deadline, schedule, commission, ethToWei(createBetMinimum.value).toString(), description, { value: ethToWei(createBetAmount.value) || 0 });
+        await signedContract.createBet(activeBet, query, deadline, schedule, commission, ethToWei(createBetMinimum.value).toString(), description, { value: ethToWei(createBetAmount.value) || 0 });
         // [betId, url, amount, scheduleDate, deadlineDate, scheduleTime, deadlineTime].forEach(n => n.value = "");
         [scheduleDate, deadlineDate, scheduleTime, deadlineTime].forEach((d) => (d.type = "text"));
     } catch (error) {
@@ -394,17 +395,16 @@ async function testQuery(url, errorMsg, after = defaultMessageLocation) {
 
 async function renderBetPool() {
     try {
-        const placedBets = await contract.queryFilter(contract.filters.PlacedBet(activeBet));
+        const placedBets = await contract.queryFilter(contract.filters.PlacedBets(null, activeBet));
         const betResults = {};
-        placedBets.forEach((bet) => (betResults[bet.args[3]] = (betResults[bet.args[3]] || 0) + 1));
+        placedBets.forEach(pb => { pb.args[4].forEach(result => { betResults[result] = (betResults[result] || 0) + 1; }) });
         const results = await Promise.all(Object.keys(betResults).map((result) => contract.resultPools(activeBet, result)));
-        const resultsPool = Object.keys(betResults).reduce((obj, key, index) => ({ ...obj, [key]: results[index] }), {});
-        Object.keys(betResults).forEach(async (result) => {
-            resultsPool[result] = ethToWei((await contract.resultPools(activeBet, result)).toString());
-        });
+        const resultsPool = {};
+        Object.keys(betResults).map((result, idx) => {
+            resultsPool[result] = ethToWei(results[idx].toString()).toString();
+        })
 
         const allEntries = Object.entries(betResults);
-        console.log(Object.entries(resultsPool));
 
         //const totalPool = weiToEth(Object.entries(resultsPool).reduce((a, b) => a[1].add(b[1]), [null, ethToWei("0")]));
 
@@ -414,16 +414,6 @@ async function renderBetPool() {
             .slice(0, 25)
             .join("");
 
-        const deadline = new Date((await contract.betDeadlines(activeBet)) * 1000).toUTCString().split(", ")[1];
-        const endDate = new Date((await contract.queryFilter(contract.filters.CreatedBet(activeBet)))[0].args[2].toString() * 1000).toUTCString().split(", ")[1];
-        const total = weiToEth(await contract.betPools(activeBet));
-        const url = await contract.betQueries(activeBet);
-
-        /* end.innerHTML = endDate;
-        betDeadline.innerHTML = deadline;
-        poolAmount.innerHTML = totalPool;
-        betsAmount.innerHTML = placedBets.length;
-        */
         poolName.innerHTML = activeBet + " Pool";
         betEntries.innerHTML = entries;
 

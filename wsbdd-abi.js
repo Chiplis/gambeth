@@ -1,4 +1,4 @@
-window.contractAbi = [
+contractAbi = [
 	{
 		"inputs": [],
 		"stateMutability": "payable",
@@ -7,6 +7,12 @@ window.contractAbi = [
 	{
 		"anonymous": false,
 		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
 			{
 				"indexed": true,
 				"internalType": "string",
@@ -66,9 +72,9 @@ window.contractAbi = [
 		"inputs": [
 			{
 				"indexed": true,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "",
-				"type": "string"
+				"type": "address"
 			},
 			{
 				"indexed": true,
@@ -77,10 +83,10 @@ window.contractAbi = [
 				"type": "string"
 			},
 			{
-				"indexed": false,
-				"internalType": "string",
+				"indexed": true,
+				"internalType": "string[]",
 				"name": "",
-				"type": "string"
+				"type": "string[]"
 			},
 			{
 				"indexed": false,
@@ -90,12 +96,12 @@ window.contractAbi = [
 			},
 			{
 				"indexed": false,
-				"internalType": "uint256",
+				"internalType": "string[]",
 				"name": "",
-				"type": "uint256"
+				"type": "string[]"
 			}
 		],
-		"name": "PlacedBet",
+		"name": "PlacedBets",
 		"type": "event"
 	},
 	{
