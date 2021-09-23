@@ -1,0 +1,361 @@
+<head>
+    <title>WSBDD - wei staking by decentralized degenerates</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.4.7/ethers.umd.min.js"></script>
+    <script src="./wsbdd-abi.js"></script>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="./wsbdd.css">
+    <link rel=“shortcut icon” href="/favicon.ico" type=“image/x-icon”>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+    <link rel=“icon” href="/favicon.ico" type=“image/x-icon”>
+</head>
+
+<body>
+    <div style="display: flex; align-items: flex-start; justify-content: space-around;">
+        <div
+            style="position: sticky; top: 5rem; left: 0; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <div class="btn create-bet"
+                onclick="betContainer.style.display='none'; newBet.style.display='flex';newBet.scrollIntoViewIfNeeded()"
+                style=""
+                onclick="createBetSchema.selectedIndex=0; newBet.hideBet = betContainer.style.display == 'none'; [betContainer.style.display, newBet.style.display] = ['none', 'flex']">
+                New Bet
+            </div>
+            <a class="btn create-bet" href="#create-bet-info" style="border-radius: 5rem; padding: 0.25rem;">?</a>
+        </div>
+
+        <div style="margin: 2rem; display: flex; width: 65vw; flex-direction: column; justify-content: center;">
+            <a href="/" style="color: black; text-decoration: none">
+                <div id="wsbdd"
+                    style="margin-bottom: 3vw; flex-direction: column; font-size: 5vw; align-items: center; display: flex; justify-content: center">
+                    <div style="display: flex">
+                        <div>W$₿ÐÐ</div>
+                    </div>
+                    <div style="font-size: 1vw; font-weight: bold">
+                        wei staking by decentralized degenerates
+                    </div>
+                </div>
+            </a>
+            <div id="default-message-location" style="display: flex; flex-direction:column; justify-content: center">
+                <button class="btn"
+                    style="padding: 0.3em; display: none; flex-direction: column; justify-content: space-around;"
+                    id="message">
+                    <div id="close-message" style="margin-left: auto; margin-bottom: 0.25em; align-self: flex-start"
+                        onclick="hideMessage()">✖</div>
+                    <div id="inner-message"></div>
+                </button>
+            </div>
+            <div id="new-bet"
+                style="display: none; flex-direction: column; justify-content: center; align-items: center">
+                <button class="btn red"
+                    onclick="newBet.style.display='none'; betContainer.style.display = newBet.hideBet ? 'flex' : 'none';"
+                    style="align-self: flex-end; border-radius: 5rem; padding: 0.25rem;">
+                    ✖
+                </button>
+                <div class="btn red" style="border: 0; margin: 0">Parameters</div>
+                <input id="create-bet-id" onchange="this.value=this.value.toLowerCase().trim()" style="margin: 0.5rem;"
+                    type="text" placeholder="Unique new bet ID" />
+                <input id="create-bet-amount" type="number" step="0.001" style="margin: 0.5rem;"
+                    placeholder="Query fund (ETH)" />
+                <input
+                    title="Commission needs to divide evenly into 100, if not it will be automatically rounded to the nearest number satisfying that condition."
+                    id="create-bet-commission" min="0.01" step="0.01" max="50" type="number" style="margin: 0.5rem;"
+                    placeholder="Bet commission (%)" />
+                <input title="Minimum bet required to enter this bet, cannot be lower than 0.001 ETH."
+                    id="create-bet-minimum" min="0.001" step="0.001" type="number" style="margin: 0.5rem;"
+                    placeholder="Minimum entry (ETH)" />
+                <input id="create-bet-description" title="Potentially expensive, check gas costs!"
+                    placeholder="Description (optional)" style="margin: 0.5rem;" />
+                <div class="btn red" style="border: 0; margin: 0">Dates</div>
+                <input id="deadline-date" onfocusout="this.type = this.value.length ? this.type : 'text'" type="text"
+                    style="margin: 0.5rem;"
+                    onfocus="this.type='date';this.min=new Date().toISOString().split('T')[0];this.max=new Date(new Date().getTime() + 60 * 24 * 3600000).toISOString().split('T')[0]"
+                    placeholder="What day is the limit to participate?" />
+                <input id="deadline-time" onfocusout="this.type = this.value.length ? this.type : 'text'" type="text"
+                    style="margin: 0.5rem;" onfocusout="this.type = this.value.length ? this.type : 'text'"
+                    onfocus="(this.type='time')" placeholder="At what time is the limit to participate?" />
+                <input id="schedule-date" onfocusout="this.type = this.value.length ? this.type : 'text'" type="text"
+                    style="margin: 0.5rem;"
+                    onfocus="this.type='date';this.min=new Date().toISOString().split('T')[0];this.max=new Date(new Date().getTime() + 60 * 24 * 3600000).toISOString().split('T')[0]"
+                    placeholder="What day is the query going to run?" />
+                <input id="schedule-time" onfocusout="this.type = this.value.length ? this.type : 'text'" type="text"
+                    style="margin: 0.5rem;" onfocus="(this.type='time')"
+                    placeholder="At what time is the query going to run?" />
+                <div class="btn red" style="border: 0; margin: 0">Query</div>
+                <input
+                    oninput="betQuery.innerHTML=createBetQuery(createBetSchema.value, this.value, createBetPath.value)"
+                    id="create-bet-url" type="text" placeholder="https://www.therocktrading.com/api/ticker/BTCEUR"
+                    style="width: 100%; margin-bottom: 1em" />
+                <select
+                    onchange="betQuery.innerHTML=createBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value);createBetPath.placeholder = this.value == 'xml' ? 'Path' : (this.value == 'html' ? 'XPath' : 'JsonPath')"
+                    style="text-align: center" name="create-bet-schema" id="create-bet-schema">
+                    <option value="schema" selected disabled>Schema</option>
+                    <option value="xml">XML</option>
+                    <option value="json">JSON</option>
+                    <option value="html">HTML</option>
+                </select>
+                <input
+                    oninput="betQuery.innerHTML=createBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value)"
+                    id="create-bet-path" type="text" placeholder=".result.0.last"
+                    style="width: 100%; margin-top: 1em" />
+                <div class="msg red" style="font-size: 0.8em; border: 0" id="bet-query"></div>
+                <div style="display: flex; justify-content: center">
+                    <button class="btn red" id="create-bet"
+                        onclick="testQuery(betQuery.innerHTML, 'Query failed, you can still create the bet if you know it will succeed when it is scheduled to run', createBetQueryResult)">Test
+                        query</button>
+                    <button class="btn red" id="create-bet" onclick="createBet()">Create Bet</button>
+                </div>
+                <div id="create-bet-query-result"></div>
+            </div>
+            <div id="bet-container">
+                <div id="bet-operations"
+                    style="display: flex; flex-direction: row; justify-content: space-around; width: 100%">
+                    <button class="btn red" id="claim-bet" onclick="claimReward()"></button>
+                    <button class="btn red" id="place-bet" onclick="addBet()"></button>
+                    <div id="place-bet-inputs" style="display: flex; flex-direction: column">
+                        <input id="result" type="text" oninput="renderPlaceSingleBet()" placeholder="Expected result" />
+                        <input id="place-bet-amount" oninput="renderPlaceSingleBet()" type="number" step="0.001"
+                            placeholder="Amount (ETH)" />
+                    </div>
+                    <button class="btn red" id="place-single-bet"
+                        style="opacity: 0; transition: opacity 0.5s linear; padding: 0.1rem; padding-top: 0.1"
+                        onclick="addSingleBet()">
+                        +
+                    </button>
+                    <button onclick="betInfo.style.display='flex'" class="btn red">
+                        Bet Info
+                    </button>
+                    <button
+                        onclick="testQuery(currentBetUrl, 'Query error encountered, bets will be refunded if this happens during scheduled execution')"
+                        class="btn red">
+                        Test Query
+                    </button>
+                    <button class="btn red" onclick="betContainer.style.display='none'"
+                        style="align-self: flex-start; border-radius: 5rem; padding: 0.25rem;">
+                        ✖
+                    </button>
+                </div>
+                <div id="bet-info" style="width: 100%; display: none; justify-content: flex-start; align-items: center">
+                    <div style="display: flex; flex-direction: column">
+                        <div class="btn red"
+                            style="font-size: 0.75rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                            <div
+                                style="color: white; font-size: 0.75rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                                URL</div>
+                            <div id="bet-url"></div>
+                        </div>
+                        <div class="btn red"
+                            style="font-size: 0.75rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                            <div
+                                style="color: white; font-size: 0.75rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                                Schema</div>
+                            <div id="schema"></div>
+                        </div>
+                        <div class="btn red"
+                            style="font-size: 0.75rem; isplay: flex; flex-direction: column; border: 0; border-radius: 0">
+                            <div
+                                style="color: white; font-size: 0.75rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                                Path</div>
+                            <div id="path"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="btn red"
+                            style="font-size: 0.75rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                            <div
+                                style="color: white; font-size: 0.75rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                                Deadline</div>
+                            <div id="bet-deadline"></div>
+                        </div>
+                        <div class="btn red"
+                            style="font-size: 0.75rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                            <div
+                                style="color: white; font-size: 0.75rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                                Scheduled</div>
+                            <div id="bet-schedule"></div>
+                        </div>
+                    </div>
+                    <div class="btn msg red" id="bet-description"
+                        style="font-size: 0.75rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                        <div
+                            style="color: white; font-size: 0.75rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                            Description</div>
+                        <div id="bet-inner-description"></div>
+                    </div>
+                </div>
+                <div style="display: flex">
+                    <table class="styled-table" style="box-shadow: none; width: auto; display: none"
+                        id="place-bet-info">
+                        <thead>
+                            <tr>
+                                <th colspan="3" style="text-align: center;">Placed Bets</th>
+                            </tr>
+                            <tr>
+                                <th>✖</th>
+                                <th>Result</th>
+                                <th>ETH</th>
+                            </tr>
+                        </thead>
+                        <tbody id="place-bet-entries"></tbody>
+                    </table>
+
+                    <table class="styled-table" id="bet-pool">
+                        <thead>
+                            <tr>
+                                <th colspan="3" id="pool-name" style="text-align: center;"></th>
+                            </tr>
+                            <tr>
+                                <th>Result</th>
+                                <th># Bets</th>
+                                <th>ETH</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bet-entries"></tbody>
+                    </table>
+                </div>
+            </div>
+            <!--
+            <div class="slider">
+                <div id="bet-carousel" class="slide-track">
+                    <style id="carousel-style">
+                    </style>
+                </div>
+            </div>
+            -->
+            <div id="intro"
+                style="margin: 1rem; flex-direction: column; display: flex; justify-content: flex-start; align-items: flex-start;">
+                <div>
+                    <h3>What is this?</h3>
+                    <p>
+                        A fully decentralized, blockchain-based web application in which anyone can participate on or
+                        create their own betting pools. There are no limits to what you can bet on; any website can be
+                        queried
+                        against and have the intended result parsed and uploaded to the blockchain.
+                    </p>
+                </div>
+                <div>
+                    <h3>Show me an example</h3>
+                    <p>
+                        To put my money where my mouth is, and to honor the many hours and dollars I've lost browsing <a
+                            href="https://reddit.com/r/wallstreetbets">/r/wallstreetbets</a>,
+                        I've created a simple starting bet: <a href="/?id=i_spy">I_SPY</a> will query
+                        <a href="https://www.investing.com/">Investing.com</a> to extract the price (without decimals)
+                        of the well-known
+                        S&P 500 ETF (SPY) on Saturday, October 2nd 2021.
+                        You can place a bet on how much SPY will be worth on that date (the deadline to do so is
+                        Wednesday, September 27th, 8:00 AM UTC).
+                        <span style="font-weight: bold">I'm making things interesting by betting 0.5 ETH on SPY ending
+                            at 4,569 USD.</span>
+                    </p>
+                </div>
+                <div>
+                    <h3>How do I sign up?</h3>
+                    <p>
+                        You can't! All server communication is delegated to the oracle contract, so using WSBDD is as
+                        simple as
+                        having <a href="https://metamask.io/">MetaMask</a> installed and some funds in your account.
+                    </p>
+                </div>
+                <div>
+                    <h3>How can I trust you?</h3>
+                    <p>
+                        You don't have to! The entire source code for the project is <a
+                            href="https://github.com/nicolas-siplis/wsbdd">available on Github</a>.
+                        If that's not enough, you can take a look at the <a href="">contract's code in Etherscan</a>.
+                        As for how the results are being fetched, WSBDD relies on <a
+                            href="https://provable.xyz/">Provable's blockchain oracle</a>,
+                        one of the oldest and most well-known in the field. In the future, I'd like to further integrate
+                        with Provable's proof of authenticity schemes so that
+                        anyone can verify that the results of each bet have not been tampered with.
+                    </p>
+                </div>
+                <div>
+                    <h3>How do I place a bet?</h3>
+                    <p>
+                        Simply search for the ID of the bet you want to participate in (check the bet's info to make
+                        sure everything looks good), write down your result and the amount you're betting, and click the
+                        "Bet" button.
+                        If you want to bet on more than one result, you can click on the "+" button to pack your
+                        bets into a single transaction, saving you time and money.
+                        The only restriction is on the minimum amount of ETH you can bet per result: 1 finney (at the
+                        time of
+                        writing, about 3 USD).
+                        Take a look at the bet in the "Show me an example" section if you'd like to get started right
+                        away.
+                    </p>
+                </div>
+                <div id="what-happens-if-i-win">
+                    <h3>What happens if I win?</h3>
+                    <p>
+                        First of all, congratulations! After the bet has been executed and the result uploaded to the
+                        blockchain, all you need to do is lookup the bet's ID in WSBDD and click on the "Claim Bet"
+                        button.
+                        Your earnings will be dependent on two factors: your share of the winner's pool, and the bet's
+                        commission costs (fixed 0.5% to WSBDD's creator, aka me + a custom amount to the bet's creator).
+                        For example, if <a href="/?id=i_spy">I_SPY</a> ends up at 4,200.69 USD and you
+                        were the only one betting on that result with 0.001 ETH, you'd get the whole pool minus 0.51% in
+                        commissions.
+                        However, if someone else were to also bet on that outcome and put 0.01 ETH instead, they'd be
+                        getting
+                        90% of the pool and leaving you with the remaining 10%.
+                    </p>
+                </div>
+                <div>
+                    <h3>What happens if no one wins or if the bet fails to run?</h3>
+                    <p>
+                        In both cases you can simply reclaim your funds (minus
+                        the fixed 0.5% commission), the same way as if you had won the bet.
+                    </p>
+                </div>
+                <div id="create-bet-info">
+                    <h3>How do I create a bet?</h3>
+                    <p>
+                        All you need to do is specify your bet's commission/minimum entry, participation deadline,
+                        scheduled time to
+                        determine outcome, and
+                        the query that will fetch the result (more on that just below).
+                    </p>
+                </div>
+                <div id="testing-your-query">
+                    <h3>How do I format my query when creating a bet?</h3>
+                    <p>
+                        Let's take a look at an example query:
+                        json(https://www.therocktrading.com/api/ticker/BTCEUR).result.0.last
+                        <br /><br />
+                        We can divide this query into 3 parts:
+                    <ul>
+                        <li>json(...) - The schema, which specifies the content type of the response from the external
+                            service.</li>
+                        <li>https://www.therocktrading.com/api/ticker/BTCEUR - The actual URL where we'll be getting our
+                            data from.</li>
+                        <li>.result.0.last - The path that tells the oracle service how to parse the response and
+                            actually extract the result. </li>
+                    </ul>
+                    If you want to learn more about how to format your URL to extract the intended result, take a
+                    look at <a href="https://docs.provable.xyz/#general-concepts-parsing-helpers">Provable's
+                        documentation.</a>
+                    When you're creating a new bet or taking a look at an existing one, look for the "Test Query" button
+                    which will let you see how each result gets parsed.
+                    Special thanks to Provable for that one, since it's a simple wrapper over <a
+                        href="https://app.provable.xyz/home/test_query"></a>their more feature complete version.</a>.
+
+                    </p>
+                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center">
+                        <input style="font-size: 1rem; width: 100%" id="query-tester-url"
+                            value="json(https://www.therocktrading.com/api/ticker/BTCEUR).result.0.last"
+                            placeholder="Test your query" />
+                        <button id="query-tester"
+                            onclick="testQuery(queryTesterUrl.value, 'Query error encountered, bets will be refunded if this happens during scheduled execution', queryTesterResult)"
+                            class="btn" style="opacity: 1">Test
+                            query</button>
+                        <div id="query-tester-result"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="position: sticky; top: 5rem; right: 0; display: flex; flex-direction: row; align-items: center;">
+            <input class="btn" style="width: 15vw;" placeholder="Search bet ID" id="search-bet" />
+        </div>
+    </div>
+    <script src="./wsbdd.js"></script>
+</body>
