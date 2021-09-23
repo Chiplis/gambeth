@@ -220,7 +220,6 @@ async function searchBet(id) {
             triggerError("Invalid Bet ID");
             return;
         }
-        hideMessage();
         const location = new URL(window.location.toString());
         location.searchParams.set("id", activeBet);
         history.pushState({}, "", location.toString());
@@ -237,6 +236,7 @@ async function searchBet(id) {
         betInnerDescription.innerHTML = description;
         betDescription.style.display = description ? "flex" : "none";
         Promise.all([renderPlaceBet(), renderClaimBet(), renderBetPool()]).then(() => {
+            hideMessage();
             betContainer.style.opacity = "100%";
             betContainer.style.visibility = "visible";
         });

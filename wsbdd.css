@@ -83,6 +83,7 @@ span {
 }
 
 .btn::placeholder {
+    opacity: 1;
     color: cornflowerblue;
 }
 

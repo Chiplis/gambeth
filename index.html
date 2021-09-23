@@ -11,35 +11,38 @@
     <link rel=“icon” href="/favicon.ico" type=“image/x-icon”>
 </head>
 
-<body>
+<body style="margin: 0">
     <div style="display: flex; align-items: flex-start; justify-content: space-around;">
         <div
-            style="position: sticky; top: 5rem; left: 0; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            <div class="btn create-bet"
+            style="border: 0; width: 100%; position: fixed; background-color: white; left: 0; display: flex; flex-direction: row; justify-content: center; align-items: center;">
+            <div class="btn create-bet" style="border: 0"
                 onclick="betContainer.style.display='none'; newBet.style.display='flex';newBet.scrollIntoViewIfNeeded()"
                 onclick="createBetSchema.selectedIndex=0; newBet.hideBet = betContainer.style.display == 'none'; [betContainer.style.display, newBet.style.display] = ['none', 'flex']">
                 New Bet
             </div>
-            <a class="btn create-bet" href="#create-bet-info" style="border-radius: 5rem; padding: 0.25rem;">?</a>
+            <a class="btn create-bet" href="#create-bet-info"
+                style="border: 0; border-radius: 5rem; padding: 0.25rem;">?</a>
+            <div style="position: sticky; margin-left: auto; display: flex; flex-direction: row; align-items: center;">
+                <input class="btn" style="border: 0" placeholder="Search bet ID" id="search-bet" />
+            </div>
         </div>
 
         <div style="margin: 2rem; display: flex; width: 65vw; flex-direction: column; justify-content: center;">
-            <a href="/" style="color: black; text-decoration: none">
-                <div id="wsbdd"
-                    style="margin-bottom: 3vw; flex-direction: column; font-size: 5vw; align-items: center; display: flex; justify-content: center">
-                    <div style="display: flex">
-                        <div>W$₿ÐÐ</div>
-                    </div>
-                    <div style="font-size: 1vw; font-weight: bold">
-                        wei stakes by decentralized degenerates
-                    </div>
+            <a href="/" id="wsbdd"
+                style="color: black; text-decoration: none; margin-bottom: 3vw; flex-direction: column; font-size: 5vw; align-items: center; display: flex; justify-content: center">
+                <div style="display: flex">
+                    <div>W$₿ÐÐ</div>
+                </div>
+                <div style="font-size: 1vw; font-weight: bold">
+                    wei stakes by decentralized degenerates
                 </div>
             </a>
             <div id="default-message-location" style="display: flex; flex-direction:column; justify-content: center">
                 <button class="btn"
                     style="padding: 0.3em; display: none; flex-direction: column; justify-content: space-around;"
                     id="message">
-                    <div id="close-message" style="color: white; margin-left: auto; margin-bottom: 0.25em; align-self: flex-start"
+                    <div id="close-message"
+                        style="color: white; margin-left: auto; margin-bottom: 0.25em; align-self: flex-start"
                         onclick="hideMessage()">✖</div>
                     <div id="inner-message"></div>
                 </button>
@@ -47,7 +50,7 @@
             <div id="new-bet"
                 style="display: none; flex-direction: column; justify-content: center; align-items: center">
                 <button class="btn red"
-                    onclick="newBet.style.display='none'; betContainer.style.display = newBet.hideBet ? 'flex' : 'none';"
+                    onclick="newBet.style.display='none'; betContainer.style.display = newBet.hideBet ? 'none' : 'flex';"
                     style="align-self: flex-end; border-radius: 5rem; padding: 0.25rem;">
                     ✖
                 </button>
@@ -264,7 +267,8 @@
                         As for how the results are being fetched, WSBDD relies on <a
                             href="https://provable.xyz/">Provable's blockchain oracle</a>,
                         one of the oldest and most well-known in the field. In the future, I'd like to further integrate
-                        with <a href="https://docs.provable.xyz/#ethereum-quick-start-authenticity-proofs">Provable's authenticity proofs</a> so that
+                        with <a href="https://docs.provable.xyz/#ethereum-quick-start-authenticity-proofs">Provable's
+                            authenticity proofs</a> so that
                         anyone can verify that the results of each bet have not been tampered with.
                     </p>
                 </div>
@@ -351,9 +355,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <div style="position: sticky; top: 5rem; right: 0; display: flex; flex-direction: row; align-items: center;">
-            <input class="btn" style="width: 15vw;" placeholder="Search bet ID" id="search-bet" />
         </div>
     </div>
     <script src="./wsbdd.js"></script>
