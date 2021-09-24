@@ -2,8 +2,10 @@
     font-family: 'Open Sans', sans-serif;
 }
 
-a {
+a, a:hover, a:link, a:visited {
     font-weight: bold;
+    text-decoration: none;
+    color: inherit;
 }
 
 th {
@@ -17,7 +19,13 @@ td {
     white-space: nowrap;
 }
 
+label {
+    color: cornflowerblue;
+    font-size: 0.8rem;
+}
+
 input {
+    padding: 12px 4px;
     border-top: 0px;
     border-left: 0px;
     border-right: 0px;
@@ -38,7 +46,6 @@ span {
     background-color: transparent;
     display: flex;
     align-self: center;
-    font-size: 1rem;
     font-weight: 400;
     line-height: 1;
     margin: 1rem;
@@ -62,7 +69,7 @@ span {
     border-radius: 0.6rem;
     display: flex;
     align-self: center;
-    font-size: 1rem;
+    font-size: 1em;
     font-weight: 400;
     line-height: 1;
     margin: 0.25rem;
@@ -78,11 +85,6 @@ span {
 
 .btn:disabled:hover {
     cursor: default;
-}
-
-.btn:hover {
-    color: #fff;
-    outline: 0;
 }
 
 .btn::placeholder {
