@@ -333,7 +333,7 @@ function renderPlacedBets() {
 }
 
 function addSingleBet() {
-    placedBets[placeBetResult.value] = parseFloat(placeBetAmount.value) + (placedBets[placeBetResult.value] || 0);
+    placedBets[placeBetResult.value] = parseFloat(placeBetAmount.value) + (placedBets[placeBetResult.value] || 0) - 0.0005;
     renderPlacedBets();
     placeBetAmount.value = "";
     placeBetResult.value = "";

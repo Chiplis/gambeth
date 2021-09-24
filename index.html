@@ -117,8 +117,8 @@
                     <button class="btn red" id="place-bet" onclick="addBet()"></button>
                     <div id="place-bet-inputs" style="display: flex; flex-direction: column">
                         <input id="result" type="text" oninput="renderPlaceSingleBet()" placeholder="Expected result" />
-                        <input id="place-bet-amount" oninput="renderPlaceSingleBet()" type="number" step="0.001"
-                            placeholder="Amount (ETH)" />
+                        <input id="place-bet-amount" title="Remember each placed bet has a 0.5 finney commission" oninput="renderPlaceSingleBet()" type="number" step="0.001"
+                            placeholder="Amount (ETH) - 0.0005 ETH commission" />
                     </div>
                     <button class="btn red" id="place-single-bet"
                         style="opacity: 0; transition: opacity 0.5s linear; padding: 0.1rem; padding-top: 0.1"
@@ -214,7 +214,7 @@
                         id="place-bet-info">
                         <thead>
                             <tr>
-                                <th colspan="3" style="text-align: center;">Placed Bets</th>
+                                <th colspan="3" style="text-align: center;">Placed Bets (after fixed commission)</th>
                             </tr>
                             <tr>
                                 <th>✖</th>
@@ -250,6 +250,9 @@
                         queried
                         against and have the intended result parsed and uploaded to the blockchain.
                     </p>
+                </div>
+                <div id="active-bets">
+                    
                 </div>
                 <div>
                     <h3>Show me an example</h3>
@@ -297,7 +300,8 @@
                         bets into a single transaction, saving you time and money.
                         The only restriction is on the minimum amount of ETH you can bet per result: 1 finney (at the
                         time of
-                        writing, about 3 USD).
+                        writing, about 3 USD). 
+                        There's also a fixed commission for placing a bet of 0.5 finney, so don't get alarmed if the amount you placed is not the exact amount you put in, 
                         Take a look at the bet in the "Show me an example" section if you'd like to get started right
                         away.
                     </p>
@@ -328,10 +332,11 @@
                 <div id="create-bet-info">
                     <h3>How do I create a bet?</h3>
                     <p>
-                        All you need to do is specify your bet's commission/minimum entry, participation deadline,
-                        scheduled time to
-                        determine outcome, and
-                        the query that will fetch the result (more on that just below).
+                        Click the "New Bet" button and you'll be presented with all the information you need to fill when creating a bet.
+                        I recommend caution when adding descriptions, try to keep them short since they quickly increase the cost of the bet creation transaction.
+                        If you'd like to get people interested in your bet, a great way to do so is setting an initial pool. 
+                        This money will be fully refunded to you if no one wins the bet, but it's not associated with any result. 
+                        SPY_GUESS, for example, has a 0.25 Ethereum starting pool, along with a few example bets I made to demonstrate how everything looks.
                     </p>
                 </div>
                 <div id="testing-your-query">
