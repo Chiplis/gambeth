@@ -74,7 +74,7 @@ if (window.ethereum) {
 }
 
 const provider = window.ethereum ? new ethers.providers.Web3Provider(window.ethereum) : null;
-const address = "0x5D97F3B2836dDeCC99966F3f04d08d8F4E134D11";
+const address = "0xbB2Dfc930A209Aa32E49f0b49264ba6b4270782A";
 const signer = provider ? provider.getSigner() : null;
 const contract = provider ? new ethers.Contract(address, contractAbi, provider) : null;
 const signedContract = contract ? contract.connect(signer) : null;
@@ -261,7 +261,7 @@ async function searchBet(id) {
 function unpackUrl(u) {
     let url = u.toLowerCase();
 
-    const htmlRegex = /(html)\(([\w:\/\.]*)\)\.xpath\((.*)\)/;
+    const htmlRegex = /(html)\((.*)\)\.xpath\((.*)\)/;
     const jsonRegex = /(json)\((.*)\)\.?(.*)/
     const xmlRegex = /(xml)\((.*)\)\.(.*)/
 

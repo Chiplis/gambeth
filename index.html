@@ -16,8 +16,7 @@
         <div
             style="border: 0; width: 100%; position: fixed; background-color: white; left: 0; display: flex; flex-direction: row; justify-content: center; align-items: center;">
             <div class="btn create-bet" style="border: 0"
-                onclick="betContainer.style.display='none'; newBet.style.display='flex';newBet.scrollIntoViewIfNeeded()"
-                onclick="createBetSchema.selectedIndex=0; newBet.hideBet = betContainer.style.display == 'none'; [betContainer.style.display, newBet.style.display] = ['none', 'flex']">
+                onclick="newBet.hideBet = betContainer.style.display == 'none'; betContainer.style.display='none'; newBet.style.display='flex';newBet.scrollIntoViewIfNeeded();createBetSchema.selectedIndex=0; [betContainer.style.display, newBet.style.display] = ['none', 'flex']">
                 New Bet
             </div>
             <a class="btn create-bet" href="#create-bet-info"
@@ -255,16 +254,15 @@
                 <div>
                     <h3>Show me an example</h3>
                     <p>
-                        <span style="font-weight: bold">I'm making things interesting by betting 0.5 ETH on SPY ending
-                            at 4,569 USD.</span>
+                        <span style="font-weight: bold">I'm making things interesting by starting a bet with a 0.25 ETH initial pool.</span>
                         To put my money where my mouth is, and to honor the many hours and dollars I've lost browsing <a
                             href="https://reddit.com/r/wallstreetbets">/r/wallstreetbets</a>,
-                        I've created a simple starting bet: <a href="/?id=i_spy">I_SPY</a> will query
+                        I've created a simple starting bet: <a href="/?id=spy_guess">SPY_GUESS</a> will query
                         <a href="https://www.investing.com/">Investing.com</a> to extract the price (without decimals)
                         of the well-known
-                        S&P 500 ETF (SPY) on Saturday, October 2nd 2021.
-                        You can place a bet on how much SPY will be worth on that date (the deadline to do so is
-                        Wednesday, September 27th, 8:00 AM UTC).
+                        S&P 500 index on Saturday, October 9th 2021, 22:00 UTC.
+                        You can place a bet on how much you think it will be worth on that date, the deadline to do so is
+                        Sunday, October 3rd, 13:00 UTC.
                     </p>
                 </div>
                 <div>
@@ -280,7 +278,7 @@
                     <p>
                         You don't have to! The entire source code for the project is <a
                             href="https://github.com/nicolas-siplis/wsbdd">available on Github</a>.
-                        If that's not enough, you can take a look at the <a href="">contract's code in Etherscan</a>.
+                        If that's not enough, you can take a look at the <a href="https://etherscan.io/address/0xbB2Dfc930A209Aa32E49f0b49264ba6b4270782A#code">contract's verified code in Etherscan</a>.
                         As for how the results are being fetched, WSBDD relies on <a
                             href="https://provable.xyz/">Provable's blockchain oracle</a>,
                         one of the oldest and most well-known in the field. In the future, I'd like to further integrate
@@ -312,7 +310,7 @@
                         button.
                         Your earnings will be dependent on two factors: your share of the winner's pool, and the bet's
                         commission costs (fixed 0.5% to WSBDD's creator, aka me + a custom amount to the bet's creator).
-                        For example, if <a href="/?id=i_spy">I_SPY</a> ends up at 4,200.69 USD and you
+                        For example, if <a href="/?id=spy_guess">I_SPY</a> ends up at 4,200.69 USD and you
                         were the only one betting on that result with 0.001 ETH, you'd get the whole pool minus 0.51% in
                         commissions.
                         However, if someone else were to also bet on that outcome and put 0.01 ETH instead, they'd be

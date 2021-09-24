@@ -8,7 +8,7 @@ import "github.com/provable-things/ethereum-api/blob/master/provableAPI_0.6.sol"
 contract WeiStakingByDecentralizedDegenerates is usingProvable {
     
     
-    address payable owner;
+    address payable contractCreator;
     
     uint256 constant fixedCommission = 1e15 / 2;
 
@@ -33,7 +33,7 @@ contract WeiStakingByDecentralizedDegenerates is usingProvable {
     event PlacedBets(address indexed, string indexed, string[] indexed, string, string[]);
 
     constructor() public payable {
-        owner = msg.sender;
+        contractCreator = msg.sender;
     }
     
     // BetId -> Deadline to place new bets
@@ -121,7 +121,7 @@ contract WeiStakingByDecentralizedDegenerates is usingProvable {
             userBets[betId][msg.sender][results[i]] += bet;
         }
 
-        owner.transfer(fixedCommission * results.length); // Commission transfer
+        contractCreator.transfer(fixedCommission * results.length); // Commission transfer
         
         if (total != 0) {
             msg.sender.transfer(total);
@@ -169,7 +169,7 @@ contract WeiStakingByDecentralizedDegenerates is usingProvable {
             reward -= generalFee;
             reward -= ownerFee;
             msg.sender.transfer(reward);
-            owner.transfer(generalFee);
+            contractCreator.transfer(generalFee);
             betOwners[betId].transfer(ownerFee);
         }
     }
