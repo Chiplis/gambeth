@@ -68,6 +68,8 @@
                     placeholder="Minimum entry (ETH)" />
                 <input id="create-bet-description" title="Potentially expensive, check gas costs!"
                     placeholder="Description (optional)" style="margin: 0.5rem;" />
+                <input id="create-bet-initial-pool" title="An initial pull helps incentivize players to participate"
+                    placeholder="Initial pool (optional)" style="margin: 0.5rem;" />
                 <div class="btn red" style="border: 0; margin: 0">Dates</div>
                 <input id="deadline-date" onfocusout="this.type = this.value.length ? this.type : 'text'" type="text"
                     style="margin: 0.5rem;"
@@ -137,52 +139,74 @@
                         ✖
                     </button>
                 </div>
-                <div id="bet-info" style="width: 100%; display: none; justify-content: flex-start; align-items: center">
+                <div id="bet-info" style="width: 100%; display: none; justify-content: space-around; align-items: center">
                     <div style="display: flex; flex-direction: column">
-                        <div class="btn red"
-                            style="font-size: 0.75rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
-                            <div
-                                style="color: white; font-size: 0.75rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
-                                URL</div>
-                            <div id="bet-url"></div>
-                        </div>
-                        <div class="btn red"
-                            style="font-size: 0.75rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
-                            <div
-                                style="color: white; font-size: 0.75rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
-                                Schema</div>
-                            <div id="schema"></div>
-                        </div>
-                        <div class="btn red"
-                            style="font-size: 0.75rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
-                            <div
-                                style="color: white; font-size: 0.75rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
-                                Path</div>
-                            <div id="path"></div>
+                        <div class="btn msg red" style="flex-direction: column; gap: 33%">
+                            <div style="font-size: 0.9rem">Query</div>
+                            <div id="bet-initial-pool"
+                                style="font-size: 0.8rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                                <div
+                                    style="margin: 1rem; font-size: 0.7rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                                    URL
+                                </div>
+                                <div id="bet-url"></div>
+                                <div
+                                    style="margin: 1rem 0; font-size: 0.8rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                                    <div
+                                        style="font-size: 0.7rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                                        Schema</div>
+                                    <div id="schema"></div>
+                                </div>
+                                <div
+                                    style="font-size: 0.8rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                                    <div
+                                        style="font-size: 0.7rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                                        Path</div>
+                                    <div id="path"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div>
-                        <div class="btn red"
-                            style="font-size: 0.75rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                    <div class="btn msg red" style="flex-direction: column; gap: 33%">
+                        <div style="font-size: 0.9rem">Timeline (UTC)</div>
+                        <div id="bet-initial-pool"
+                            style="font-size: 0.8rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
                             <div
-                                style="color: white; font-size: 0.75rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
-                                Deadline</div>
-                            <div id="bet-deadline"></div>
-                        </div>
-                        <div class="btn red"
-                            style="font-size: 0.75rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
-                            <div
-                                style="color: white; font-size: 0.75rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
-                                Scheduled</div>
+                                style="margin: 1rem; font-size: 0.7rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                                Schedule</div>
                             <div id="bet-schedule"></div>
+                            <div id="bet-total-pool"
+                                style="margin: 1rem; font-size: 0.8rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                                <div
+                                    style="font-size: 0.7rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                                    Deadline</div>
+                                <div id="bet-deadline"></div>
+                            </div>
                         </div>
                     </div>
                     <div class="btn msg red" id="bet-description"
-                        style="font-size: 0.75rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                        style="font-size: 0.8rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
                         <div
-                            style="color: white; font-size: 0.75rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                            style="font-size: 0.8rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
                             Description</div>
                         <div id="bet-inner-description"></div>
+                    </div>
+                    <div class="btn msg red" style="flex-direction: column; gap: 33%">
+                        <div style="font-size: 0.9rem">Pool</div>
+                        <div id="bet-initial-pool"
+                            style="font-size: 0.8rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                            <div
+                                style="margin: 1rem; font-size: 0.7rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                                Initial</div>
+                            <div id="bet-inner-initial-pool"></div>
+                            <div id="bet-total-pool"
+                                style="margin: 1rem; font-size: 0.8rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                                <div
+                                    style="font-size: 0.7rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                                    Total</div>
+                                <div id="bet-inner-total-pool"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div style="display: flex">
@@ -216,14 +240,6 @@
                     </table>
                 </div>
             </div>
-            <!--
-            <div class="slider">
-                <div id="bet-carousel" class="slide-track">
-                    <style id="carousel-style">
-                    </style>
-                </div>
-            </div>
-            -->
             <div id="intro"
                 style="margin: 1rem; width: 85%; flex-direction: column; display: flex; justify-content: flex-start; align-items: flex-start;">
                 <div>

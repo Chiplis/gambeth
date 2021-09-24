@@ -1,4 +1,4 @@
-contractAbi = [
+window.contractAbi = [
 	{
 		"inputs": [],
 		"stateMutability": "payable",
@@ -30,6 +30,18 @@ contractAbi = [
 				"internalType": "uint64",
 				"name": "",
 				"type": "uint64"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "",
+				"type": "string"
 			}
 		],
 		"name": "CreatedBet",
@@ -223,25 +235,6 @@ contractAbi = [
 				"type": "string"
 			}
 		],
-		"name": "betDescriptions",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
 		"name": "betMinimums",
 		"outputs": [
 			{
@@ -396,6 +389,11 @@ contractAbi = [
 			{
 				"internalType": "uint256",
 				"name": "minimum",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "initialPool",
 				"type": "uint256"
 			},
 			{

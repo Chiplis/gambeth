@@ -26,8 +26,8 @@ contract WeiStakingByDecentralizedDegenerates is usingProvable {
     // Refunded user
     event UnwonBet(address indexed);
 
-    // Creator, betId, betId, schedule
-    event CreatedBet(address indexed, string indexed, string, uint64);
+    // Creator, betId, betId, schedule, initialPool, description
+    event CreatedBet(address indexed, string indexed, string, uint64, uint256, string);
 
     // User betting, betId, results, betId, results
     event PlacedBets(address indexed, string indexed, string[] indexed, string, string[]);
@@ -55,19 +55,19 @@ contract WeiStakingByDecentralizedDegenerates is usingProvable {
     mapping(string => address payable) public betOwners; 
     mapping(string => uint256) public betCommissions;
 
-    // Each bet can be created with an optional description which will be presented in the frontend
-    mapping(string => string) public betDescriptions;
-
     // To help people avoid overpaying for the oracle contract querying service, its last price is saved and then suggested in the frontend
     uint256 public lastQueryPrice;
     
-    function createBet(string calldata betId, string calldata query, uint64 deadline, uint64 schedule, uint256 commission, uint256 minimum, string calldata description) public payable {
+    function createBet(string calldata betId, string calldata query, uint64 deadline, uint64 schedule, uint256 commission, uint256 minimum, uint256 initialPool, string calldata description) public payable {
         
-        // Commission can't be higher than 50%
-        require(commission > 1 && minimum >= 1e15 && !createdBets[betId] && deadline <= schedule && deadline > block.timestamp);
         
+        // Initial pool can't be higher than transferred value, commission can't be higher than 50%, minimum bet is 1 finney
+        require(msg.value >= initialPool && commission > 1 && minimum >= 1e15 && !createdBets[betId] && deadline <= schedule && deadline > block.timestamp);
+        uint256 balance = msg.value;
+        balance -= initialPool;
+
         lastQueryPrice = provable_getPrice("URL");
-        if (lastQueryPrice > msg.value) {
+        if (lastQueryPrice > balance) {
             emit LackingFunds(msg.sender, lastQueryPrice);
             msg.sender.transfer(msg.value);
             return;
@@ -81,8 +81,12 @@ contract WeiStakingByDecentralizedDegenerates is usingProvable {
         betDeadlines[betId] = deadline;
         betMinimums[betId] = minimum;
         betQueries[betId] = query;
-        betDescriptions[betId] = description;
-        emit CreatedBet(msg.sender, betId, betId, schedule);
+
+        // Owner's pool of bets is set to refund them in case nobody wins
+        userPools[betId][msg.sender] += initialPool;
+        betPools[betId] = initialPool;
+        
+        emit CreatedBet(msg.sender, betId, betId, schedule, initialPool, description);
     }
     
     // BetId -> Result -> Total pooled per result
