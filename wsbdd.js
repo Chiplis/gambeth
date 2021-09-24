@@ -57,6 +57,63 @@ const betTotalPool = document.getElementById("bet-total-pool");
 const betInnerTotalPool = document.getElementById("bet-inner-total-pool");
 const betFinalResult = document.getElementById("bet-final-result");
 const betInnerFinalResult = document.getElementById("bet-inner-final-result");
+const createParams = document.getElementById("create-bet-params");
+const createDates = document.getElementById("create-bet-dates");
+const createQuery = document.getElementById("create-bet-query");
+let lastCreationStep = createParams;
+
+const closeNewBet = () => {
+    newBet.hideBet = newBet.style.display = 'none';
+    betContainer.style.display = newBet.hideBet ? 'none' : 'flex';
+}
+
+const createBetBtn = () => {
+    newBet.hideBet = betContainer.style.display == 'none';
+    betContainer.style.display = 'none';
+    newBet.style.display = 'flex';
+    newBet.scrollIntoViewIfNeeded();
+    createBetSchema.selectedIndex = 0;
+    [betContainer.style.display, newBet.style.display] = ['none', 'flex'];
+    lastCreationStep.style.position = "initial";
+    lastCreationStep.style.opacity = "100%";
+}
+
+const renderPreviousCreationStep = () => {
+    const mapping = {
+        [createDates.id]: createParams,
+        [createQuery.id]: createDates,
+        [createParams.id]: createQuery
+    }
+    lastCreationStep.style.opacity = "0";
+    lastCreationStep.style.visibility="hidden";
+    const p = lastCreationStep;
+    setTimeout(() => p.style.position = "absolute", 200);
+    lastCreationStep.style["z-index"] = "0";
+    lastCreationStep = mapping[lastCreationStep.id];
+    lastCreationStep.style.visibility = "visible";
+    lastCreationStep.style["z-index"] = "1";
+    lastCreationStep.style.position = "initial";
+    lastCreationStep.style.opacity = "100%";
+
+}
+
+const renderNextCreationStep = () => {
+    const mapping = {
+        [createParams.id]: createDates,
+        [createDates.id]: createQuery,
+        [createQuery.id]: createParams
+    }
+    lastCreationStep.style.opacity = "0";
+    lastCreationStep.style.visibility="hidden";
+    const p = lastCreationStep;
+    setTimeout(() => p.style.position = "absolute", 200);
+    lastCreationStep.style["z-index"] = "0";
+    lastCreationStep = mapping[lastCreationStep.id];
+    lastCreationStep.style.visibility = "visible";
+    lastCreationStep.style["z-index"] = "1";
+    lastCreationStep.style.position = "initial";
+    lastCreationStep.style.opacity = "100%";
+}
 
 searchBetId.onkeydown = searchTriggered;
 let activeBet = null;
@@ -85,7 +142,7 @@ const signedContract = contract ? contract.connect(signer) : null;
         const owner = await signer.getAddress();
         contract.on("LackingFunds", async (sender, funds) => { if (sender == owner) triggerError(`Insufficient query funds, requiring ${weiToEth(funds)} ETH`) });
         contract.on("CreatedBet", async (_, __, betId) => { if (betId == activeBet) triggerSuccess(`Bet created!`, () => { searchBet(betId) }) });
-        contract.on("PlacedBets", async (sender, _, __, betId) => { if (sender == owner) triggerSuccess(`Bet placed!`, () => searchBet(betId))});
+        contract.on("PlacedBets", async (sender, _, __, betId) => { if (sender == owner) triggerSuccess(`Bet placed!`, () => searchBet(betId)) });
         contract.on("LostBet", async (sender) => { if (sender == owner) triggerSuccess("Bet lost, better luck next time!") });
         contract.on("UnwonBet", async (sender) => { if (sender == owner) triggerSuccess("No one won the bet, you've been refunded") });
         contract.on("WonBet", async (sender, amount) => { if (sender == owner) triggerSuccess(`Bet won! ${weiToEth(amount.toString())} ETH transferred to account`) });
