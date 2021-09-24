@@ -136,17 +136,18 @@ function hideMessage(delay) {
     return setTimeout(() => message.style.display = "none", 500);
 }
 
-function triggerMessage(msg, add, remove, after = defaultMessageLocation, showClose = true) {
+function triggerMessage(msg, add, remove, after = defaultMessageLocation, showClose = true, click) {
     clearInterval(processing);
     message.remove();
     console.log(after);
     after.append(message);
     message.onmouseover = undefined;
-    message.onclick = undefined;
+    message.onclick = click;
     message.ontouchstart = undefined;
     message.classList.add(add);
     remove.forEach((r) => message.classList.remove(r));
     closeMessage.style.display = showClose ? "block" : "none";
+    message.style.cursor = "default";
     message.style.display = "flex";
     message.style.visibility = "visible";
     message.style.opacity = "100%";
@@ -154,18 +155,22 @@ function triggerMessage(msg, add, remove, after = defaultMessageLocation, showCl
     message.scrollIntoViewIfNeeded();
 }
 
-function triggerError(msg, after) {
+function triggerError(msg, after, link) {
     triggerMessage(msg, "error", ["processing", "success"], after);
+    if (link) {
+        innerMessage.onclick = () => window.location.href = link;
+        innerMessage.style.cursor = "pointer";
+    }
 }
 
-function triggerSuccess(msg, callback, after) {
-    triggerMessage(msg, "success", ["processing", "error"], after);
+function triggerSuccess(msg, callback, after, click) {
+    triggerMessage(msg, "success", ["processing", "error"], after, click);
     if (callback) {
         setTimeout(callback, 5000);
     }
 }
 
-function triggerProcessing(msg, after) {
+function triggerProcessing(msg, after, click) {
     triggerMessage(msg, "processing", ["error", "success"], after, false);
     let i = 0;
     processing = setInterval(() => (innerMessage.innerHTML = msg + ".".repeat(i++ % 4)), 300);
@@ -222,7 +227,7 @@ async function searchBet(id) {
         newBet.style.display = "none";
         resetButtons();
         if (!window.ethereum) {
-            triggerError("No Ethereum provider detected");
+            triggerError("No Ethereum provider detected, click to install MetaMask", undefined, "https://metamask.io");
             return;
         }
         triggerProcessing("Fetching bet");
@@ -297,7 +302,7 @@ async function createBet() {
         const description = createBetDescription.value || "";
 
         if (!window.ethereum) {
-            triggerError("No Ethereum provider detected", betQuery);
+            triggerError("No Ethereum provider detected", betQuery, "https://metamask.io");
             return;
         } else if (await contract.createdBets(betId.value)) {
             triggerError("Bet ID already exists", betQuery);

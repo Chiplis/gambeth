@@ -90,16 +90,12 @@ span {
     color: cornflowerblue;
 }
 
-.btn:hover,
-.btn:focus,
-.btn:active {
+.btn:hover {
     color: white;
     background-color: cornflowerblue;
 }
 
-.btn:hover::placeholder,
-.btn:focus::placeholder,
-.btn:active::placeholder {
+.btn:hover::placeholder {
     color: white;
 }
 
@@ -111,9 +107,7 @@ label .red:hover {
     background-color: transparent;
 }
 
-.red:hover,
-.red:focus,
-.red:active {
+.red:hover {
     color: white;
     background-color: #ed7b64;
 }
@@ -127,6 +121,7 @@ label .red:hover {
 .error {
     color: #f45977;
 }
+
 
 .error:hover {
     background-color: #f45977;
