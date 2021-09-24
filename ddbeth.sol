@@ -144,14 +144,11 @@ contract WeiStakingByDecentralizedDegenerates is usingProvable {
         uint256 winnerPool = resultPools[betId][result];
         
         uint256 reward;
-        uint256 ownerFee;
         
         // If no one won then all bets get refunded
         if (winnerPool == 0) {
             emit UnwonBet(msg.sender);
             reward = userPools[betId][msg.sender];
-            // Owner's fee only gets set if someone actually wins the bet, to prevent potential malicious action
-        	ownerFee = reward / betCommissions[betId];
         } else if (userBet != 0) {
             emit WonBet(msg.sender, reward);
         	uint256 loserPool = betPools[betId] - winnerPool;
@@ -163,14 +160,13 @@ contract WeiStakingByDecentralizedDegenerates is usingProvable {
         }
         
         if (reward > 0) {
+            uint256 ownerFee = reward / betCommissions[betId];
             uint256 generalFee = reward / 200;
             reward -= generalFee;
             reward -= ownerFee;
             msg.sender.transfer(reward);
             owner.transfer(generalFee);
-            if (ownerFee != 0) {
-                betOwners[betId].transfer(ownerFee);
-            }
+            betOwners[betId].transfer(ownerFee);
         }
     }
     
