@@ -102,7 +102,7 @@
                     oninput="betQuery.innerHTML=createBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value)"
                     id="create-bet-path" type="text" placeholder=".result.0.last"
                     style="width: 100%; margin-top: 1em" />
-                <div class="msg red" style="font-size: 0.8em; border: 0" id="bet-query"></div>
+                <div id="bet-query"></div>
                 <div style="display: flex; justify-content: center">
                     <button class="btn red" id="create-bet"
                         onclick="testQuery(betQuery.innerHTML, 'Query failed, you can still create the bet if you know it will succeed when it is scheduled to run', createBetQueryResult)">Test
