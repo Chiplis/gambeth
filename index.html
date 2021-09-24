@@ -114,7 +114,7 @@
                             oninput="betQuery.innerHTML=createBetQuery(createBetSchema.value, this.value, createBetPath.value)"
                             id="create-bet-url" type="text"
                             placeholder="https://www.therocktrading.com/api/ticker/BTCEUR"
-                            style="width: 100%; margin: 0.5em" />
+                            style="width: 75%; margin: 0.5em" />
                         <label for="create-bet-url">URL</label>
 
                         <select
@@ -130,7 +130,7 @@
                         <input
                             oninput="betQuery.innerHTML=createBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value)"
                             id="create-bet-path" type="text" placeholder=".result.0.last"
-                            style="width: 100%; margin-top: 1em" />
+                            style="width: 75%; margin-top: 1em" />
                         <label for="create-bet-path">Path</label>
 
 
@@ -146,7 +146,7 @@
                     </div>
                 </div>
                 <div class="btn"
-                    style="color:white; background-color:cornflowerblue; z-index: 999; align-self: flex-start; margin-top: 10em; margin-left: 5em"
+                    style="color:white; background-color:cornflowerblue; z-index: 999; align-self: flex-start; margin-top: 10em"
                     onclick="renderNextCreationStep()">→</div>
                 <button class="btn error" onclick="closeNewBet()"
                     style="margin-left: auto; align-self: flex-start; border-radius: 5rem; padding: 0.25rem;">
