@@ -84,9 +84,9 @@ const signedContract = contract ? contract.connect(signer) : null;
         contract.on("LackingFunds", async (sender, funds) => { if (sender == owner) triggerError(`Insufficient query funds, requiring ${weiToEth(funds)} ETH`) });
         contract.on("CreatedBet", async (_, __, betId) => { if (betId == activeBet) triggerSuccess(`Bet created!`, () => { searchBet(betId) }) });
         contract.on("PlacedBets", async (sender, _, __, betId) => { if (sender == owner) triggerSuccess(`Bet placed!`, () => searchBet(betId))});
-        contract.on("LostBet", async (sender) => { if (sender == owner) triggerSuccess("Bet lost, better luck next time!", () => searchBet(activeBet)) });
-        contract.on("UnwonBet", async (sender) => { if (sender == owner) triggerSuccess("Bet unwon, your funds have been refunded", () => searchBet(activeBet)) });
-        contract.on("WonBet", async (sender, amount) => { if (sender == owner) triggerSuccess(`Bet won! ${weiToEth(amount.toString())} ETH transferred to account`, () => searchBet(activeBet)) });
+        contract.on("LostBet", async (sender) => { if (sender == owner) triggerSuccess("Bet lost, better luck next time!") });
+        contract.on("UnwonBet", async (sender) => { if (sender == owner) triggerSuccess("No one won the bet, you've been refunded") });
+        contract.on("WonBet", async (sender, amount) => { if (sender == owner) triggerSuccess(`Bet won! ${weiToEth(amount.toString())} ETH transferred to account`) });
         //loadBetCarousel();
     }
 })()
@@ -156,7 +156,7 @@ function triggerError(msg, after) {
 function triggerSuccess(msg, callback, after) {
     triggerMessage(msg, "success", ["processing", "error"], after);
     if (callback) {
-        setTimeout(callback, 1000);
+        setTimeout(callback, 5000);
     }
 }
 
@@ -243,8 +243,8 @@ async function searchBet(id) {
         const [schedule, initialPool, description] = [new Date(createdFilter.args[3].toString() * 1000), createdFilter.args[4].toString(), createdFilter.args[5].toString()];
         betSchedule.innerHTML = schedule.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
         betInnerDescription.innerHTML = description;
-        betInnerInitialPool.innerHTML = weiToEth(initialPool).toString() + " ETH";
-        betInnerTotalPool.innerHTML = weiToEth((await contract.betPools(activeBet)).toString()).toString() + " ETH";
+        betInnerInitialPool.innerHTML = weiToEth(initialPool).toString() + "Ð";
+        betInnerTotalPool.innerHTML = weiToEth((await contract.betPools(activeBet)).toString()).toString() + "Ð";
         betDescription.style.display = description ? "flex" : "none";
         Promise.all([renderPlaceBet(), renderClaimBet(), renderBetPool()]).then(() => {
             hideMessage();
