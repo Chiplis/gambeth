@@ -116,13 +116,15 @@
                     <button class="btn red" id="claim-bet" onclick="claimReward()"></button>
                     <button class="btn red" id="place-bet" onclick="addBet()"></button>
                     <div id="place-bet-inputs" style="display: flex; flex-direction: column">
-                        <input id="result" type="text" oninput="renderPlaceSingleBet()" placeholder="Expected result" />
-                        <input id="place-bet-amount" title="Remember each placed bet has a 0.5 finney commission" oninput="renderPlaceSingleBet()" type="number" step="0.001"
-                            placeholder="Amount (ETH) - 0.0005 ETH commission" />
+                        <label style="font-size: 0.8rem; color: #ed7b64" for="place-bet-result">Result</label>
+                        <input name="place-bet-result" id="place-bet-result" type="text"
+                            oninput="renderPlaceSingleBet()" placeholder="Expected result" />
+                        <label style="font-size: 0.8rem; color: #ed7b64" for="place-bet-amount">Amount (ETH):</label>
+                        <input name="place-bet-amount" id="place-bet-amount" oninput="renderPlaceSingleBet()"
+                            type="number" step="0.001" placeholder="Amount (ETH) - 0.0005 ETH commission" />
                     </div>
                     <button class="btn red" id="place-single-bet"
-                        style="opacity: 0; transition: opacity 0.5s linear; padding: 0.1rem; padding-top: 0.1"
-                        onclick="addSingleBet()">
+                        style="opacity: 0; color: white; background-color: #ed7b64; padding: 0.5rem; border-radius: 100%">
                         +
                     </button>
                     <button onclick="betInfo.style.display='flex'" class="btn red">
@@ -139,26 +141,26 @@
                     </button>
                 </div>
                 <div id="bet-info"
-                    style="width: 100%; display: none; justify-content: space-around; align-items: center">
+                    style="margin: 1em 0; width: 100%; display: none; justify-content: space-around; align-items: center">
                     <div style="display: flex; flex-direction: column">
                         <div class="btn msg red" style="flex-direction: column; gap: 33%">
                             <div style="font-size: 0.9rem">Query</div>
                             <div id="bet-initial-pool"
-                                style="font-size: 0.8rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                                style="font-size: 0.8rem; display: flex; flex-direction: column; justify-content: flex-start; border: 0; border-radius: 0">
                                 <div
-                                    style="margin: 1rem; font-size: 0.7rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                                    style="margin: 1rem; margin-left: 0; font-size: 0.7rem; margin-bottom: 0.25rem; justify-content: flex-start; margin-right: auto; align-self: flex-start">
                                     URL
                                 </div>
                                 <div id="bet-url"></div>
                                 <div
-                                    style="margin: 1rem 0; font-size: 0.8rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                                    style="margin: 1rem 0; font-size: 0.8rem; display: flex; flex-direction: column; justify-content: flex-start; border: 0; border-radius: 0">
                                     <div
                                         style="font-size: 0.7rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
                                         Schema</div>
                                     <div id="schema"></div>
                                 </div>
                                 <div
-                                    style="font-size: 0.8rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                                    style="font-size: 0.8rem; display: flex; flex-direction: column; justify-content: flex-start; border: 0; border-radius: 0">
                                     <div
                                         style="font-size: 0.7rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
                                         Path</div>
@@ -201,12 +203,21 @@
                             </div>
                         </div>
                     </div>
-                    <div class="btn msg red" id="bet-description"
-                        style="font-size: 0.7rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
-                        <div
-                            style="font-size: 0.9rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
-                            Description</div>
-                        <div id="bet-inner-description" style="text-align: left"></div>
+                    <div class="btn msg red" style="flex-direction: column">
+                        <div id="bet-final-result"
+                            style="font-size: 0.7rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                            <div
+                                style="font-size: 0.9rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                                Result</div>
+                            <div id="bet-inner-final-result" style="text-align: left"></div>
+                        </div>
+                        <div id="bet-description"
+                            style="font-size: 0.7rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
+                            <div
+                                style="font-size: 0.9rem; margin-bottom: 0.25rem; margin-right: auto; align-self: flex-start">
+                                Description</div>
+                            <div id="bet-inner-description" style="text-align: left"></div>
+                        </div>
                     </div>
                 </div>
                 <div style="display: flex">
@@ -252,19 +263,21 @@
                     </p>
                 </div>
                 <div id="active-bets">
-                    
+
                 </div>
                 <div>
                     <h3>Show me an example</h3>
                     <p>
-                        <span style="font-weight: bold">I'm making things interesting by starting a bet with a 0.25 ETH initial pool.</span>
+                        <span style="font-weight: bold">I'm making things interesting by starting a bet with a 0.25 ETH
+                            initial pool.</span>
                         To put my money where my mouth is, and to honor the many hours and dollars I've lost browsing <a
                             href="https://reddit.com/r/wallstreetbets">/r/wallstreetbets</a>,
                         I've created a simple starting bet: <a href="/?id=spy_guess">SPY_GUESS</a> will query
                         <a href="https://www.investing.com/">Investing.com</a> to extract the price (without decimals)
                         of the well-known
                         S&P 500 index on Saturday, October 9th 2021, 22:00 UTC.
-                        You can place a bet on how much you think it will be worth on that date, the deadline to do so is
+                        You can place a bet on how much you think it will be worth on that date, the deadline to do so
+                        is
                         Sunday, October 3rd, 13:00 UTC.
                     </p>
                 </div>
@@ -281,7 +294,9 @@
                     <p>
                         You don't have to! The entire source code for the project is <a
                             href="https://github.com/nicolas-siplis/wsbdd">available on Github</a>.
-                        If that's not enough, you can take a look at the <a href="https://etherscan.io/address/0xbB2Dfc930A209Aa32E49f0b49264ba6b4270782A#code">contract's verified code in Etherscan</a>.
+                        If that's not enough, you can take a look at the <a
+                            href="https://etherscan.io/address/0xbB2Dfc930A209Aa32E49f0b49264ba6b4270782A#code">contract's
+                            verified code in Etherscan</a>.
                         As for how the results are being fetched, WSBDD relies on <a
                             href="https://provable.xyz/">Provable's blockchain oracle</a>,
                         one of the oldest and most well-known in the field. In the future, I'd like to further integrate
@@ -300,8 +315,9 @@
                         bets into a single transaction, saving you time and money.
                         The only restriction is on the minimum amount of ETH you can bet per result: 1 finney (at the
                         time of
-                        writing, about 3 USD). 
-                        There's also a fixed commission for placing a bet of 0.5 finney, so don't get alarmed if the amount you placed is not the exact amount you put in, 
+                        writing, about 3 USD).
+                        There's also a fixed commission for placing a bet of 0.5 finney, so don't get alarmed if the
+                        amount you placed is not the exact amount you put in,
                         Take a look at the bet in the "Show me an example" section if you'd like to get started right
                         away.
                     </p>
@@ -332,11 +348,16 @@
                 <div id="create-bet-info">
                     <h3>How do I create a bet?</h3>
                     <p>
-                        Click the "New Bet" button and you'll be presented with all the information you need to fill when creating a bet.
-                        I recommend caution when adding descriptions, try to keep them short since they quickly increase the cost of the bet creation transaction.
-                        If you'd like to get people interested in your bet, a great way to do so is setting an initial pool. 
-                        This money will be fully refunded to you if no one wins the bet, but it's not associated with any result. 
-                        SPY_GUESS, for example, has a 0.25 Ethereum starting pool, along with a few example bets I made to demonstrate how everything looks.
+                        Click the "New Bet" button and you'll be presented with all the information you need to fill
+                        when creating a bet.
+                        I recommend caution when adding descriptions, try to keep them short since they quickly increase
+                        the cost of the bet creation transaction.
+                        If you'd like to get people interested in your bet, a great way to do so is setting an initial
+                        pool.
+                        This money will be fully refunded to you if no one wins the bet, but it's not associated with
+                        any result.
+                        SPY_GUESS, for example, has a 0.25 Ethereum starting pool, along with a few example bets I made
+                        to demonstrate how everything looks.
                     </p>
                 </div>
                 <div id="testing-your-query">

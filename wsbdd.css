@@ -103,6 +103,10 @@ span {
     color: #ed7b64;
 }
 
+label .red:hover {
+    background-color: transparent;
+}
+
 .red:hover,
 .red:focus,
 .red:active {

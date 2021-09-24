@@ -9,7 +9,7 @@ const scheduleTime = document.getElementById("schedule-time");
 const deadlineTime = document.getElementById("deadline-time");
 const betId = document.getElementById("create-bet-id");
 const createBetUrl = document.getElementById("create-bet-url");
-const placeBetResult = document.getElementById("result");
+const placeBetResult = document.getElementById("place-bet-result");
 const placeBetAmount = document.getElementById("place-bet-amount");
 const createBetAmount = document.getElementById("create-bet-amount");
 const createBetSchema = document.getElementById("create-bet-schema");
@@ -55,6 +55,8 @@ const betInitialPool = document.getElementById("bet-initial-pool");
 const betInnerInitialPool = document.getElementById("bet-inner-initial-pool");
 const betTotalPool = document.getElementById("bet-total-pool");
 const betInnerTotalPool = document.getElementById("bet-inner-total-pool");
+const betFinalResult = document.getElementById("bet-final-result");
+const betInnerFinalResult = document.getElementById("bet-inner-final-result");
 
 searchBetId.onkeydown = searchTriggered;
 let activeBet = null;
@@ -120,7 +122,10 @@ async function resetButtons() {
 }
 
 function renderPlaceSingleBet() {
-    placeSingleBet.style.opacity = (placeBetResult.value && placeBetAmount.value) ? "1" : "0";
+    const filledBet = (placeBetResult.value && placeBetAmount.value);
+    placeSingleBet.onclick = filledBet ? () => { addSingleBet(); renderPlaceSingleBet(); } : "";
+    placeSingleBet.style.cursor = filledBet ? "pointer" : "default";
+    placeSingleBet.style.opacity = filledBet ? "1" : "0";
 }
 
 function hideMessage(delay) {
@@ -204,6 +209,8 @@ async function renderPlaceBet() {
     placeBetInputs.style.display = bettingDisabled ? "none" : "flex";
     placeBetInputs.style.opacity = bettingDisabled ? 0 : "100%";
     placeBetInputs.style.visibility = bettingDisabled ? "hidden" : "visible";
+    placeBetAmount.placeholder = `${weiToEth(await contract.betMinimums(activeBet))} minimum, 0.0005 fixed commission`;
+    console.log(placeBetAmount.placeholder);
     placeBet.innerHTML = bettingDisabled ? (betFinished ? "Finished" : "Deadline Reached") : "Place Bet";
     placeSingleBet.style.display = bettingDisabled ? "none" : "block";
     placeBet.disabled = bettingDisabled;
@@ -241,11 +248,14 @@ async function searchBet(id) {
         betDeadline.innerHTML = new Date(await contract.betDeadlines(activeBet) * 1000).toISOString().replace("T", " ").split(".")[0].slice(0, -3);
         const createdFilter = (await contract.queryFilter(contract.filters.CreatedBet(null, activeBet)))[0];
         const [schedule, initialPool, description] = [new Date(createdFilter.args[3].toString() * 1000), createdFilter.args[4].toString(), createdFilter.args[5].toString()];
+        const result = await contract.betResults(activeBet);
         betSchedule.innerHTML = schedule.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
         betInnerDescription.innerHTML = description;
         betInnerInitialPool.innerHTML = weiToEth(initialPool).toString() + "Ð";
         betInnerTotalPool.innerHTML = weiToEth((await contract.betPools(activeBet)).toString()).toString() + "Ð";
         betDescription.style.display = description ? "flex" : "none";
+        betFinalResult.style.display = result ? "flex" : "none";
+        betFinalResult.innerHTML = result;
         Promise.all([renderPlaceBet(), renderClaimBet(), renderBetPool()]).then(() => {
             hideMessage();
             betContainer.style.opacity = "100%";
@@ -403,7 +413,7 @@ async function testQuery(url, errorMsg, after = defaultMessageLocation) {
             triggerError(errorMsg || "Error while trying to fetch result, check query and try again.", after);
             return;
         }
-        triggerSuccess(result, null, after);
+        triggerSuccess("Result: " + result, null, after);
     }, 2000);
 }
 
