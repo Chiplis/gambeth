@@ -20,8 +20,9 @@ td {
 }
 
 label {
+    font-weight:bold;
     color: cornflowerblue;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
 }
 
 input {
@@ -139,6 +140,14 @@ label .red:hover {
 
 .success {
     color: lightseagreen;
+}
+
+.action {
+    color: #ed9d64;
+}
+
+.action:hover {
+    background-color: #ed9d64;
 }
 
 .success:hover {

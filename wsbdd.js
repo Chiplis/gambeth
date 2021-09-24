@@ -405,10 +405,10 @@ async function testQuery(url, errorMsg, after = defaultMessageLocation) {
     }
     const baseURL = "https://api.oraclize.it/api/v1/query";
     triggerProcessing("Querying", after);
-    const queryId = (await fetch(`${baseURL}/create`, { method: "POST", body: JSON.stringify(payload) }).then(r => r.json()).catch(console.log)).result.id;
     setTimeout(async () => {
         let result;
         try {
+            const queryId = (await fetch(`${baseURL}/create`, { method: "POST", body: JSON.stringify(payload) }).then(r => r.json()).catch(console.log)).result.id;
             const fullResult = (await fetch(`${baseURL}/${queryId}/status`).then(r => r.json()).catch(console.log));
             const error = fullResult.result.checks.find(check => check.errors.length);
             result = fullResult.result.checks[0].results[0];
