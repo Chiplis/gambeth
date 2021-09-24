@@ -52,8 +52,8 @@ span {
 }
 
 .btn {
-    box-sizing: border-box;
     appearance: none;
+    border: 0;
     background-color: transparent;
     border-radius: 0.6rem;
     display: flex;
@@ -68,7 +68,6 @@ span {
     text-transform: uppercase;
     font-weight: 700;
     -webkit-appearance: none;
-    border: 2px solid cornflowerblue;
     color: cornflowerblue;
     transition: opacity 200ms linear, visibility 200ms linear, background-color 300ms ease-in-out, box-shadow 300ms ease-in-out, color 300ms ease-in-out;
 }
@@ -92,10 +91,6 @@ span {
 .btn:active {
     color: white;
     background-color: cornflowerblue;
-    box-shadow: 0 0 40px 40px cornflowerblue inset;
-    -webkit-box-shadow: 0 0 40px 40px cornflowerblue inset;
-    -moz-box-shadow: 0 0 40px 40px cornflowerblue inset;
-    -box-box-shadow: 0 0 40px 40px cornflowerblue inset;
 }
 
 .btn:hover::placeholder,
@@ -105,7 +100,6 @@ span {
 }
 
 .red {
-    border: 2px solid #ed7b64;
     color: #ed7b64;
 }
 
@@ -114,10 +108,6 @@ span {
 .red:active {
     color: white;
     background-color: #ed7b64;
-    box-shadow: 0 0 40px 40px #ed7b64 inset;
-    -webkit-box-shadow: 0 0 40px 40px #ed7b64 inset;
-    -moz-box-shadow: 0 0 40px 40px #ed7b64 inset;
-    -box-box-shadow: 0 0 40px 40px #ed7b64 inset;
 }
 
 .red:hover::placeholder,
@@ -127,44 +117,27 @@ span {
 }
 
 .error {
-    border: 2px solid rgb(250, 50, 50);
-    background-color: rgb(250, 50, 50);
-    color: white;
-    transition: opacity 200ms linear, visibility 200ms linear;
+    color: #f45977;
 }
 
 .error:hover {
-    box-shadow: 0 0 40px 40px rgb(250, 50, 50) inset;
+    background-color: #f45977;
 }
 
 .processing {
-    border: 2px solid cornflowerblue;
     color: cornflowerblue;
-    transition: opacity 200ms linear, visibility 200ms linear;
 }
 
 .processing:hover {
     background-color: cornflowerblue;
-    box-shadow: 0 0 40px 40px cornflowerblue inset;
 }
 
 .success {
-    border: 2px solid lightseagreen;
     color: lightseagreen;
-    transition: opacity 200ms linear, visibility 200ms linear;
 }
 
 .success:hover {
-    box-shadow: 0 0 40px 40px lightseagreen inset;
-}
-
-.info {
-    border: 2px solid cornflowerblue;
-    color: cornflowerblue;
-}
-
-.info:hover {
-    box-shadow: 0 0 40px 40px cornflowerblue inset;
+    background-color: lightseagreen;
 }
 
 .styled-table {
@@ -185,7 +158,7 @@ span {
 
 .styled-table th,
 .styled-table td {
-    padding: 12px 15px;
+    padding: 0.5rem 0.5em;
 }
 
 .styled-table tbody tr {

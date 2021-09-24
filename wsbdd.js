@@ -67,7 +67,7 @@ if (window.ethereum) {
 }
 
 const provider = window.ethereum ? new ethers.providers.Web3Provider(window.ethereum) : null;
-const address = "0x2Af2bf286d90b20D9691ED56556005DC2F885294";
+const address = "0xf2861B677e9b3C9533De82505207C44C0EE19a42";
 const signer = provider ? provider.getSigner() : null;
 const contract = provider ? new ethers.Contract(address, contractAbi, provider) : null;
 const signedContract = contract ? contract.connect(signer) : null;
@@ -218,6 +218,7 @@ async function searchBet(id) {
         searchBetId.value = activeBet;
         const betExists = await contract.createdBets(activeBet);
         if (!betExists) {
+            betContainer.style.display = "none";
             triggerError("Invalid Bet ID");
             return;
         }
@@ -242,6 +243,7 @@ async function searchBet(id) {
             betContainer.style.visibility = "visible";
         });
     } catch (error) {
+        betContainer.style.display = "none";
         console.error(error);
         triggerError(`Unexpected error: ${error.code ? `code: ${error.code}` : error}`);
     }
@@ -401,16 +403,17 @@ async function renderBetPool() {
         const results = await Promise.all(Object.keys(betResults).map((result) => contract.resultPools(activeBet, result)));
         const resultsPool = {};
         Object.keys(betResults).map((result, idx) => {
-            resultsPool[result] = ethToWei(results[idx].toString()).toString();
+            console.log(weiToEth(results[idx]));
+            resultsPool[result] = weiToEth(results[idx]);
         })
 
         const allEntries = Object.entries(betResults);
 
         //const totalPool = weiToEth(Object.entries(resultsPool).reduce((a, b) => a[1].add(b[1]), [null, ethToWei("0")]));
 
-        allEntries.sort((a, b) => weiToEth(resultsPool[b[0]]) - weiToEth(resultsPool[a[0]]));
+        allEntries.sort((a, b) => resultsPool[b[0]] - resultsPool[a[0]]);
         const entries = allEntries
-            .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td><td>${weiToEth(resultsPool[k])}</td></tr>`)
+            .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td><td>${(resultsPool[k])}</td></tr>`)
             .slice(0, 25)
             .join("");
 
