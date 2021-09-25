@@ -56,7 +56,7 @@
                     onclick="renderPreviousCreationStep()">←</div>
                 <div style="width: 70%">
                     <div id="create-bet-params"
-                        style="opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
+                        style="z-index: 1; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
                         <div class="btn red" style="border: 0; margin: 0">Parameters</div>
                         <input id="create-bet-id" onchange="this.value=this.value.toLowerCase().trim()"
                             style="margin: 0.5rem;" type="text" />
@@ -84,7 +84,7 @@
                         <label for="create-bet-initial-pool">Initial pool (optional)</label>
                     </div>
                     <div id="create-bet-dates"
-                        style="opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
+                        style="z-index: 0; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
 
                         <div class="btn red" style="border: 0; margin: 0">Dates</div>
                         <input id="deadline-date" onfocusout="this.type = this.value.length ? this.type : 'text'"
@@ -108,7 +108,7 @@
                         <label for="schedule-time">At what time is the query going to run?</label>
                     </div>
                     <div id="create-bet-query"
-                        style="opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
+                        style="z-index: 0; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
                         <div class="btn red" style="border: 0; margin: 0">Query</div>
                         <input
                             oninput="betQuery.innerHTML=createBetQuery(createBetSchema.value, this.value, createBetPath.value)"
