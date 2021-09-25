@@ -210,7 +210,7 @@ function triggerMessage(msg, add, remove, after = defaultMessageLocation, showCl
 }
 
 function triggerError(msg, after, link) {
-    triggerMessage(msg, "error", ["processing", "success"], after);
+    triggerMessage(msg, "error", ["info", "success"], after);
     if (link) {
         innerMessage.onclick = () => window.location.href = link;
         innerMessage.style.cursor = "pointer";
@@ -218,14 +218,14 @@ function triggerError(msg, after, link) {
 }
 
 function triggerSuccess(msg, callback, after, click) {
-    triggerMessage(msg, "success", ["processing", "error"], after, click);
+    triggerMessage(msg, "success", ["info", "error"], after, click);
     if (callback) {
         setTimeout(callback, 5000);
     }
 }
 
 function triggerProcessing(msg, after, click) {
-    triggerMessage(msg, "processing", ["error", "success"], after, false);
+    triggerMessage(msg, "info", ["error", "success"], after, false);
     let i = 0;
     processing = setInterval(() => (innerMessage.innerHTML = msg + ".".repeat(i++ % 4)), 300);
 }

@@ -21,7 +21,7 @@ td {
 
 label {
     font-weight:bold;
-    color: cornflowerblue;
+    color: #ed9d64;
     font-size: 0.85rem;
 }
 
@@ -80,8 +80,34 @@ span {
     text-transform: uppercase;
     font-weight: 700;
     -webkit-appearance: none;
-    color: cornflowerblue;
     transition: opacity 200ms linear, visibility 200ms linear, background-color 300ms ease-in-out, box-shadow 300ms ease-in-out, color 300ms ease-in-out;
+}
+
+.link {
+    color: cornflowerblue;
+}
+
+.link:hover {
+    color:white;
+    background-color: cornflowerblue;
+}
+
+.details {
+    color: #d464ed;
+}
+
+.details:hover {
+    color:white;
+    background-color: #d464ed;
+}
+
+.info {
+    color: #ed9d64;
+}
+
+.info:hover {
+    color:white;
+    background-color: #ed9d64;
 }
 
 .btn:disabled:hover {
@@ -93,7 +119,7 @@ span {
     color: cornflowerblue;
 }
 
-.btn:hover {
+.link:hover {
     color: white;
     background-color: cornflowerblue;
 }
@@ -102,23 +128,15 @@ span {
     color: white;
 }
 
-.red {
-    color: #ed7b64;
-}
-
-label .red:hover {
-    background-color: transparent;
-}
-
-.red:hover {
+.search {
     color: white;
-    background-color: #ed7b64;
+    border: 0;
+    background-color: cornflowerblue;
 }
 
-.red:hover::placeholder,
-.red:focus::placeholder,
-.red:active::placeholder {
+.search::placeholder {
     color: white;
+    background-color: cornflowerblue;
 }
 
 .error {
@@ -128,6 +146,7 @@ label .red:hover {
 
 .error:hover {
     background-color: #f45977;
+    color: white;
 }
 
 .processing {
@@ -135,6 +154,7 @@ label .red:hover {
 }
 
 .processing:hover {
+    color: white;
     background-color: cornflowerblue;
 }
 
@@ -142,16 +162,20 @@ label .red:hover {
     color: lightseagreen;
 }
 
-.action {
-    color: #ed9d64;
-}
-
-.action:hover {
-    background-color: #ed9d64;
-}
-
 .success:hover {
+    color: white;
     background-color: lightseagreen;
+}
+
+.styled-table {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+    margin: 25px 0;
+    color: white;
+    font-size: 0.9rem;
+    font-family: sans-serif;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
 }
 
 .styled-table {
@@ -170,9 +194,12 @@ label .red:hover {
     text-align: left;
 }
 
-.styled-table th,
-.styled-table td {
+.styled-table th {
     padding: 0.5rem 0.5em;
+}
+
+.styled-table td {
+    color: black;
 }
 
 .styled-table tbody tr {
