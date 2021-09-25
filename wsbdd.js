@@ -431,7 +431,7 @@ async function addBet() {
         placeBetEntries.innerHTML = "";
     } catch (error) {
         console.error(error);
-        claerTimeout(hideMessage());
+        clearTimeout(hideMessage());
         triggerError(`Unexpected error: ${error.code ? `code: ${error.code}` : error}`);
     }
 }
