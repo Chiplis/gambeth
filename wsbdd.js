@@ -190,7 +190,6 @@ function hideMessage(delay) {
     clearInterval(processing);
     message.style.visibility = "hidden";
     message.style.opacity = "0";
-    return setTimeout(() => message.style.display = "none", 500);
 }
 
 function triggerMessage(msg, add, remove, after = defaultMessageLocation, showClose = true, click) {
