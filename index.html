@@ -13,13 +13,13 @@
 
 <body style="margin: 0; font-size: 25px">
     <div
-        style="margin: 0 1em; border: 0; width: 100%; position: fixed; background-color: white; left: 0; display: flex; flex-direction: row; justify-content: space-around; align-items: center;">
+        style="margin: 0 1em; border: 0; width: 100%; z-index: 999; position: fixed; background-color: white; left: 0; display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
         <a href="/" style="align-items: center;text-decoration: none; display:flex; flex-direction: column" id="wsbdd"
-            style="color: black; text-decoration: none; margin-bottom: 3vw; flex-direction: column; font-size: 5vw; align-items: center; display: flex; justify-content: center">
+            style="color: #ed7b64; text-decoration: none; margin-bottom: 3vw; flex-direction: column; font-size: 5vw; align-items: center; display: flex; justify-content: center">
             <div style="display: flex">
                 <div>₩$₿ÐÐ</div>
             </div>
-            <div style="font-size: 1vw; font-weight: bold">
+            <div style="color: cornflowerblue; font-size: 1vw; font-weight: bold">
                 wei stakes by decentralized degenerates
             </div>
         </a>
@@ -50,7 +50,7 @@
                 </button>
             </div>
             <div id="new-bet"
-                style="width: 70vw; display: none; flex-direction: row; justify-content: space-evenly; align-items: center">
+                style="width: 70vw; display: none; flex-direction: row; justify-content: space-between; align-items: center">
                 <div class="btn"
                     style="color:white; background-color:cornflowerblue; z-index: 999; align-self: flex-start; margin-top: 10em"
                     onclick="renderPreviousCreationStep()">←</div>
@@ -149,7 +149,7 @@
                     style="color:white; background-color:cornflowerblue; z-index: 999; align-self: flex-start; margin-top: 10em"
                     onclick="renderNextCreationStep()">→</div>
                 <button class="btn error" onclick="closeNewBet()"
-                    style="margin-left: auto; align-self: flex-start; border-radius: 5rem; padding: 0.25rem;">
+                    style="align-self: flex-start; border-radius: 5rem; padding: 0.25rem;">
                     ✖
                 </button>
             </div>
