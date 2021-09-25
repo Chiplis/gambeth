@@ -86,12 +86,10 @@ const renderPreviousCreationStep = () => {
     }
     lastCreationStep.style.opacity = "0";
     lastCreationStep.style.visibility="hidden";
-    lastCreationStep.style["z-index"] = "0";
     const p = lastCreationStep;
     setTimeout(() => { p.style.position = "absolute" }, 200);
     lastCreationStep = mapping[lastCreationStep.id];
     lastCreationStep.style.visibility = "visible";
-    lastCreationStep.style["z-index"] = "1";
     lastCreationStep.style.position = "initial";
     lastCreationStep.style.opacity = "100%";
 
