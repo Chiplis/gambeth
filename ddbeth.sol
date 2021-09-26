@@ -7,11 +7,6 @@ import "github.com/provable-things/ethereum-api/blob/master/provableAPI_0.6.sol"
     
 contract WeiStakesByDecentralizedDegenerates is usingProvable {
     
-    
-    address payable contractCreator;
-    
-    uint256 constant fixedCommission = 1e15 / 2;
-
     // Events are useful for the frontend to present information about each bet
     
     // Sender, required funds for Provable query
@@ -32,6 +27,7 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     // User betting, betId, results, betId, results
     event PlacedBets(address indexed, string indexed, string[] indexed, string, string[]);
 
+    address payable contractCreator;
     constructor() public payable {
         contractCreator = msg.sender;
     }
@@ -62,7 +58,7 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     uint256 public lastQueryPrice;
     
 
-    uint64 const scheduleThreshold = 60 * 24 * 60 * 60; // Queries can't be scheduled more than 60 days in the future
+    uint64 constant scheduleThreshold = 60 * 24 * 60 * 60; // Queries can't be scheduled more than 60 days in the future
 
     function createBet(string calldata betId, string calldata query, uint64 deadline, uint64 schedule, uint256 commission, uint256 minimum, uint256 initialPool, string calldata description) public payable {
 
@@ -106,6 +102,7 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     // BetId -> User -> Result -> How much user 
     mapping(string => mapping(address => mapping(string => uint256))) public userBets;
     
+    uint256 constant fixedCommission = 1e16;
     function placeBets(string calldata betId, string[] calldata results, uint256[] calldata amounts) public payable {
         require(results.length == amounts.length && createdBets[betId] && !finishedBets[betId] && betDeadlines[betId] >= block.timestamp);
         uint256 total = msg.value;
