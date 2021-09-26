@@ -23,16 +23,16 @@ const betsAmount = document.getElementById("bets-amount");
 const end = document.getElementById("end");
 const message = document.getElementById("message");
 const betContainer = document.getElementById("bet-container");
-const betCommission = document.getElementById("create-bet-commission");
-const createBetHelp = document.getElementById("create-bet-help");
-const createBetInfo = document.getElementById("create-bet-info");
 const intro = document.getElementById("intro");
 const createBetMinimum = document.getElementById("create-bet-minimum");
 const betCarousel = document.getElementById("bet-carousel");
 const placeSingleBet = document.getElementById("place-single-bet");
+
 const createBetDescription = document.getElementById("create-bet-description");
 const createBetInitialPool = document.getElementById("create-bet-initial-pool");
 const createBetCommission = document.getElementById("create-bet-commission");
+const createBetHelp = document.getElementById("create-bet-help");
+const createBetInfo = document.getElementById("create-bet-info");
 
 const placeBetInfo = document.getElementById("place-bet-info");
 const placeBetEntries = document.getElementById("place-bet-entries");
@@ -42,8 +42,8 @@ const betUrl = document.getElementById("bet-url");
 const betDeadline = document.getElementById("bet-deadline");
 const betSchedule = document.getElementById("bet-schedule");
 const betInfo = document.getElementById("bet-info");
-const urlSchema = document.getElementById("schema");
-const schemaPath = document.getElementById("path");
+const urlSchema = document.getElementById("bet-schema");
+const schemaPath = document.getElementById("bet-path");
 const defaultMessageLocation = document.getElementById("default-message-location");
 const createBetQueryResult = document.getElementById("create-bet-query-result");
 const betQuery = document.getElementById("bet-query");
@@ -52,12 +52,14 @@ const closeMessage = document.getElementById("close-message");
 const queryTesterUrl = document.getElementById("query-tester-url");
 const queryTesterResult = document.getElementById("query-tester-result");
 const newBet = document.getElementById("new-bet");
-const betInitialPool = document.getElementById("bet-initial-pool");
-const betInnerInitialPool = document.getElementById("bet-inner-initial-pool");
+
+const betInnerInitialPool = document.getElementById("bet-initial-pool");
+const betInnerCommission = document.getElementById("bet-commission");
+const betInnerMinimum = document.getElementById("bet-minimum");
 const betTotalPool = document.getElementById("bet-total-pool");
-const betInnerTotalPool = document.getElementById("bet-inner-total-pool");
-const betFinalResult = document.getElementById("bet-final-result");
-const betInnerFinalResult = document.getElementById("bet-inner-final-result");
+const betInnerTotalPool = document.getElementById("bet-total-pool");
+const betResult = document.getElementById("bet-result");
+const betInnerResult = document.getElementById("bet-inner-result");
 
 const closeNewBet = () => {
     newBet.hideBet = newBet.style.display = 'none';
@@ -314,9 +316,11 @@ async function searchBet(id) {
         betInnerDescription.innerHTML = description;
         betInnerInitialPool.innerHTML = weiToEth(initialPool).toString() + "Ð";
         betInnerTotalPool.innerHTML = weiToEth((await contract.betPools(activeBet)).toString()).toString() + "Ð";
+        betInnerCommission.innerHTML = Number.parseFloat((100 / (await contract.betCommissions(activeBet))).toFixed(5)) + "%";
+        betInnerMinimum.innerHTML = weiToEth(await contract.betMinimums(activeBet)) + "Ð";
         betDescription.style.display = description ? "flex" : "none";
-        betFinalResult.style.display = result ? "flex" : "none";
-        betFinalResult.innerHTML = result;
+        betResult.style.display = result ? "flex" : "none";
+        betInnerResult.innerHTML = result;
         Promise.all([renderPlaceBet(), renderClaimBet(), renderBetPool()]).then(() => {
             hideMessage();
             betContainer.style.opacity = "100%";
