@@ -118,7 +118,7 @@ let providerLoaded = false;
 
 async function loadProvider() {
     try {
-        if (providerLoaded) return;
+        if (providerLoaded) return true;
 
         if (window.ethereum) {
             await window.ethereum.request({ method: "eth_requestAccounts" });
@@ -126,7 +126,7 @@ async function loadProvider() {
             clearTimeout(hideMessage());
             triggerError("No Ethereum provider detected, click to install MetaMask", null, "https://metamask.io");
             providerLoaded = false;
-            return;
+            return false;
         }
 
         provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -144,14 +144,15 @@ async function loadProvider() {
             contract.on("WonBet", async (sender, amount) => { if (sender == owner) triggerSuccess(`Bet won! ${weiToEth(amount.toString())} ETH transferred to account`) });
         }
         providerLoaded = true;
+        return true;
     } catch (error) {
         triggerError("Error while loading Ethereum provider: " + (error.code || error));
         providerLoaded = false;
+        return false;
     }
 }
 
-
-
+loadProvider();
 
 const ethToWei = (eth) => ethers.utils.parseEther(eth);
 const weiToEth = (wei) => (wei / Math.pow(10, 18)).toString();
@@ -286,8 +287,7 @@ async function renderPlaceBet() {
 
 async function searchBet(id) {
     try {
-        await loadProvider();
-        if (!providerLoaded) return;
+        if (!(await loadProvider())) return;
         placedBets = {};
         newBet.style.display = "none";
         resetButtons();
@@ -353,8 +353,7 @@ const createBetQuery = (schema, url, path) => `${schema}(${url})${schema == "htm
 
 async function createBet() {
     try {
-        await loadProvider();
-        if (!providerLoaded) return;
+        if (!(await loadProvider())) return;
         betContainer.style.display = "none";
         resetButtons();
         clearTimeout(hideMessage());
