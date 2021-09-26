@@ -27,7 +27,7 @@ contract WeiStakingByDecentralizedDegenerates is usingProvable {
     event UnwonBet(address indexed);
 
     // Creator, betId, betId, schedule, initialPool, description
-    event CreatedBet(address indexed, string indexed, string, uint64, uint256, string);
+    event CreatedBet(address indexed, string indexed, string, uint256, string);
 
     // User betting, betId, results, betId, results
     event PlacedBets(address indexed, string indexed, string[] indexed, string, string[]);
@@ -38,6 +38,9 @@ contract WeiStakingByDecentralizedDegenerates is usingProvable {
     
     // BetId -> Deadline to place new bets
     mapping(string => uint64) public betDeadlines;
+
+    // BetId -> Scheduled time to run
+    mapping(string => uint64) public betSchedules;
 
     // BetId -> Query
     mapping(string => string) public betQueries;
@@ -79,6 +82,7 @@ contract WeiStakingByDecentralizedDegenerates is usingProvable {
         betOwners[betId] = msg.sender;
         betCommissions[betId] = commission;
         betDeadlines[betId] = deadline;
+        betSchedules[betId] = schedule;
         betMinimums[betId] = minimum;
         betQueries[betId] = query;
 
@@ -86,7 +90,7 @@ contract WeiStakingByDecentralizedDegenerates is usingProvable {
         userPools[betId][msg.sender] += initialPool;
         betPools[betId] = initialPool;
         
-        emit CreatedBet(msg.sender, betId, betId, schedule, initialPool, description);
+        emit CreatedBet(msg.sender, betId, betId, initialPool, description);
     }
     
     // BetId -> Result -> Total pooled per result
@@ -133,9 +137,12 @@ contract WeiStakingByDecentralizedDegenerates is usingProvable {
     // Keep track of which rewards have already been granted
     mapping(string => mapping(address => bool)) public claimedBets;
     
+    uint constant betThreshold = 5 * 24 * 60 * 60; // 5 days
 
     function claimBet(string calldata betId) public {
-        require(finishedBets[betId] && !claimedBets[betId][msg.sender] && userPools[betId][msg.sender] != 0);
+        // If the oracle service's callback was never executed, a user can reclaim his funds after the bet's execution threshold has passed
+        uint64 betExpired = betSchedules[betId] + betThreshold < block.timestamp;
+        require((finishedBets[betId] || betExpired) && !claimedBets[betId][msg.sender] && userPools[betId][msg.sender] != 0);
         
         claimedBets[betId][msg.sender] = true;
 

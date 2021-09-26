@@ -113,27 +113,43 @@ function searchTriggered(e) {
     }
 }
 
-if (window.ethereum) {
-    window.ethereum.request({ method: "eth_requestAccounts" });
+let provider, address, signer, contract, signedContract, owner;
+let providerLoaded = false;
+
+async function loadProvider() {
+    try {
+        if (providerLoaded) return;
+
+        if (window.ethereum) {
+            await window.ethereum.request({ method: "eth_requestAccounts" });
+        } else {
+            clearTimeout(hideMessage());
+            triggerError("No Ethereum provider detected, click to install MetaMask", null, "https://metamask.io");
+            providerLoaded = false;
+            return;
+        }
+
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        address = "0xbB2Dfc930A209Aa32E49f0b49264ba6b4270782A";
+        signer = provider.getSigner();
+        contract = new ethers.Contract(address, contractAbi, provider);
+        signedContract = contract.connect(signer);
+        if (contract) {
+            owner = await signer.getAddress();
+            contract.on("LackingFunds", async (sender, funds) => { if (sender == owner) triggerError(`Insufficient query funds, requiring ${weiToEth(funds)} ETH`) });
+            contract.on("CreatedBet", async (_, __, betId) => { if (betId == activeBet) triggerSuccess(`Bet created!`, () => { searchBet(betId) }) });
+            contract.on("PlacedBets", async (sender, _, __, betId) => { if (sender == owner) triggerSuccess(`Bet placed!`, () => searchBet(betId)) });
+            contract.on("LostBet", async (sender) => { if (sender == owner) triggerSuccess("Bet lost, better luck next time!") });
+            contract.on("UnwonBet", async (sender) => { if (sender == owner) triggerSuccess("No one won the bet, you've been refunded") });
+            contract.on("WonBet", async (sender, amount) => { if (sender == owner) triggerSuccess(`Bet won! ${weiToEth(amount.toString())} ETH transferred to account`) });
+        }
+        providerLoaded = true;
+    } catch (error) {
+        triggerError("Error while loading Ethereum provider: " + (error.code || error));
+        providerLoaded = false;
+    }
 }
 
-const provider = window.ethereum ? new ethers.providers.Web3Provider(window.ethereum) : null;
-const address = "0xbB2Dfc930A209Aa32E49f0b49264ba6b4270782A";
-const signer = provider ? provider.getSigner() : null;
-const contract = provider ? new ethers.Contract(address, contractAbi, provider) : null;
-const signedContract = contract ? contract.connect(signer) : null;
-(async () => {
-    if (contract) {
-        const owner = await signer.getAddress();
-        contract.on("LackingFunds", async (sender, funds) => { if (sender == owner) triggerError(`Insufficient query funds, requiring ${weiToEth(funds)} ETH`) });
-        contract.on("CreatedBet", async (_, __, betId) => { if (betId == activeBet) triggerSuccess(`Bet created!`, () => { searchBet(betId) }) });
-        contract.on("PlacedBets", async (sender, _, __, betId) => { if (sender == owner) triggerSuccess(`Bet placed!`, () => searchBet(betId)) });
-        contract.on("LostBet", async (sender) => { if (sender == owner) triggerSuccess("Bet lost, better luck next time!") });
-        contract.on("UnwonBet", async (sender) => { if (sender == owner) triggerSuccess("No one won the bet, you've been refunded") });
-        contract.on("WonBet", async (sender, amount) => { if (sender == owner) triggerSuccess(`Bet won! ${weiToEth(amount.toString())} ETH transferred to account`) });
-        //loadBetCarousel();
-    }
-})()
 
 
 
@@ -270,6 +286,8 @@ async function renderPlaceBet() {
 
 async function searchBet(id) {
     try {
+        await loadProvider();
+        if (!providerLoaded) return;
         placedBets = {};
         newBet.style.display = "none";
         resetButtons();
@@ -335,6 +353,8 @@ const createBetQuery = (schema, url, path) => `${schema}(${url})${schema == "htm
 
 async function createBet() {
     try {
+        await loadProvider();
+        if (!providerLoaded) return;
         betContainer.style.display = "none";
         resetButtons();
         clearTimeout(hideMessage());
