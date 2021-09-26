@@ -21,7 +21,7 @@ td {
 
 label {
     font-weight:bold;
-    color: #ed9d64;
+    color: cornflowerblue;
     font-size: 0.85rem;
 }
 
@@ -83,31 +83,43 @@ span {
     transition: opacity 200ms linear, visibility 200ms linear, background-color 300ms ease-in-out, box-shadow 300ms ease-in-out, color 300ms ease-in-out;
 }
 
-.link {
-    color: cornflowerblue;
+.search {
+    color: white;
+    border: 0;
+    background-color: #64daed;
 }
 
-.link:hover {
-    color:white;
-    background-color: cornflowerblue;
-}
-
-.details {
-    color: #d464ed;
-}
-
-.details:hover {
-    color:white;
-    background-color: #d464ed;
+.search::placeholder {
+    color: white;
+    opacity: 1;
+    background-color: #64daed;
 }
 
 .info {
-    color: #ed9d64;
+    color: cornflowerblue;
 }
 
 .info:hover {
     color:white;
-    background-color: #ed9d64;
+    background-color: cornflowerblue;
+}
+
+.link {
+    color: #7864ed;
+}
+
+.link:hover {
+    color:white;
+    background-color: #7864ed;
+}
+
+.details {
+    color: cornflowerblue;
+}
+
+.details:hover {
+    color:white;
+    background-color: cornflowerblue;
 }
 
 .btn:disabled:hover {
@@ -119,24 +131,8 @@ span {
     color: cornflowerblue;
 }
 
-.link:hover {
-    color: white;
-    background-color: cornflowerblue;
-}
-
 .btn:hover::placeholder {
     color: white;
-}
-
-.search {
-    color: white;
-    border: 0;
-    background-color: cornflowerblue;
-}
-
-.search::placeholder {
-    color: white;
-    background-color: cornflowerblue;
 }
 
 .error {
@@ -163,7 +159,7 @@ span {
 }
 
 .success:hover {
-    color: white;
+    color: white;   
     background-color: lightseagreen;
 }
 
@@ -189,7 +185,7 @@ span {
 }
 
 .styled-table thead tr {
-    background-color: #ed9d64;
+    background-color: #64daed;
     color: #ffffff;
     text-align: left;
 }
@@ -211,7 +207,7 @@ span {
 }
 
 .styled-table tbody tr:last-of-type {
-    border-bottom: 2px solid #ed9d64;
+    border-bottom: 2px solid #64daed;
 }
 
 #bet-container {

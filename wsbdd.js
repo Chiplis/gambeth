@@ -11,7 +11,7 @@ const betId = document.getElementById("create-bet-id");
 const createBetUrl = document.getElementById("create-bet-url");
 const placeBetResult = document.getElementById("place-bet-result");
 const placeBetAmount = document.getElementById("place-bet-amount");
-const createBetAmount = document.getElementById("create-bet-amount");
+const createBetAmount = document.getElementById("create-bet-amount-label");
 const createBetSchema = document.getElementById("create-bet-schema");
 const createBetPath = document.getElementById("create-bet-path");
 const betEntries = document.getElementById("bet-entries");
@@ -32,6 +32,7 @@ const betCarousel = document.getElementById("bet-carousel");
 const placeSingleBet = document.getElementById("place-single-bet");
 const createBetDescription = document.getElementById("create-bet-description");
 const createBetInitialPool = document.getElementById("create-bet-initial-pool");
+const createBetCommission = document.getElementById("create-bet-commission");
 
 const placeBetInfo = document.getElementById("place-bet-info");
 const placeBetEntries = document.getElementById("place-bet-entries");
@@ -57,10 +58,6 @@ const betTotalPool = document.getElementById("bet-total-pool");
 const betInnerTotalPool = document.getElementById("bet-inner-total-pool");
 const betFinalResult = document.getElementById("bet-final-result");
 const betInnerFinalResult = document.getElementById("bet-inner-final-result");
-const createParams = document.getElementById("create-bet-params");
-const createDates = document.getElementById("create-bet-dates");
-const createQuery = document.getElementById("create-bet-query");
-let lastCreationStep = createParams;
 
 const closeNewBet = () => {
     newBet.hideBet = newBet.style.display = 'none';
@@ -83,7 +80,7 @@ const createBetBtn = () => {
 
 const renderPreviousCreationStep = () => {
     steps[currentStep].style.opacity = "0";
-    steps[currentStep].style.visibility="hidden";
+    steps[currentStep].style.visibility = "hidden";
     const p = steps[currentStep];
     setTimeout(() => { p.style.position = "absolute" }, 200);
     currentStep = currentStep == 0 ? steps.length - 1 : currentStep - 1;
@@ -94,7 +91,7 @@ const renderPreviousCreationStep = () => {
 
 const renderNextCreationStep = () => {
     steps[currentStep].style.opacity = "0";
-    steps[currentStep].style.visibility="hidden";
+    steps[currentStep].style.visibility = "hidden";
     const p = steps[currentStep];
     setTimeout(() => { p.style.position = "absolute" }, 200);
     currentStep = (currentStep + 1) % steps.length;
@@ -146,6 +143,12 @@ const weiToEth = (wei) => (wei / Math.pow(10, 18)).toString();
 const createBetAmountTitle = `Provable's oracle service used by WSBDD needs to be paid for by the bet's creator.`;
 createBetAmount.title = createBetAmountTitle;
 
+(async () => {
+    createBetAmount.innerHTML = "Provable's oracle service used by WSBDD needs to be paid for by the bet's creator." + (contract
+        ? ` The suggested amount is ${weiToEth((await contract.lastQueryPrice())).toString()} ETH.`
+        : ``);
+})();
+
 createBetAmount.onmouseover = async () => {
     createBetAmount.title = `${createBetAmountTitle} Suggested amount: ${weiToEth((await contract.lastQueryPrice())).toString()} ETH`;
 }
@@ -156,6 +159,10 @@ window.onload = () => {
     if (betId) {
         searchBet(betId.toLowerCase().trim());
     }
+}
+
+function commissionChanged() {
+    createBetCommission.value = Number.parseFloat(100 / Math.round(100 / createBetCommission.value)).toFixed(2);
 }
 
 async function resetButtons() {
