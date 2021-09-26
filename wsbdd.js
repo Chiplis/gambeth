@@ -178,7 +178,7 @@ async function loadProvider() {
             await window.ethereum.request({ method: "eth_requestAccounts" });
         } else {
             clearTimeout(hideMessage());
-            triggerError("No Ethereum provider detected, click to install MetaMask", null, "https://metamask.io");
+            triggerError("No Ethereum provider detected, click to install MetaMask", undefined, "https://metamask.io");
             providerLoaded = false;
             return false;
         }
