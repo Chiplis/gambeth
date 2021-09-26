@@ -21,7 +21,7 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     // Refunded user
     event UnwonBet(address indexed);
 
-    // Creator, betId, betId, schedule, initialPool, description
+    // Creator, betId, betId, initialPool, description
     event CreatedBet(address indexed, string indexed, string, uint256, string);
 
     // User betting, betId, results, betId, results
@@ -56,14 +56,17 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
 
     // To help people avoid overpaying for the oracle contract querying service, its last price is saved and then suggested in the frontend
     uint256 public lastQueryPrice;
-    
 
-    uint64 constant scheduleThreshold = 60 * 24 * 60 * 60; // Queries can't be scheduled more than 60 days in the future
+    // Queries can't be scheduled more than 60 days in the future
+    uint64 constant scheduleThreshold = 60 * 24 * 60 * 60; 
+    
+    uint256 constant fixedCommission = 1e16;
+    uint256 constant minimumBet = fixedCommission * 2;
 
     function createBet(string calldata betId, string calldata query, uint64 deadline, uint64 schedule, uint256 commission, uint256 minimum, uint256 initialPool, string calldata description) public payable {
 
-        // Initial pool can't be higher than transferred value, commission can't be higher than 50%, minimum bet is 1 finney
-        require(msg.value >= initialPool && commission > 1 && minimum >= 1e15 && !createdBets[betId] && deadline <= schedule && deadline > block.timestamp && schedule < block.timestamp + scheduleThreshold);
+        // Initial pool can't be higher than transferred value, commission can't be higher than 50%, deadline can't be after scheduled execution
+        require(msg.value >= initialPool && commission > 1 && minimum >= minimumBet && !createdBets[betId] && deadline <= schedule && deadline > block.timestamp && schedule < block.timestamp + scheduleThreshold);
         uint256 balance = msg.value - initialPool;
 
         lastQueryPrice = provable_getPrice("URL");
@@ -102,7 +105,6 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     // BetId -> User -> Result -> How much user 
     mapping(string => mapping(address => mapping(string => uint256))) public userBets;
     
-    uint256 constant fixedCommission = 1e16;
     function placeBets(string calldata betId, string[] calldata results, uint256[] calldata amounts) public payable {
         require(results.length == amounts.length && createdBets[betId] && !finishedBets[betId] && betDeadlines[betId] >= block.timestamp);
         uint256 total = msg.value;
@@ -167,16 +169,11 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
             emit LostBet(msg.sender);
             return;
         }
-        
-        if (reward > 0) {
-            uint256 ownerFee = reward / betCommissions[betId];
-            uint256 generalFee = reward / 200;
-            reward -= generalFee;
-            reward -= ownerFee;
-            msg.sender.transfer(reward);
-            contractCreator.transfer(generalFee);
-            betOwners[betId].transfer(ownerFee);
-        }
+    
+        uint256 ownerFee = reward / betCommissions[betId];
+        reward -= ownerFee;
+        msg.sender.transfer(reward);
+        betOwners[betId].transfer(ownerFee);
     }
     
     // Keep track of when a bet ends and what its result was
