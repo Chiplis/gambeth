@@ -121,6 +121,55 @@ function searchTriggered(e) {
 let provider, address, signer, contract, signedContract, owner;
 let providerLoaded = false;
 
+
+function hideMessage(delay) {
+    // document.getElementById("intro").style.display = "none";
+    clearInterval(processing);
+    message.style.visibility = "hidden";
+    message.style.opacity = "0";
+}
+
+function triggerMessage(msg, add, remove, after = defaultMessageLocation, showClose = true, click) {
+    clearInterval(processing);
+    message.remove();
+    console.log(after);
+    after.append(message);
+    message.onmouseover = undefined;
+    message.onclick = click;
+    message.ontouchstart = undefined;
+    message.classList.add(add);
+    remove.forEach((r) => message.classList.remove(r));
+    closeMessage.style.display = showClose ? "block" : "none";
+    message.style.cursor = "default";
+    message.style.display = "flex";
+    message.style.visibility = "visible";
+    message.style.opacity = "100%";
+    innerMessage.innerHTML = msg;
+    message.scrollIntoViewIfNeeded();
+}
+
+function triggerError(msg, after, link) {
+    triggerMessage(msg, "error", ["info", "success"], after);
+    if (link) {
+        innerMessage.onclick = () => window.location.href = link;
+        innerMessage.style.cursor = "pointer";
+    }
+}
+
+function triggerSuccess(msg, callback, after, click) {
+    triggerMessage(msg, "success", ["info", "error"], after, click);
+    if (callback) {
+        setTimeout(callback, 5000);
+    }
+}
+
+function triggerProcessing(msg, after, click) {
+    triggerMessage(msg, "info", ["error", "success"], after, false);
+    let i = 0;
+    processing = setInterval(() => (innerMessage.innerHTML = msg + ".".repeat(i++ % 4)), 300);
+}
+
+
 async function loadProvider() {
     try {
         if (providerLoaded) return true;
@@ -190,63 +239,6 @@ function renderPlaceSingleBet() {
     placeSingleBet.onclick = filledBet ? () => { addSingleBet(); renderPlaceSingleBet(); } : "";
     placeSingleBet.style.cursor = filledBet ? "pointer" : "default";
     placeSingleBet.style.opacity = filledBet ? "1" : "0";
-}
-
-function hideMessage(delay) {
-    // document.getElementById("intro").style.display = "none";
-    clearInterval(processing);
-    message.style.visibility = "hidden";
-    message.style.opacity = "0";
-}
-
-function triggerMessage(msg, add, remove, after = defaultMessageLocation, showClose = true, click) {
-    clearInterval(processing);
-    message.remove();
-    console.log(after);
-    after.append(message);
-    message.onmouseover = undefined;
-    message.onclick = click;
-    message.ontouchstart = undefined;
-    message.classList.add(add);
-    remove.forEach((r) => message.classList.remove(r));
-    closeMessage.style.display = showClose ? "block" : "none";
-    message.style.cursor = "default";
-    message.style.display = "flex";
-    message.style.visibility = "visible";
-    message.style.opacity = "100%";
-    innerMessage.innerHTML = msg;
-    message.scrollIntoViewIfNeeded();
-}
-
-function triggerError(msg, after, link) {
-    triggerMessage(msg, "error", ["info", "success"], after);
-    if (link) {
-        innerMessage.onclick = () => window.location.href = link;
-        innerMessage.style.cursor = "pointer";
-    }
-}
-
-function triggerSuccess(msg, callback, after, click) {
-    triggerMessage(msg, "success", ["info", "error"], after, click);
-    if (callback) {
-        setTimeout(callback, 5000);
-    }
-}
-
-function triggerProcessing(msg, after, click) {
-    triggerMessage(msg, "info", ["error", "success"], after, false);
-    let i = 0;
-    processing = setInterval(() => (innerMessage.innerHTML = msg + ".".repeat(i++ % 4)), 300);
-}
-
-async function loadBetCarousel() {
-    const events = await contract.queryFilter(contract.filters.CreatedBet());
-    const bets = events.map(bet => `<div class="slide"><button class="msg success carousel-item">${bet.args[1]}</button></div>`).join("")
-    betCarousel.insertAdjacentHTML("beforeend", bets);
-    Array.from(document.getElementsByClassName("carousel-item")).forEach(item => item.style.opacity = "100%");
-    const w = Array.from(document.getElementsByClassName("slide")).reduce((a, b) => a + b.offsetWidth, 0);
-    console.log(w);
-    betCarousel.style.width = w / 2 + "px";
 }
 
 async function renderClaimBet() {
