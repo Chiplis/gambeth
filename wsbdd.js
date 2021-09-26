@@ -76,6 +76,11 @@ const createBetBtn = () => {
     [betContainer.style.display, newBet.style.display] = ['none', 'flex'];
     steps[currentStep].style.position = "initial";
     steps[currentStep].style.opacity = "100%";
+    (async () => {
+        createBetAmount.innerHTML = `The <a href="https://provable.xyz">oracle service</a> that WSBDD uses to interact with the web needs to be paid for by the bet's creator.` + (contract
+            ? ` The suggested amount is ${weiToEth((await contract.lastQueryPrice())).toString()} ETH.`
+            : ``);
+    })();
 }
 
 const renderPreviousCreationStep = () => {
@@ -159,12 +164,6 @@ const weiToEth = (wei) => (wei / Math.pow(10, 18)).toString();
 
 const createBetAmountTitle = `Provable's oracle service used by WSBDD needs to be paid for by the bet's creator.`;
 createBetAmount.title = createBetAmountTitle;
-
-(async () => {
-    createBetAmount.innerHTML = "Provable's oracle service used by WSBDD needs to be paid for by the bet's creator." + (contract
-        ? ` The suggested amount is ${weiToEth((await contract.lastQueryPrice())).toString()} ETH.`
-        : ``);
-})();
 
 window.onload = () => {
     const betId = new URL(window.location).searchParams.get("id");
