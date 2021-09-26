@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 
 import "github.com/provable-things/ethereum-api/blob/master/provableAPI_0.6.sol";
     
-contract WeiStakingByDecentralizedDegenerates is usingProvable {
+contract WeiStakesByDecentralizedDegenerates is usingProvable {
     
     
     address payable contractCreator;
@@ -137,11 +137,11 @@ contract WeiStakingByDecentralizedDegenerates is usingProvable {
     // Keep track of which rewards have already been granted
     mapping(string => mapping(address => bool)) public claimedBets;
     
-    uint constant betThreshold = 5 * 24 * 60 * 60; // 5 days
+    uint64 constant betThreshold = 5 * 24 * 60 * 60; // 5 days
 
     function claimBet(string calldata betId) public {
         // If the oracle service's callback was never executed, a user can reclaim his funds after the bet's execution threshold has passed
-        uint64 betExpired = betSchedules[betId] + betThreshold < block.timestamp;
+        bool betExpired = betSchedules[betId] + betThreshold < block.timestamp;
         require((finishedBets[betId] || betExpired) && !claimedBets[betId][msg.sender] && userPools[betId][msg.sender] != 0);
         
         claimedBets[betId][msg.sender] = true;
