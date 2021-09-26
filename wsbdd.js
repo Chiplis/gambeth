@@ -67,6 +67,9 @@ const closeNewBet = () => {
     betContainer.style.display = newBet.hideBet ? 'none' : 'flex';
 }
 
+let currentStep = 0;
+const steps = Array.from(document.getElementsByClassName("create-bet-step"));
+
 const createBetBtn = () => {
     newBet.hideBet = betContainer.style.display == 'none';
     betContainer.style.display = 'none';
@@ -74,43 +77,30 @@ const createBetBtn = () => {
     newBet.scrollIntoViewIfNeeded();
     createBetSchema.selectedIndex = 0;
     [betContainer.style.display, newBet.style.display] = ['none', 'flex'];
-    lastCreationStep.style.position = "initial";
-    lastCreationStep.style.opacity = "100%";
+    steps[currentStep].style.position = "initial";
+    steps[currentStep].style.opacity = "100%";
 }
 
 const renderPreviousCreationStep = () => {
-    const mapping = {
-        [createDates.id]: createParams,
-        [createQuery.id]: createDates,
-        [createParams.id]: createQuery
-    }
-    lastCreationStep.style.opacity = "0";
-    lastCreationStep.style.visibility="hidden";
-    const p = lastCreationStep;
+    steps[currentStep].style.opacity = "0";
+    steps[currentStep].style.visibility="hidden";
+    const p = steps[currentStep];
     setTimeout(() => { p.style.position = "absolute" }, 200);
-    lastCreationStep = mapping[lastCreationStep.id];
-    lastCreationStep.style.visibility = "visible";
-    lastCreationStep.style.position = "initial";
-    lastCreationStep.style.opacity = "100%";
-
+    currentStep = currentStep == 0 ? steps.length - 1 : currentStep - 1;
+    steps[currentStep].style.visibility = "visible";
+    steps[currentStep].style.position = "initial";
+    steps[currentStep].style.opacity = "100%";
 }
 
 const renderNextCreationStep = () => {
-    const mapping = {
-        [createParams.id]: createDates,
-        [createDates.id]: createQuery,
-        [createQuery.id]: createParams
-    }
-    lastCreationStep.style.opacity = "0";
-    lastCreationStep.style.visibility="hidden";
-    const p = lastCreationStep;
-    setTimeout(() => p.style.position = "absolute", 200);
-    lastCreationStep.style["z-index"] = "0";
-    lastCreationStep = mapping[lastCreationStep.id];
-    lastCreationStep.style.visibility = "visible";
-    lastCreationStep.style["z-index"] = "1";
-    lastCreationStep.style.position = "initial";
-    lastCreationStep.style.opacity = "100%";
+    steps[currentStep].style.opacity = "0";
+    steps[currentStep].style.visibility="hidden";
+    const p = steps[currentStep];
+    setTimeout(() => { p.style.position = "absolute" }, 200);
+    currentStep = (currentStep + 1) % steps.length;
+    steps[currentStep].style.visibility = "visible";
+    steps[currentStep].style.position = "initial";
+    steps[currentStep].style.opacity = "100%";
 }
 
 searchBetId.onkeydown = searchTriggered;
