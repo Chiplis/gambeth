@@ -61,13 +61,14 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     // To help people avoid overpaying for the oracle contract querying service, its last price is saved and then suggested in the frontend
     uint256 public lastQueryPrice;
     
+
+    uint64 const scheduleThreshold = 60 * 24 * 60 * 60; // Queries can't be scheduled more than 60 days in the future
+
     function createBet(string calldata betId, string calldata query, uint64 deadline, uint64 schedule, uint256 commission, uint256 minimum, uint256 initialPool, string calldata description) public payable {
-        
-        
+
         // Initial pool can't be higher than transferred value, commission can't be higher than 50%, minimum bet is 1 finney
-        require(msg.value >= initialPool && commission > 1 && minimum >= 1e15 && !createdBets[betId] && deadline <= schedule && deadline > block.timestamp);
-        uint256 balance = msg.value;
-        balance -= initialPool;
+        require(msg.value >= initialPool && commission > 1 && minimum >= 1e15 && !createdBets[betId] && deadline <= schedule && deadline > block.timestamp && schedule < block.timestamp + scheduleThreshold);
+        uint256 balance = msg.value - initialPool;
 
         lastQueryPrice = provable_getPrice("URL");
         if (lastQueryPrice > balance) {
