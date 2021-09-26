@@ -149,10 +149,6 @@ createBetAmount.title = createBetAmountTitle;
         : ``);
 })();
 
-createBetAmount.onmouseover = async () => {
-    createBetAmount.title = `${createBetAmountTitle} Suggested amount: ${weiToEth((await contract.lastQueryPrice())).toString()} ETH`;
-}
-
 window.onload = () => {
     const betId = new URL(window.location).searchParams.get("id");
     console.log(betId);
