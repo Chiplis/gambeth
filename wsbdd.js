@@ -377,8 +377,8 @@ async function createBet() {
         } else if (schedule >= Date.parse(new Date()) / 1000 + 60 * 24 * 3600) {
             triggerError("Bet cannot be scheduled more than 60 days from now", betQuery);
             return;
-        } else if (createBetMinimum.value < 0.001) {
-            triggerError("Minimum betting amount is 0.001 ETH", betQuery);
+        } else if (createBetMinimum.value < 0.0002) {
+            triggerError("Minimum betting amount is 0.0002 ETH", betQuery);
             return;
         } else if (createBetCommission.value == 0) {
             triggerError("Commission can't be 0%", betQuery);

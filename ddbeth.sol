@@ -60,7 +60,7 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     // Queries can't be scheduled more than 60 days in the future
     uint64 constant scheduleThreshold = 60 * 24 * 60 * 60; 
     
-    uint256 constant fixedCommission = 1e16;
+    uint256 constant fixedCommission = 1e14;
     uint256 constant minimumBet = fixedCommission * 2;
 
     function createBet(string calldata betId, string calldata query, uint64 deadline, uint64 schedule, uint256 commission, uint256 minimum, uint256 initialPool, string calldata description) public payable {
