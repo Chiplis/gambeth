@@ -380,8 +380,8 @@ async function createBet() {
         } else if (createBetMinimum.value < 0.0002) {
             triggerError("Minimum betting amount is 0.0002 ETH", betQuery);
             return;
-        } else if (createBetCommission.value == 0) {
-            triggerError("Commission can't be 0%", betQuery);
+        } else if (createBetCommission.value == 0 || createBetCommission.value > 50) {
+            triggerError("Commission can't be 0% nor higher than 50%", betQuery);
             return;
         } else if (schema == "schema") {
             triggerError("Need to specify query's schema", betQuery);
