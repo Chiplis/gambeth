@@ -155,7 +155,7 @@
                         <select
                             onchange="betQuery.innerHTML=createBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value);createBetPath.placeholder = this.value == 'xml' ? '.result.0.prices.last' : (this.value == 'html' ? 'XPath' : 'JsonPath')"
                             style="margin: 1rem; text-align: center" name="create-bet-schema" id="create-bet-schema">
-                            <option value="schema" selected disabled>Schema</option>
+                            <option id="schema-option" value="schema" selected>Schema</option>
                             <option value="xml">XML</option>
                             <option value="json">JSON</option>
                             <option value="html">HTML</option>

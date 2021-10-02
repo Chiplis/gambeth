@@ -75,6 +75,7 @@ const createBetBtn = () => {
     betContainer.style.display = 'none';
     newBet.style.display = 'flex';
     newBet.scrollIntoViewIfNeeded();
+    document.getElementById("schema-option").disabled = true;
     createBetSchema.selectedIndex = 0;
     [betContainer.style.display, newBet.style.display] = ['none', 'flex'];
     steps[currentStep].style.position = "initial";
