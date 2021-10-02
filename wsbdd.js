@@ -359,7 +359,7 @@ async function createBet() {
         const query = createBetQuery(schema, url, path);
         const schedule = Date.parse(`${scheduleDate.value} ${scheduleTime.value}`) / 1000;
         const deadline = Date.parse(`${deadlineDate.value} ${deadlineTime.value}`) / 1000;
-        const commission = Math.round(100 / betCommission.value);
+        const commission = Math.round(100 / createBetCommission.value);
         const description = createBetDescription.value || "";
 
         if (!window.ethereum) {
@@ -502,7 +502,6 @@ async function renderBetPool() {
         allEntries.sort((a, b) => resultsPool[b[0]] - resultsPool[a[0]]);
         const entries = allEntries
             .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td><td>${(resultsPool[k])}</td></tr>`)
-            .slice(0, 25)
             .join("");
 
         poolName.innerHTML = activeBet + " Pool";
