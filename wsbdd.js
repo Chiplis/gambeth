@@ -127,7 +127,7 @@ function hideMessage(delay) {
     message.style.opacity = "0";
 }
 
-function triggerMessage(msg, add, remove, after = defaultMessageLocation, showClose = true, click) {
+function triggerMessage(msg, add, remove, after = defaultMessageLocation, click, showClose = true) {
     clearInterval(processing);
     message.remove();
     after.append(message);
@@ -148,7 +148,7 @@ function triggerMessage(msg, add, remove, after = defaultMessageLocation, showCl
 }
 
 function triggerError(msg, after, click) {
-    triggerMessage(msg, "error", ["info", "success"], after, true, click);
+    triggerMessage(msg, "error", ["info", "success"], after, click);
 }
 
 function triggerSuccess(msg, callback, after) {
@@ -159,7 +159,7 @@ function triggerSuccess(msg, callback, after) {
 }
 
 function triggerProcessing(msg, after) {
-    triggerMessage(msg, "info", ["error", "success"], after, false);
+    triggerMessage(msg, "info", ["error", "success"], after, null, false);
     let i = 0;
     processing = setInterval(() => (innerMessage.innerHTML = msg + ".".repeat(i++ % 4)), 300);
 }
