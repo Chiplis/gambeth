@@ -225,7 +225,7 @@ window.onload = () => {
 }
 
 function commissionChanged() {
-    createBetCommission.value = Number.parseFloat(100 / Math.round(100 / createBetCommission.value)).toFixed(2);
+    createBetCommission.value = Number.parseFloat((100 / Math.round(100 / createBetCommission.value)).toFixed(10));
 }
 
 async function resetButtons() {
