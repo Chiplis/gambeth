@@ -392,7 +392,7 @@ async function createBet() {
         const value = ethToWei(createBetAmount.value || "0").add(initialPool);
 
         triggerProcessing("Creating bet", createBetQueryResult);
-        await signedContract.createBet(activeBet, query, deadline, schedule, commission, ethToWei(createBetMinimum.value).toString(), initialPool, description, { value });
+        await signedContract.createBet(activeBet, query, deadline, schedule, commission, ethToWei(createBetMinimum.value), initialPool, description, { value });
         // [betId, url, amount, scheduleDate, deadlineDate, scheduleTime, deadlineTime].forEach(n => n.value = "");
         [scheduleDate, deadlineDate, scheduleTime, deadlineTime].forEach((d) => (d.type = "text"));
     } catch (error) {
