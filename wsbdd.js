@@ -85,26 +85,23 @@ const createBetBtn = () => {
     })();
 }
 
-const renderPreviousCreationStep = () => {
+const renderCreationStep = (idx) => {
     steps[currentStep].style.opacity = "0";
     steps[currentStep].style.visibility = "hidden";
     const p = steps[currentStep];
     setTimeout(() => { p.style.position = "absolute" }, 200);
-    currentStep = currentStep == 0 ? steps.length - 1 : currentStep - 1;
+    currentStep = idx;
     steps[currentStep].style.visibility = "visible";
     steps[currentStep].style.position = "initial";
     steps[currentStep].style.opacity = "100%";
 }
 
+const renderPreviousCreationStep = () => {
+    renderCreationStep(currentStep == 0 ? steps.length - 1 : currentStep - 1);
+}
+
 const renderNextCreationStep = () => {
-    steps[currentStep].style.opacity = "0";
-    steps[currentStep].style.visibility = "hidden";
-    const p = steps[currentStep];
-    setTimeout(() => { p.style.position = "absolute" }, 200);
-    currentStep = (currentStep + 1) % steps.length;
-    steps[currentStep].style.visibility = "visible";
-    steps[currentStep].style.position = "initial";
-    steps[currentStep].style.opacity = "100%";
+    renderCreationStep((currentStep + 1) % steps.length);
 }
 
 searchBetId.onkeydown = searchTriggered;
@@ -134,10 +131,9 @@ function hideMessage(delay) {
 function triggerMessage(msg, add, remove, after = defaultMessageLocation, showClose = true, click) {
     clearInterval(processing);
     message.remove();
-    console.log(after);
     after.append(message);
     message.onmouseover = undefined;
-    message.onclick = click;
+    message.onclick = undefined;
     message.ontouchstart = undefined;
     message.classList.add(add);
     remove.forEach((r) => message.classList.remove(r));
@@ -146,26 +142,24 @@ function triggerMessage(msg, add, remove, after = defaultMessageLocation, showCl
     message.style.display = "flex";
     message.style.visibility = "visible";
     message.style.opacity = "100%";
+    innerMessage.style.cursor = click ? "pointer" : "default";
+    innerMessage.onclick = click;
     innerMessage.innerHTML = msg;
     message.scrollIntoViewIfNeeded();
 }
 
-function triggerError(msg, after, link) {
-    triggerMessage(msg, "error", ["info", "success"], after);
-    if (link) {
-        innerMessage.onclick = () => window.location.href = link;
-        innerMessage.style.cursor = "pointer";
-    }
+function triggerError(msg, after, click) {
+    triggerMessage(msg, "error", ["info", "success"], after, false, click);
 }
 
-function triggerSuccess(msg, callback, after, click) {
-    triggerMessage(msg, "success", ["info", "error"], after, click);
+function triggerSuccess(msg, callback, after) {
+    triggerMessage(msg, "success", ["info", "error"], after);
     if (callback) {
         setTimeout(callback, 5000);
     }
 }
 
-function triggerProcessing(msg, after, click) {
+function triggerProcessing(msg, after) {
     triggerMessage(msg, "info", ["error", "success"], after, false);
     let i = 0;
     processing = setInterval(() => (innerMessage.innerHTML = msg + ".".repeat(i++ % 4)), 300);
@@ -180,8 +174,8 @@ async function loadProvider() {
             await window.ethereum.request({ method: "eth_requestAccounts" });
         } else {
             clearTimeout(hideMessage());
-            triggerError("No Ethereum provider detected, click to install MetaMask", undefined, "https://metamask.io");
-            providerLoaded = false;
+            triggerError("No Ethereum provider detected, click to install MetaMask", undefined, () => window.location.href = "https://metamask.io/");
+            providerLoaded = false; 
             return false;
         }
 
@@ -218,7 +212,6 @@ createBetAmount.title = createBetAmountTitle;
 
 window.onload = () => {
     const betId = new URL(window.location).searchParams.get("id");
-    console.log(betId);
     if (betId) {
         searchBet(betId.toLowerCase().trim());
     }
@@ -249,7 +242,6 @@ async function renderClaimBet() {
         claimBet.style.display = "none";
         claimBet.style.visibility = "hidden";
         claimBet.style.opacity = "0";
-        console.log("Hello!")
     } else {
         claimBet.style.display = "block";
         claimBet.style.visibility = "visible";
@@ -272,7 +264,6 @@ async function renderPlaceBet() {
     placeBetInputs.style.opacity = bettingDisabled ? 0 : "100%";
     placeBetInputs.style.visibility = bettingDisabled ? "hidden" : "visible";
     placeBetAmount.placeholder = `${weiToEth(await contract.betMinimums(activeBet))} minimum, 0.0005 fixed commission`;
-    console.log(placeBetAmount.placeholder);
     placeBet.innerHTML = bettingDisabled ? (betFinished ? "Finished" : "Deadline Reached") : "Place Bet";
     placeSingleBet.style.display = bettingDisabled ? "none" : "block";
     placeBet.disabled = bettingDisabled;
@@ -285,7 +276,7 @@ async function searchBet(id) {
         newBet.style.display = "none";
         resetButtons();
         if (!window.ethereum) {
-            triggerError("No Ethereum provider detected, click to install MetaMask", undefined, "https://metamask.io");
+            triggerError("No Ethereum provider detected, click to install MetaMask", null, () => window.location.href = "https://metamask.io/");
             return;
         }
         triggerProcessing("Fetching bet");
@@ -363,25 +354,34 @@ async function createBet() {
         const description = createBetDescription.value || "";
 
         if (!window.ethereum) {
-            triggerError("No Ethereum provider detected", betQuery, "https://metamask.io");
+            triggerError("No Ethereum provider detected", betQuery, () => window.location.href = "https://metamask.io/");
+            return;
+        } else if (!betId.value.trim()) {
+            triggerError("No bet ID submitted", betQuery, () => renderCreationStep(0));
             return;
         } else if (await contract.createdBets(betId.value)) {
-            triggerError("Bet ID already exists", betQuery);
+            triggerError("Bet ID already exists", betQuery, () => renderCreationStep(0));
+            return;
+        } else if (await contract.createdBets(betId.value)) {
+            triggerError("No funds for oracle service", betQuery, () => renderCreationStep(1));
+            return;
+        } else if (!deadline || !schedule) {
+            triggerError("Need to specify both bet's deadline to enter and scheduled execution", betQuery, () => renderCreationStep(6));
             return;
         } else if (deadline > schedule) {
-            triggerError("Bet's deadline to enter can't be set after scheduled time to run", betQuery);
+            triggerError("Bet's deadline to enter can't be set after scheduled time to run", betQuery, () => renderCreationStep(6));
             return;
         } else if (deadline < Date.parse(new Date()) / 1000) {
-            triggerError("Bet's deadline to enter needs to be a future date", betQuery);
+            triggerError("Bet's deadline to enter needs to be a future date", betQuery, () => renderCreationStep(6));
             return;
         } else if (schedule >= Date.parse(new Date()) / 1000 + 60 * 24 * 3600) {
-            triggerError("Bet cannot be scheduled more than 60 days from now", betQuery);
+            triggerError("Bet cannot be scheduled more than 60 days from now", betQuery, () => renderCreationStep(6));
             return;
         } else if (createBetMinimum.value < 0.0002) {
-            triggerError("Minimum betting amount is 0.0002 ETH", betQuery);
+            triggerError("Minimum betting amount is 0.0002 ETH", betQuery, () => renderCreationStep(3));
             return;
-        } else if (createBetCommission.value == 0 || createBetCommission.value > 50) {
-            triggerError("Commission can't be 0% nor higher than 50%", betQuery);
+        } else if (!createBetCommission || createBetCommission.value == 0 || createBetCommission.value > 50) {
+            triggerError("Commission can't be 0% nor higher than 50%", betQuery, () => renderCreationStep(2));
             return;
         } else if (schema == "schema") {
             triggerError("Need to specify query's schema", betQuery);
@@ -470,7 +470,7 @@ async function testQuery(url, errorMsg, after = defaultMessageLocation) {
         let result;
         try {
             const queryId = (await fetch(`${baseURL}/create`, { method: "POST", body: JSON.stringify(payload) }).then(r => r.json()).catch(console.log)).result.id;
-            const fullResult = (await fetch(`${baseURL}/${queryId}/status`).then(r => r.json()).catch(console.log));
+            const fullResult = (await fetch(`${baseURL}/${queryId}/status`).then(r => r.json()).catch(console.error));
             const error = fullResult.result.checks.find(check => check.errors.length);
             result = fullResult.result.checks[0].results[0];
             if (error || !result) throw error;
@@ -491,7 +491,6 @@ async function renderBetPool() {
         const results = await Promise.all(Object.keys(betResults).map((result) => contract.resultPools(activeBet, result)));
         const resultsPool = {};
         Object.keys(betResults).map((result, idx) => {
-            console.log(weiToEth(results[idx]));
             resultsPool[result] = weiToEth(results[idx]);
         })
 
