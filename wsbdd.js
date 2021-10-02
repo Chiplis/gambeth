@@ -46,7 +46,7 @@ const urlSchema = document.getElementById("bet-schema");
 const schemaPath = document.getElementById("bet-path");
 const defaultMessageLocation = document.getElementById("default-message-location");
 const createBetQueryResult = document.getElementById("create-bet-query-result");
-const betQuery = document.getElementById("bet-query");
+const createBetQuery = document.getElementById("create-bet-query");
 const innerMessage = document.getElementById("inner-message");
 const closeMessage = document.getElementById("close-message");
 const queryTesterUrl = document.getElementById("query-tester-url");
@@ -59,6 +59,7 @@ const betInnerMinimum = document.getElementById("bet-minimum");
 const betTotalPool = document.getElementById("bet-total-pool");
 const betInnerTotalPool = document.getElementById("bet-total-pool");
 const betResult = document.getElementById("bet-result");
+const betQuery = document.getElementById("bet-query");
 const betInnerResult = document.getElementById("bet-inner-result");
 
 const closeNewBet = () => {
@@ -297,6 +298,7 @@ async function searchBet(id) {
         const { url, schema, path } = unpackUrl(currentBetUrl);
         urlSchema.innerHTML = schema || "Unknown";
         betUrl.innerHTML = url || currentBetUrl;
+        betQuery.innerHTML = await contract.betQueries(activeBet);
         schemaPath.innerHTML = path || "Unknown";
         betDeadline.innerHTML = new Date(await contract.betDeadlines(activeBet) * 1000).toISOString().replace("T", " ").split(".")[0].slice(0, -3);
         const createdFilter = (await contract.queryFilter(contract.filters.CreatedBet(null, activeBet)))[0];
@@ -334,7 +336,7 @@ function unpackUrl(u) {
     return { schema: match[1], url: match[2], path: match[3] }
 }
 
-const createBetQuery = (schema, url, path) => `${schema}(${url})${schema == "html" ? `.xpath(${path})` : path}`;
+const parseBetQuery = (schema, url, path) => `${schema}(${url})${schema == "html" ? `.xpath(${path})` : path}`;
 
 async function createBet() {
     try {
@@ -346,44 +348,44 @@ async function createBet() {
         const schema = createBetSchema.value;
         const url = createBetUrl.value;
         const path = createBetPath.value;
-        const query = createBetQuery(schema, url, path);
+        const query = parseBetQuery(schema, url, path);
         const schedule = Date.parse(`${scheduleDate.value} ${scheduleTime.value}`) / 1000;
         const deadline = Date.parse(`${deadlineDate.value} ${deadlineTime.value}`) / 1000;
         const commission = Math.round(100 / createBetCommission.value);
         const description = createBetDescription.value || "";
 
         if (!window.ethereum) {
-            triggerError("No Ethereum provider detected", betQuery, () => window.location.href = "https://metamask.io/");
+            triggerError("No Ethereum provider detected", createBetQuery, () => window.location.href = "https://metamask.io/");
             return;
         } else if (!betId.value.trim()) {
-            triggerError("No bet ID submitted", betQuery, () => renderCreationStep(0));
+            triggerError("No bet ID submitted", createBetQuery, () => renderCreationStep(0));
             return;
         } else if (await contract.createdBets(betId.value)) {
-            triggerError("Bet ID already exists", betQuery, () => renderCreationStep(0));
+            triggerError("Bet ID already exists", createBetQuery, () => renderCreationStep(0));
             return;
         } else if (await contract.createdBets(betId.value)) {
-            triggerError("No funds for oracle service", betQuery, () => renderCreationStep(1));
+            triggerError("No funds for oracle service", createBetQuery, () => renderCreationStep(1));
             return;
         } else if (!deadline || !schedule) {
-            triggerError("Need to specify both bet's deadline to enter and scheduled execution", betQuery, () => renderCreationStep(6));
+            triggerError("Need to specify both bet's deadline to enter and scheduled execution", createBetQuery, () => renderCreationStep(6));
             return;
         } else if (deadline > schedule) {
-            triggerError("Bet's deadline to enter can't be set after scheduled time to run", betQuery, () => renderCreationStep(6));
+            triggerError("Bet's deadline to enter can't be set after scheduled time to run", createBetQuery, () => renderCreationStep(6));
             return;
         } else if (deadline < Date.parse(new Date()) / 1000) {
-            triggerError("Bet's deadline to enter needs to be a future date", betQuery, () => renderCreationStep(6));
+            triggerError("Bet's deadline to enter needs to be a future date", createBetQuery, () => renderCreationStep(6));
             return;
         } else if (schedule >= Date.parse(new Date()) / 1000 + 60 * 24 * 3600) {
-            triggerError("Bet cannot be scheduled more than 60 days from now", betQuery, () => renderCreationStep(6));
+            triggerError("Bet cannot be scheduled more than 60 days from now", createBetQuery, () => renderCreationStep(6));
             return;
         } else if (createBetMinimum.value < 0.001) {
-            triggerError("Minimum betting amount is 0.001 ETH", betQuery, () => renderCreationStep(3));
+            triggerError("Minimum betting amount is 0.001 ETH", createBetQuery, () => renderCreationStep(3));
             return;
         } else if (!createBetCommission || createBetCommission.value == 0 || createBetCommission.value > 50) {
-            triggerError("Commission can't be 0% nor higher than 50%", betQuery, () => renderCreationStep(2));
+            triggerError("Commission can't be 0% nor higher than 50%", createBetQuery, () => renderCreationStep(2));
             return;
         } else if (schema == "schema") {
-            triggerError("Need to specify query's schema", betQuery);
+            triggerError("Need to specify query's schema", createBetQuery);
             return;
         }
         activeBet = betId.value.toLowerCase().trim();
@@ -395,7 +397,7 @@ async function createBet() {
         [scheduleDate, deadlineDate, scheduleTime, deadlineTime].forEach((d) => (d.type = "text"));
     } catch (error) {
         console.error(error);
-        triggerError(`Unexpected error - ${error.code || error}`, betQuery);
+        triggerError(`Unexpected error - ${error.code || error}`, createBetQuery);
     }
 }
 
