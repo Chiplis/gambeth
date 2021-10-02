@@ -148,7 +148,7 @@ function triggerMessage(msg, add, remove, after = defaultMessageLocation, showCl
 }
 
 function triggerError(msg, after, click) {
-    triggerMessage(msg, "error", ["info", "success"], after, false, click);
+    triggerMessage(msg, "error", ["info", "success"], after, true, click);
 }
 
 function triggerSuccess(msg, callback, after) {
