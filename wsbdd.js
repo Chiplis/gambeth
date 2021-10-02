@@ -122,7 +122,6 @@ let providerLoaded = false;
 
 
 function hideMessage(delay) {
-    // document.getElementById("intro").style.display = "none";
     clearInterval(processing);
     message.style.visibility = "hidden";
     message.style.opacity = "0";
@@ -377,8 +376,8 @@ async function createBet() {
         } else if (schedule >= Date.parse(new Date()) / 1000 + 60 * 24 * 3600) {
             triggerError("Bet cannot be scheduled more than 60 days from now", betQuery, () => renderCreationStep(6));
             return;
-        } else if (createBetMinimum.value < 0.0002) {
-            triggerError("Minimum betting amount is 0.0002 ETH", betQuery, () => renderCreationStep(3));
+        } else if (createBetMinimum.value < 0.001) {
+            triggerError("Minimum betting amount is 0.001 ETH", betQuery, () => renderCreationStep(3));
             return;
         } else if (!createBetCommission || createBetCommission.value == 0 || createBetCommission.value > 50) {
             triggerError("Commission can't be 0% nor higher than 50%", betQuery, () => renderCreationStep(2));
@@ -393,7 +392,6 @@ async function createBet() {
 
         triggerProcessing("Creating bet", createBetQueryResult);
         await signedContract.createBet(activeBet, query, deadline, schedule, commission, ethToWei(createBetMinimum.value), initialPool, description, { value });
-        // [betId, url, amount, scheduleDate, deadlineDate, scheduleTime, deadlineTime].forEach(n => n.value = "");
         [scheduleDate, deadlineDate, scheduleTime, deadlineTime].forEach((d) => (d.type = "text"));
     } catch (error) {
         console.error(error);
@@ -495,8 +493,6 @@ async function renderBetPool() {
         })
 
         const allEntries = Object.entries(betResults);
-
-        //const totalPool = weiToEth(Object.entries(resultsPool).reduce((a, b) => a[1].add(b[1]), [null, ethToWei("0")]));
 
         allEntries.sort((a, b) => resultsPool[b[0]] - resultsPool[a[0]]);
         const entries = allEntries
