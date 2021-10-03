@@ -517,7 +517,7 @@ Element.prototype.scrollIntoViewIfNeeded = function () {
     var rect = this.getBoundingClientRect();
     var input = document.querySelectorAll('input');
     for (i = 0; i < input.length; i++) {
-        if (!input[i].placeholder) continue;
+        if (!input[i].placeholder || input[i].id === "search-bet") continue;
         if (input[i].getAttribute('size') < input[i].getAttribute('placeholder').length)
             input[i].setAttribute('size', input[i].getAttribute('placeholder').length);
     }
