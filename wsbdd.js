@@ -264,7 +264,7 @@ async function renderPlaceBet() {
     placeBetInputs.style.display = bettingDisabled ? "none" : "flex";
     placeBetInputs.style.opacity = bettingDisabled ? 0 : "100%";
     placeBetInputs.style.visibility = bettingDisabled ? "hidden" : "visible";
-    placeBetAmount.placeholder = `${weiToEth(await contract.betMinimums(activeBet))} minimum, 0.0005 fixed commission`;
+    placeBetAmount.placeholder = `${weiToEth(await contract.betMinimums(activeBet))} minimum`;
     placeBet.innerHTML = bettingDisabled ? (betFinished ? "Finished" : "Deadline Reached") : "Place Bet";
     placeSingleBet.style.display = bettingDisabled ? "none" : "block";
     placeBet.disabled = bettingDisabled;
@@ -402,10 +402,11 @@ async function createBet() {
     }
 }
 
-function renderPlacedBets() {
+async function renderPlacedBets() {
     placeBetInfo.style.display = Object.keys(placedBets).length ? "block" : "none";
+    const commission = (await contract.betCommissions(activeBet)).toString();
     placeBetEntries.innerHTML = `
-        ${Object.entries(placedBets).map(([k, v]) => `<tr><td onclick="delete placedBets['${k}']; renderPlacedBets()">✖</td><td>${k}</td><td>${v}</td></tr>`).join("")}
+        ${Object.entries(placedBets).map(([k, v]) => `<tr><td onclick="delete placedBets['${k}']; renderPlacedBets()">✖</td><td>${k}</td><td>${v - 0.0001 - v / commission}</td></tr>`).join("")}
     `;
 }
 

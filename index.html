@@ -193,7 +193,7 @@
                             oninput="renderPlaceSingleBet()" placeholder="Expected result" />
                         <label for="place-bet-amount">Amount (ETH)</label>
                         <input name="place-bet-amount" id="place-bet-amount" oninput="renderPlaceSingleBet()"
-                            type="number" step="0.0001" placeholder="Amount (ETH) - 0.0005 ETH commission" />
+                            type="number" step="0.0001" placeholder="Amount (ETH)" />
                     </div>
                     <button class="btn link" id="place-single-bet"
                         style="opacity: 0; color: white; background-color: #ed7b64; padding: 0.5rem 0.75rem; border-radius: 100%">
@@ -301,7 +301,10 @@
                         id="place-bet-info">
                         <thead>
                             <tr>
-                                <th colspan="3" style="text-align: center;">Placed Bets (after fixed commission)</th>
+                                <th colspan="3" style="text-align: center;">Placed Bets</th>
+                            </tr>
+                            <tr>
+                                <th colspan="3" style="text-align: center;">(after commissions)</th>
                             </tr>
                             <tr>
                                 <th>✖</th>
