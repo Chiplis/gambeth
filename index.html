@@ -125,7 +125,7 @@
                             type="text" style="margin: 0.5rem;"
                             onfocusout="this.type = this.value.length ? this.type : 'text'"
                             onfocus="(this.type='time')" />
-                        <label for="deadline-time">"At what time is the limit to participate?</label>
+                        <label for="deadline-time">At what time is the limit to participate?</label>
 
                         <input id="schedule-date" onfocusout="this.type = this.value.length ? this.type : 'text'"
                             type="text" style="margin: 0.5rem;"
@@ -390,11 +390,11 @@
                         "Bet" button.
                         If you want to bet on more than one result, you can click on the "+" button to pack your
                         bets into a single transaction, saving you time and money.
-                        The only restriction is on the minimum amount of ETH you can bet per result: 1 finney (at the
+                        The only restriction is on the minimum amount of ETH you can bet per result: 0.0002 ETH (at the
                         time of
-                        writing, about 3 USD).
-                        There's also a fixed commission for placing a bet of 0.5 finney, so don't get alarmed if the
-                        amount you placed is not the exact amount you put in,
+                        writing, about 0.35 USD).
+                        There's also a fixed commission for placing a bet of 0.0001 ETH, so don't get alarmed if the
+                        amount you placed is not the exact amount you put in.
                         Take a look at the bet in the "Show me an example" section if you'd like to get started right
                         away.
                     </p>
@@ -406,7 +406,7 @@
                         blockchain, all you need to do is lookup the bet's ID in WSBDD and click on the "Claim Bet"
                         button.
                         Your earnings will be dependent on two factors: your share of the winner's pool, and the bet's
-                        commission costs (fixed 0.5% to WSBDD's creator, aka me + a custom amount to the bet's creator).
+                        commission costs (fixed 0.0001 ETH + a custom % set by the bet's creator).
                         For example, if <a href="/?id=spy_guess">SPY_GUESS</a> ends up at 4,200.69 USD and you
                         were the only one betting on that result with 0.001 ETH, you'd get the whole pool minus 0.51% in
                         commissions.
