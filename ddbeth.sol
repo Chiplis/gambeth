@@ -10,27 +10,6 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
         contractCreator = msg.sender;
     }
     
-    /* Provable's API requires some initial funds to cover the cost of the query. 
-    If they are not enough to pay for it, the user should be informed and their funds returned. */
-    event LackingFunds(address indexed sender, uint256 funds);
-    
-    // If the user wins the bet, let them know along with the reward amount.
-    event WonBet(address indexed winner, uint256 won);
-    
-    // If the user lost no funds are claimable.
-    event LostBet(address indexed loser);
-    
-    /* If no one wins the bet the funds can be refunded to the user, 
-    after the bet creator's takes their cut. */
-    event UnwonBet(address indexed refunded);
-    
-    /* Contains all the information that does not need to be saved as a state variable, 
-    but which can prove useful to people taking a look at the bet in the frontend. */
-    event CreatedBet(string indexed _id, uint256 initialPool, string description, string query);
-    
-    // The table representing each bet's pool is populated according to these events.
-    event PlacedBets(address indexed user, string indexed _id, string id, string[] results);
-    
     /* There are two different dates associated with each created bet:
     one for the deadline where a user can no longer place new bets,
     and another one that tells the smart oracle contract when to actually
@@ -69,7 +48,15 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     
     // Queries can't be scheduled more than 60 days in the future
     uint64 constant scheduleThreshold = 60 * 24 * 60 * 60;
-      
+
+    /* Provable's API requires some initial funds to cover the cost of the query. 
+    If they are not enough to pay for it, the user should be informed and their funds returned. */
+    event LackingFunds(address indexed sender, uint256 funds);    
+    
+    /* Contains all the information that does not need to be saved as a state variable, 
+    but which can prove useful to people taking a look at the bet in the frontend. */
+    event CreatedBet(string indexed _id, uint256 initialPool, string description, string query);
+    
     function createBet(string calldata betId, string calldata query, uint64 deadline, uint64 schedule, uint256 commission, uint256 minimum, uint256 initialPool, string calldata description) public payable {
         
         require(
@@ -123,7 +110,11 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
       
     // For each bet, track how much each user has put into each result
     mapping(string => mapping(address => mapping(string => uint256))) public userBets;
-      
+
+
+    // The table representing each bet's pool is populated according to these events.
+    event PlacedBets(address indexed user, string indexed _id, string id, string[] results);
+    
     function placeBets(string calldata betId, string[] calldata results, uint256[] calldata amounts) public payable {
       
         require(
@@ -175,6 +166,17 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     Note that even if the callback execution is delayed,
     Provable's oracle should've extracted the result at the originally scheduled time. */
     uint64 constant betThreshold = 5 * 24 * 60 * 60;
+    
+    
+    // If the user wins the bet, let them know along with the reward amount.
+    event WonBet(address indexed winner, uint256 won);
+    
+    // If the user lost no funds are claimable.
+    event LostBet(address indexed loser);
+    
+    /* If no one wins the bet the funds can be refunded to the user, 
+    after the bet creator's takes their cut. */
+    event UnwonBet(address indexed refunded);
     
     function claimBet(string calldata betId) public {
         bool betExpired = betSchedules[betId] + betThreshold < block.timestamp;
