@@ -1,4 +1,4 @@
-pragma solidity 0.6.11;
+pragma solidity > 0.6.1 < 0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "github.com/provable-things/ethereum-api/blob/master/provableAPI_0.6.sol";
