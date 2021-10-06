@@ -68,6 +68,9 @@ const closeNewBet = () => {
     betContainer.style.display = newBet.hideBet ? 'none' : 'flex';
 }
 
+let minimumBet = null;
+let fixedCommission = null;
+
 let currentStep = 0;
 const steps = Array.from(document.getElementsByClassName("create-bet-step"));
 
@@ -181,7 +184,7 @@ async function loadProvider() {
         }
 
         provider = new ethers.providers.Web3Provider(window.ethereum);
-        address = "0x35d31c373b3D5f7d5040efC368160127AacDaAbE";
+        address = "0x0e3FB8eC556be8014025247D1BBA10CF46e8b7Ad";
         signer = provider.getSigner();
         contract = new ethers.Contract(address, contractAbi, provider);
         signedContract = contract.connect(signer);
@@ -193,6 +196,8 @@ async function loadProvider() {
             contract.on("LostBet", async (sender) => { if (sender == owner) triggerSuccess("Bet lost, better luck next time!") });
             contract.on("UnwonBet", async (sender) => { if (sender == owner) triggerSuccess("No one won the bet, you've been refunded") });
             contract.on("WonBet", async (sender, amount) => { if (sender == owner) triggerSuccess(`Bet won! ${weiToEth(amount.toString())} ETH transferred to account`) });
+            minimumBet = weiToEth(await contract.minimumBet());
+            fixedCommission = weiToEth(await contract.fixedCommission());
         }
         providerLoaded = true;
         return true;
@@ -351,7 +356,6 @@ async function createBet() {
         const deadline = Date.parse(`${deadlineDate.value} ${deadlineTime.value}`) / 1000;
         const commission = Math.round(100 / createBetCommission.value);
         const description = createBetDescription.value || "";
-        const minimumBet = weiToEth(await contract.minimumBet());
         if (!window.ethereum) {
             triggerError("No Ethereum provider detected", createBetQuery, () => window.location.href = "https://metamask.io/");
             return;
@@ -405,12 +409,12 @@ async function renderPlacedBets() {
     placeBetInfo.style.display = Object.keys(placedBets).length ? "block" : "none";
     const commission = (await contract.betCommissions(activeBet)).toString();
     placeBetEntries.innerHTML = `
-        ${Object.entries(placedBets).map(([k, v]) => `<tr><td onclick="delete placedBets['${k}']; renderPlacedBets()">✖</td><td>${k}</td><td>${v - 0.0001 - v / commission}</td></tr>`).join("")}
+        ${Object.entries(placedBets).map(([k, v]) => `<tr><td onclick="delete placedBets['${k}']; renderPlacedBets()">✖</td><td>${k}</td><td>${v - fixedCommission}</td></tr>`).join("")}
     `;
 }
 
 function addSingleBet() {
-    placedBets[placeBetResult.value] = parseFloat(placeBetAmount.value) + (placedBets[placeBetResult.value] || 0) - 0.0005;
+    placedBets[placeBetResult.value] = parseFloat(placeBetAmount.value) + (placedBets[placeBetResult.value] || 0);
     renderPlacedBets();
     placeBetAmount.value = "";
     placeBetResult.value = "";
@@ -421,14 +425,15 @@ async function addBet() {
         if (placeBetAmount.value && placeBetResult.value) {
             addSingleBet();
         }
-        const results = Object.keys(placedBets).map(pb => pb || "");
-        const amounts = results.map(r => placedBets[r]).map(a => ethToWei(a.toString()));
+        const results = Object.keys(placedBets).filter(pb => pb);
+        const amounts = results.map(r => placedBets[r]).map(a => a.toString()).map(ethToWei);
         if (!results.length || !amounts.length) {
             triggerError("No bets have been placed, make sure result and amount fields are not empty.")
             return;
         }
         const sum = amounts.reduce((acc, b) => acc.add(b), ethToWei("0")).toString();
         triggerProcessing("Placing bet" + (results.length > 1 ? "s" : ""));
+        console.log(results, amounts.map(a => a.toString()), sum);
         await signedContract.placeBets(activeBet, results, amounts.map(a => a.toString()), { value: sum });
         placedBets = {};
         placeSingleBet.style.opacity = 0;

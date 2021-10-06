@@ -11,8 +11,7 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     }
     
     /* Provable's API requires some initial funds to cover the cost of the query. 
-        If they are not enough to pay for it, the user should be informed and their funds returned.
-      */
+    If they are not enough to pay for it, the user should be informed and their funds returned. */
       event LackingFunds(address indexed sender, uint256 funds);
 
       // If the user wins the bet, let them know along with the reward amount.
@@ -115,7 +114,7 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
       mapping(string => mapping(address => mapping(string => uint256))) public userBets;
       
       function placeBets(string calldata betId, string[] calldata results, uint256[] calldata amounts) public payable {
-          require(results.length == amounts.length && createdBets[betId] && !finishedBets[betId] && betDeadlines[betId] >= block.timestamp);
+          require(results.length > 0 && results.length == amounts.length && createdBets[betId] && !finishedBets[betId] && betDeadlines[betId] >= block.timestamp);
           uint256 total = msg.value;
           for (uint i = 0; i < results.length; i++) {
   
