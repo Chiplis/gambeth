@@ -40,10 +40,10 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
       mapping(string => uint64) public betSchedules;
       
       // There's a 0.0001 ETH fixed commission transferred to the contract's creator for every placed bet
-      uint256 constant fixedCommission = 1e14;
+      uint256 public constant fixedCommission = 1e14;
       
       // Minimum entry for all bets, bet creators cannot set it lower than this 
-      uint256 constant minimumBet = fixedCommission * 2;
+      uint256 public constant minimumBet = fixedCommission * 2;
 
       // Custom minimum entry for each bet, set by their creator
       mapping(string => uint256) public betMinimums;
@@ -72,7 +72,7 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
       uint64 constant scheduleThreshold = 60 * 24 * 60 * 60;
       
       function createBet(string calldata betId, string calldata query, uint64 deadline, uint64 schedule, uint256 commission, uint256 minimum, uint256 initialPool, string calldata description) public payable {
-        require(msg.value >= initialPool && commission > 1 && minimum >= minimumBet && !createdBets[betId] && deadline <= schedule && deadline > block.timestamp && schedule < block.timestamp + scheduleThreshold);
+        require(bytes(betId).length > 0 && deadline > block.timestamp && schedule < block.timestamp + scheduleThreshold && msg.value >= initialPool && commission > 1 && minimum >= minimumBet && !createdBets[betId] && deadline <= schedule);
 
         // The remaining balance should be enough to cover the cost of the smart oracle query
         uint256 balance = msg.value - initialPool;
