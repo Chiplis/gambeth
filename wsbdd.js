@@ -11,7 +11,8 @@ const betId = document.getElementById("create-bet-id");
 const createBetUrl = document.getElementById("create-bet-url");
 const placeBetResult = document.getElementById("place-bet-result");
 const placeBetAmount = document.getElementById("place-bet-amount");
-const createBetAmount = document.getElementById("create-bet-amount-label");
+const createBetAmount = document.getElementById("create-bet-amount");
+const createBetAmountLabel = document.getElementById("create-bet-amount-label");
 const createBetSchema = document.getElementById("create-bet-schema");
 const createBetPath = document.getElementById("create-bet-path");
 const betEntries = document.getElementById("bet-entries");
@@ -81,7 +82,7 @@ const createBetBtn = () => {
     steps[currentStep].style.position = "initial";
     steps[currentStep].style.opacity = "100%";
     (async () => {
-        createBetAmount.innerHTML = `The <a href="https://provable.xyz">oracle service</a> that WSBDD uses to interact with the web needs to be paid for by the bet's creator.` + (contract
+        createBetAmountLabel.innerHTML = `The <a href="https://provable.xyz">oracle service</a> that WSBDD uses to interact with the web needs to be paid for by the bet's creator.` + (contract
             ? ` The suggested amount is ${weiToEth((await contract.lastQueryPrice())).toString()} ETH.`
             : ``);
     })();
@@ -109,9 +110,8 @@ const renderNextCreationStep = () => {
 searchBetId.onkeydown = searchTriggered;
 let activeBet = null;
 let placedBets = {};
+let newBetId = null;
 let processing = null;
-
-let currentBetUrl = null;
 
 function searchTriggered(e) {
     if (e.keyCode === 13) {
@@ -181,15 +181,15 @@ async function loadProvider() {
         }
 
         provider = new ethers.providers.Web3Provider(window.ethereum);
-        address = "0xbB2Dfc930A209Aa32E49f0b49264ba6b4270782A";
+        address = "0x35d31c373b3D5f7d5040efC368160127AacDaAbE";
         signer = provider.getSigner();
         contract = new ethers.Contract(address, contractAbi, provider);
         signedContract = contract.connect(signer);
         if (contract) {
             owner = await signer.getAddress();
             contract.on("LackingFunds", async (sender, funds) => { if (sender == owner) triggerError(`Insufficient query funds, requiring ${weiToEth(funds)} ETH`) });
-            contract.on("CreatedBet", async (_, __, betId) => { if (betId == activeBet) triggerSuccess(`Bet created!`, () => { searchBet(betId) }) });
-            contract.on("PlacedBets", async (sender, _, __, betId) => { if (sender == owner) triggerSuccess(`Bet placed!`, () => searchBet(betId)) });
+            contract.on("CreatedBet", async hashedBetId => { if (hashedBetId.hash == ethers.utils.id(newBetId || "")) triggerSuccess(`Bet created!`, () => { searchBet(newBetId); newBetId = null; }) });
+            contract.on("PlacedBets", async (sender, _, betId) => { if (sender == owner) triggerSuccess(`Bet placed!`, () => searchBet(betId)) });
             contract.on("LostBet", async (sender) => { if (sender == owner) triggerSuccess("Bet lost, better luck next time!") });
             contract.on("UnwonBet", async (sender) => { if (sender == owner) triggerSuccess("No one won the bet, you've been refunded") });
             contract.on("WonBet", async (sender, amount) => { if (sender == owner) triggerSuccess(`Bet won! ${weiToEth(amount.toString())} ETH transferred to account`) });
@@ -209,7 +209,7 @@ const ethToWei = (eth) => ethers.utils.parseEther(eth);
 const weiToEth = (wei) => (wei / Math.pow(10, 18)).toString();
 
 const createBetAmountTitle = `Provable's oracle service used by WSBDD needs to be paid for by the bet's creator.`;
-createBetAmount.title = createBetAmountTitle;
+createBetAmountLabel.title = createBetAmountTitle;
 
 window.onload = () => {
     const betId = new URL(window.location).searchParams.get("id");
@@ -276,10 +276,6 @@ async function searchBet(id) {
         placedBets = {};
         newBet.style.display = "none";
         resetButtons();
-        if (!window.ethereum) {
-            triggerError("No Ethereum provider detected, click to install MetaMask", null, () => window.location.href = "https://metamask.io/");
-            return;
-        }
         triggerProcessing("Fetching bet");
         betContainer.style.opacity = "0";
         betContainer.style.visibility = "hidden";
@@ -295,17 +291,18 @@ async function searchBet(id) {
         location.searchParams.set("id", activeBet);
         history.pushState({}, "", location.toString());
         betContainer.style.display = "flex";
-        currentBetUrl = await contract.betQueries(activeBet);
-        const { url, schema, path } = unpackUrl(currentBetUrl);
+        const createdFilter = (await contract.queryFilter(contract.filters.CreatedBet(activeBet)))[0];
+        const [initialPool, description, query] = createdFilter.args.slice(1).map(arg => arg.toString());
+        const { url, schema, path } = unpackQuery(query);
         urlSchema.innerHTML = schema || "Unknown";
-        betUrl.innerHTML = url || currentBetUrl;
-        betQuery.innerHTML = await contract.betQueries(activeBet);
+        betUrl.innerHTML = url || query;
+        betQuery.innerHTML = query;
         schemaPath.innerHTML = path || "Unknown";
-        betDeadline.innerHTML = new Date(await contract.betDeadlines(activeBet) * 1000).toISOString().replace("T", " ").split(".")[0].slice(0, -3);
-        const createdFilter = (await contract.queryFilter(contract.filters.CreatedBet(null, activeBet)))[0];
-        const [schedule, initialPool, description] = [new Date(createdFilter.args[3].toString() * 1000), createdFilter.args[4].toString(), createdFilter.args[5].toString()];
-        const result = await contract.betResults(activeBet);
+        const deadline = new Date(await contract.betDeadlines(activeBet) * 1000);
+        betDeadline.innerHTML = deadline.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
+        const schedule = new Date(await contract.betSchedules(activeBet) * 1000);
         betSchedule.innerHTML = schedule.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
+        const result = await contract.betResults(activeBet);
         betInnerDescription.innerHTML = description;
         betInnerInitialPool.innerHTML = weiToEth(initialPool).toString() + "Ð";
         betInnerTotalPool.innerHTML = weiToEth((await contract.betPools(activeBet)).toString()).toString() + "Ð";
@@ -326,7 +323,7 @@ async function searchBet(id) {
     }
 }
 
-function unpackUrl(u) {
+function unpackQuery(u) {
     let url = u.toLowerCase();
 
     const htmlRegex = /(html)\((.*)\)\.xpath\((.*)\)/;
@@ -354,7 +351,7 @@ async function createBet() {
         const deadline = Date.parse(`${deadlineDate.value} ${deadlineTime.value}`) / 1000;
         const commission = Math.round(100 / createBetCommission.value);
         const description = createBetDescription.value || "";
-
+        const minimumBet = weiToEth(await contract.minimumBet());
         if (!window.ethereum) {
             triggerError("No Ethereum provider detected", createBetQuery, () => window.location.href = "https://metamask.io/");
             return;
@@ -379,8 +376,8 @@ async function createBet() {
         } else if (schedule >= Date.parse(new Date()) / 1000 + 60 * 24 * 3600) {
             triggerError("Bet cannot be scheduled more than 60 days from now", createBetQuery, () => renderCreationStep(6));
             return;
-        } else if (createBetMinimum.value < 0.001) {
-            triggerError("Minimum betting amount is 0.001 ETH", createBetQuery, () => renderCreationStep(3));
+        } else if (createBetMinimum.value < minimumBet) {
+            triggerError(`Minimum bet is ${minimumBet} ETH`, createBetQuery, () => renderCreationStep(3));
             return;
         } else if (!createBetCommission || createBetCommission.value == 0 || createBetCommission.value > 50) {
             triggerError("Commission can't be 0% nor higher than 50%", createBetQuery, () => renderCreationStep(2));
@@ -390,6 +387,7 @@ async function createBet() {
             return;
         }
         activeBet = betId.value.toLowerCase().trim();
+        newBetId = activeBet;
         const initialPool = ethToWei(createBetInitialPool.value || "0");
         const value = ethToWei(createBetAmount.value || "0").add(initialPool);
 
@@ -397,6 +395,7 @@ async function createBet() {
         await signedContract.createBet(activeBet, query, deadline, schedule, commission, ethToWei(createBetMinimum.value), initialPool, description, { value });
         [scheduleDate, deadlineDate, scheduleTime, deadlineTime].forEach((d) => (d.type = "text"));
     } catch (error) {
+        newBetId = null;
         console.error(error);
         triggerError(`Unexpected error - ${error.code || error}`, createBetQuery);
     }
@@ -489,7 +488,7 @@ async function renderBetPool() {
     try {
         const placedBets = await contract.queryFilter(contract.filters.PlacedBets(null, activeBet));
         const betResults = {};
-        placedBets.forEach(pb => { pb.args[4].forEach(result => { betResults[result] = (betResults[result] || 0) + 1; }) });
+        placedBets.forEach(pb => { pb.args[3].forEach(result => { betResults[result] = (betResults[result] || 0) + 1; }) });
         const results = await Promise.all(Object.keys(betResults).map((result) => contract.resultPools(activeBet, result)));
         const resultsPool = {};
         Object.keys(betResults).map((result, idx) => {

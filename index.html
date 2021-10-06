@@ -87,7 +87,7 @@
                             <div class="info" style="color: cornflowerblue; background-color: transparent">ETH</div>
                         </div>
                         <label for="create-bet-minimum">
-                            Minimum bet required to participate, cannot be lower than 0.001 ETH.
+                            Minimum bet required to participate, cannot be lower than 0.0002 ETH.
                         </label>
                     </div>
                     <div class="create-bet-step"
@@ -140,14 +140,14 @@
                         style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
                         <div class="btn info" style="border: 0; margin: 0">Query</div>
                         <input
-                            oninput="betQuery.innerHTML=createBetQuery(createBetSchema.value, this.value, createBetPath.value)"
+                            oninput="createBetQuery.innerHTML=parseBetQuery(createBetSchema.value, this.value, createBetPath.value)"
                             id="create-bet-url" type="text"
                             placeholder="https://www.therocktrading.com/api/ticker/BTCEUR"
                             style="width: 75%; margin: 0.5em" />
                         <label for="create-bet-url">URL</label>
 
                         <select
-                            onchange="betQuery.innerHTML=createBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value);createBetPath.placeholder = this.value == 'xml' ? '.result.0.prices.last' : (this.value == 'html' ? 'XPath' : 'JsonPath')"
+                            onchange="createBetQuery.innerHTML=parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value);createBetPath.placeholder = this.value == 'xml' ? '.result.0.prices.last' : (this.value == 'html' ? 'XPath' : 'JsonPath')"
                             style="margin: 1rem; text-align: center" name="create-bet-schema" id="create-bet-schema">
                             <option id="schema-option" value="schema" selected>Schema</option>
                             <option value="xml">XML</option>
@@ -157,7 +157,7 @@
                         <label for="create-bet-schema">Schema</label>
 
                         <input
-                            oninput="betQuery.innerHTML=createBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value)"
+                            oninput="createBetQuery.innerHTML=parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value)"
                             id="create-bet-path" type="text" placeholder=".result.0.last"
                             style="width: 75%; margin-top: 1em" />
                         <label for="create-bet-path">Path</label>
