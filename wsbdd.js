@@ -5,8 +5,6 @@ const placeBetInputs = document.getElementById("place-bet-inputs");
 const placeBet = document.getElementById("place-bet");
 const scheduleDate = document.getElementById("schedule-date");
 const deadlineDate = document.getElementById("deadline-date");
-const scheduleTime = document.getElementById("schedule-time");
-const deadlineTime = document.getElementById("deadline-time");
 const betId = document.getElementById("create-bet-id");
 const createBetUrl = document.getElementById("create-bet-url");
 const placeBetResult = document.getElementById("place-bet-result");
@@ -48,6 +46,7 @@ const schemaPath = document.getElementById("bet-path");
 const defaultMessageLocation = document.getElementById("default-message-location");
 const createBetQueryResult = document.getElementById("create-bet-query-result");
 const createBetQuery = document.getElementById("create-bet-query");
+const createBetQueryInner = document.getElementById("create-bet-query-inner");
 const innerMessage = document.getElementById("inner-message");
 const closeMessage = document.getElementById("close-message");
 const queryTesterUrl = document.getElementById("query-tester-url");
@@ -324,7 +323,7 @@ async function searchBet(id) {
     } catch (error) {
         betContainer.style.display = "none";
         console.error(error);
-        triggerError(`Unexpected error: ${error.code ? `code: ${error.code}` : error}`);
+        triggerError(providerErrorMsg(error));
     }
 }
 
@@ -352,8 +351,8 @@ async function createBet() {
         const url = createBetUrl.value;
         const path = createBetPath.value;
         const query = parseBetQuery(schema, url, path);
-        const schedule = Date.parse(`${scheduleDate.value} ${scheduleTime.value}`) / 1000;
-        const deadline = Date.parse(`${deadlineDate.value} ${deadlineTime.value}`) / 1000;
+        const schedule = Date.parse(`${scheduleDate.value}`) / 1000;
+        const deadline = Date.parse(`${deadlineDate.value}`) / 1000;
         const commission = Math.round(100 / createBetCommission.value);
         const description = createBetDescription.value || "";
         if (!window.ethereum) {
@@ -397,11 +396,10 @@ async function createBet() {
 
         triggerProcessing("Creating bet", createBetQueryResult);
         await signedContract.createBet(activeBet, query, deadline, schedule, commission, ethToWei(createBetMinimum.value), initialPool, description, { value });
-        [scheduleDate, deadlineDate, scheduleTime, deadlineTime].forEach((d) => (d.type = "text"));
     } catch (error) {
         newBetId = null;
         console.error(error);
-        triggerError(`Unexpected error - ${error.code || error}`, createBetQuery);
+        triggerError(providerErrorMsg(error), createBetQuery);
     }
 }
 
@@ -442,8 +440,12 @@ async function addBet() {
     } catch (error) {
         console.error(error);
         clearTimeout(hideMessage());
-        triggerError(`Unexpected error: ${error.code ? `code: ${error.code}` : error}`);
+        triggerError(providerErrorMsg(error));
     }
+}
+
+function providerErrorMsg(error) {
+    return `Provider error - ${error.code ? `Code: ${error.code}` : error}`;
 }
 
 async function claimReward() {
@@ -452,7 +454,7 @@ async function claimReward() {
         signedContract.claimBet(activeBet);
     } catch (error) {
         console.error(error);
-        triggerError(`Unexpected error: ${error.code ? `code: ${error.code}` : error}`);
+        triggerError(providerErrorMsg(error));
     }
 }
 
@@ -514,7 +516,7 @@ async function renderBetPool() {
         betPool.style.opacity = "100%";
     } catch (error) {
         console.error(error);
-        triggerError(`Unexpected error: ${error.code ? `code: ${error.code}` : error}`);
+        triggerError(providerErrorMsg(error));
     }
 }
 
