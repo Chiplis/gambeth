@@ -9,38 +9,26 @@ window.contractAbi = [
 		"inputs": [
 			{
 				"indexed": true,
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			},
-			{
-				"indexed": true,
 				"internalType": "string",
-				"name": "",
+				"name": "_id",
 				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint64",
-				"name": "",
-				"type": "uint64"
 			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "",
+				"name": "initialPool",
 				"type": "uint256"
 			},
 			{
 				"indexed": false,
 				"internalType": "string",
-				"name": "",
+				"name": "description",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "query",
 				"type": "string"
 			}
 		],
@@ -53,13 +41,13 @@ window.contractAbi = [
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "",
+				"name": "sender",
 				"type": "address"
 			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "",
+				"name": "funds",
 				"type": "uint256"
 			}
 		],
@@ -72,7 +60,7 @@ window.contractAbi = [
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "",
+				"name": "loser",
 				"type": "address"
 			}
 		],
@@ -85,31 +73,25 @@ window.contractAbi = [
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "",
+				"name": "user",
 				"type": "address"
 			},
 			{
 				"indexed": true,
 				"internalType": "string",
-				"name": "",
+				"name": "_id",
 				"type": "string"
-			},
-			{
-				"indexed": true,
-				"internalType": "string[]",
-				"name": "",
-				"type": "string[]"
 			},
 			{
 				"indexed": false,
 				"internalType": "string",
-				"name": "",
+				"name": "id",
 				"type": "string"
 			},
 			{
 				"indexed": false,
 				"internalType": "string[]",
-				"name": "",
+				"name": "results",
 				"type": "string[]"
 			}
 		],
@@ -122,7 +104,7 @@ window.contractAbi = [
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "",
+				"name": "refunded",
 				"type": "address"
 			}
 		],
@@ -135,13 +117,13 @@ window.contractAbi = [
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "",
+				"name": "winner",
 				"type": "address"
 			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "",
+				"name": "won",
 				"type": "uint256"
 			}
 		],
@@ -292,7 +274,7 @@ window.contractAbi = [
 				"type": "string"
 			}
 		],
-		"name": "betQueries",
+		"name": "betResults",
 		"outputs": [
 			{
 				"internalType": "string",
@@ -311,12 +293,12 @@ window.contractAbi = [
 				"type": "string"
 			}
 		],
-		"name": "betResults",
+		"name": "betSchedules",
 		"outputs": [
 			{
-				"internalType": "string",
+				"internalType": "uint64",
 				"name": "",
-				"type": "string"
+				"type": "uint64"
 			}
 		],
 		"stateMutability": "view",
@@ -447,7 +429,33 @@ window.contractAbi = [
 	},
 	{
 		"inputs": [],
+		"name": "fixedCommission",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "lastQueryPrice",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "minimumBet",
 		"outputs": [
 			{
 				"internalType": "uint256",

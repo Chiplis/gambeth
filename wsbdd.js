@@ -5,13 +5,12 @@ const placeBetInputs = document.getElementById("place-bet-inputs");
 const placeBet = document.getElementById("place-bet");
 const scheduleDate = document.getElementById("schedule-date");
 const deadlineDate = document.getElementById("deadline-date");
-const scheduleTime = document.getElementById("schedule-time");
-const deadlineTime = document.getElementById("deadline-time");
 const betId = document.getElementById("create-bet-id");
 const createBetUrl = document.getElementById("create-bet-url");
 const placeBetResult = document.getElementById("place-bet-result");
 const placeBetAmount = document.getElementById("place-bet-amount");
-const createBetAmount = document.getElementById("create-bet-amount-label");
+const createBetAmount = document.getElementById("create-bet-amount");
+const createBetAmountLabel = document.getElementById("create-bet-amount-label");
 const createBetSchema = document.getElementById("create-bet-schema");
 const createBetPath = document.getElementById("create-bet-path");
 const betEntries = document.getElementById("bet-entries");
@@ -47,6 +46,7 @@ const schemaPath = document.getElementById("bet-path");
 const defaultMessageLocation = document.getElementById("default-message-location");
 const createBetQueryResult = document.getElementById("create-bet-query-result");
 const createBetQuery = document.getElementById("create-bet-query");
+const createBetQueryInner = document.getElementById("create-bet-query-inner");
 const innerMessage = document.getElementById("inner-message");
 const closeMessage = document.getElementById("close-message");
 const queryTesterUrl = document.getElementById("query-tester-url");
@@ -67,6 +67,9 @@ const closeNewBet = () => {
     betContainer.style.display = newBet.hideBet ? 'none' : 'flex';
 }
 
+let minimumBet = null;
+let fixedCommission = null;
+
 let currentStep = 0;
 const steps = Array.from(document.getElementsByClassName("create-bet-step"));
 
@@ -81,7 +84,7 @@ const createBetBtn = () => {
     steps[currentStep].style.position = "initial";
     steps[currentStep].style.opacity = "100%";
     (async () => {
-        createBetAmount.innerHTML = `The <a href="https://provable.xyz">oracle service</a> that WSBDD uses to interact with the web needs to be paid for by the bet's creator.` + (contract
+        createBetAmountLabel.innerHTML = `The <a href="https://provable.xyz">oracle service</a> that WSBDD uses to interact with the web needs to be paid for by the bet's creator.` + (contract
             ? ` The suggested amount is ${weiToEth((await contract.lastQueryPrice())).toString()} ETH.`
             : ``);
     })();
@@ -109,9 +112,8 @@ const renderNextCreationStep = () => {
 searchBetId.onkeydown = searchTriggered;
 let activeBet = null;
 let placedBets = {};
+let newBetId = null;
 let processing = null;
-
-let currentBetUrl = null;
 
 function searchTriggered(e) {
     if (e.keyCode === 13) {
@@ -181,18 +183,20 @@ async function loadProvider() {
         }
 
         provider = new ethers.providers.Web3Provider(window.ethereum);
-        address = "0xbB2Dfc930A209Aa32E49f0b49264ba6b4270782A";
+        address = "0x0e3FB8eC556be8014025247D1BBA10CF46e8b7Ad";
         signer = provider.getSigner();
         contract = new ethers.Contract(address, contractAbi, provider);
         signedContract = contract.connect(signer);
         if (contract) {
             owner = await signer.getAddress();
             contract.on("LackingFunds", async (sender, funds) => { if (sender == owner) triggerError(`Insufficient query funds, requiring ${weiToEth(funds)} ETH`) });
-            contract.on("CreatedBet", async (_, __, betId) => { if (betId == activeBet) triggerSuccess(`Bet created!`, () => { searchBet(betId) }) });
-            contract.on("PlacedBets", async (sender, _, __, betId) => { if (sender == owner) triggerSuccess(`Bet placed!`, () => searchBet(betId)) });
+            contract.on("CreatedBet", async hashedBetId => { if (hashedBetId.hash == ethers.utils.id(newBetId || "")) triggerSuccess(`Bet created!`, () => { searchBet(newBetId); newBetId = null; }) });
+            contract.on("PlacedBets", async (sender, _, betId) => { if (sender == owner) triggerSuccess(`Bet placed!`, () => searchBet(betId)) });
             contract.on("LostBet", async (sender) => { if (sender == owner) triggerSuccess("Bet lost, better luck next time!") });
             contract.on("UnwonBet", async (sender) => { if (sender == owner) triggerSuccess("No one won the bet, you've been refunded") });
             contract.on("WonBet", async (sender, amount) => { if (sender == owner) triggerSuccess(`Bet won! ${weiToEth(amount.toString())} ETH transferred to account`) });
+            minimumBet = weiToEth(await contract.minimumBet());
+            fixedCommission = weiToEth(await contract.fixedCommission());
         }
         providerLoaded = true;
         return true;
@@ -209,7 +213,7 @@ const ethToWei = (eth) => ethers.utils.parseEther(eth);
 const weiToEth = (wei) => (wei / Math.pow(10, 18)).toString();
 
 const createBetAmountTitle = `Provable's oracle service used by WSBDD needs to be paid for by the bet's creator.`;
-createBetAmount.title = createBetAmountTitle;
+createBetAmountLabel.title = createBetAmountTitle;
 
 window.onload = () => {
     const betId = new URL(window.location).searchParams.get("id");
@@ -276,10 +280,6 @@ async function searchBet(id) {
         placedBets = {};
         newBet.style.display = "none";
         resetButtons();
-        if (!window.ethereum) {
-            triggerError("No Ethereum provider detected, click to install MetaMask", null, () => window.location.href = "https://metamask.io/");
-            return;
-        }
         triggerProcessing("Fetching bet");
         betContainer.style.opacity = "0";
         betContainer.style.visibility = "hidden";
@@ -295,17 +295,18 @@ async function searchBet(id) {
         location.searchParams.set("id", activeBet);
         history.pushState({}, "", location.toString());
         betContainer.style.display = "flex";
-        currentBetUrl = await contract.betQueries(activeBet);
-        const { url, schema, path } = unpackUrl(currentBetUrl);
+        const createdFilter = (await contract.queryFilter(contract.filters.CreatedBet(activeBet)))[0];
+        const [initialPool, description, query] = createdFilter.args.slice(1).map(arg => arg.toString());
+        const { url, schema, path } = unpackQuery(query);
         urlSchema.innerHTML = schema || "Unknown";
-        betUrl.innerHTML = url || currentBetUrl;
-        betQuery.innerHTML = await contract.betQueries(activeBet);
+        betUrl.innerHTML = url || query;
+        betQuery.innerHTML = query;
         schemaPath.innerHTML = path || "Unknown";
-        betDeadline.innerHTML = new Date(await contract.betDeadlines(activeBet) * 1000).toISOString().replace("T", " ").split(".")[0].slice(0, -3);
-        const createdFilter = (await contract.queryFilter(contract.filters.CreatedBet(null, activeBet)))[0];
-        const [schedule, initialPool, description] = [new Date(createdFilter.args[3].toString() * 1000), createdFilter.args[4].toString(), createdFilter.args[5].toString()];
-        const result = await contract.betResults(activeBet);
+        const deadline = new Date(await contract.betDeadlines(activeBet) * 1000);
+        betDeadline.innerHTML = deadline.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
+        const schedule = new Date(await contract.betSchedules(activeBet) * 1000);
         betSchedule.innerHTML = schedule.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
+        const result = await contract.betResults(activeBet);
         betInnerDescription.innerHTML = description;
         betInnerInitialPool.innerHTML = weiToEth(initialPool).toString() + "Ð";
         betInnerTotalPool.innerHTML = weiToEth((await contract.betPools(activeBet)).toString()).toString() + "Ð";
@@ -322,11 +323,11 @@ async function searchBet(id) {
     } catch (error) {
         betContainer.style.display = "none";
         console.error(error);
-        triggerError(`Unexpected error: ${error.code ? `code: ${error.code}` : error}`);
+        triggerError(providerErrorMsg(error));
     }
 }
 
-function unpackUrl(u) {
+function unpackQuery(u) {
     let url = u.toLowerCase();
 
     const htmlRegex = /(html)\((.*)\)\.xpath\((.*)\)/;
@@ -350,11 +351,10 @@ async function createBet() {
         const url = createBetUrl.value;
         const path = createBetPath.value;
         const query = parseBetQuery(schema, url, path);
-        const schedule = Date.parse(`${scheduleDate.value} ${scheduleTime.value}`) / 1000;
-        const deadline = Date.parse(`${deadlineDate.value} ${deadlineTime.value}`) / 1000;
+        const schedule = Date.parse(`${scheduleDate.value}`) / 1000;
+        const deadline = Date.parse(`${deadlineDate.value}`) / 1000;
         const commission = Math.round(100 / createBetCommission.value);
         const description = createBetDescription.value || "";
-
         if (!window.ethereum) {
             triggerError("No Ethereum provider detected", createBetQuery, () => window.location.href = "https://metamask.io/");
             return;
@@ -379,8 +379,8 @@ async function createBet() {
         } else if (schedule >= Date.parse(new Date()) / 1000 + 60 * 24 * 3600) {
             triggerError("Bet cannot be scheduled more than 60 days from now", createBetQuery, () => renderCreationStep(6));
             return;
-        } else if (createBetMinimum.value < 0.001) {
-            triggerError("Minimum betting amount is 0.001 ETH", createBetQuery, () => renderCreationStep(3));
+        } else if (createBetMinimum.value < minimumBet) {
+            triggerError(`Minimum bet is ${minimumBet} ETH`, createBetQuery, () => renderCreationStep(3));
             return;
         } else if (!createBetCommission || createBetCommission.value == 0 || createBetCommission.value > 50) {
             triggerError("Commission can't be 0% nor higher than 50%", createBetQuery, () => renderCreationStep(2));
@@ -390,15 +390,16 @@ async function createBet() {
             return;
         }
         activeBet = betId.value.toLowerCase().trim();
+        newBetId = activeBet;
         const initialPool = ethToWei(createBetInitialPool.value || "0");
         const value = ethToWei(createBetAmount.value || "0").add(initialPool);
 
         triggerProcessing("Creating bet", createBetQueryResult);
         await signedContract.createBet(activeBet, query, deadline, schedule, commission, ethToWei(createBetMinimum.value), initialPool, description, { value });
-        [scheduleDate, deadlineDate, scheduleTime, deadlineTime].forEach((d) => (d.type = "text"));
     } catch (error) {
+        newBetId = null;
         console.error(error);
-        triggerError(`Unexpected error - ${error.code || error}`, createBetQuery);
+        triggerError(providerErrorMsg(error), createBetQuery);
     }
 }
 
@@ -406,12 +407,12 @@ async function renderPlacedBets() {
     placeBetInfo.style.display = Object.keys(placedBets).length ? "block" : "none";
     const commission = (await contract.betCommissions(activeBet)).toString();
     placeBetEntries.innerHTML = `
-        ${Object.entries(placedBets).map(([k, v]) => `<tr><td onclick="delete placedBets['${k}']; renderPlacedBets()">✖</td><td>${k}</td><td>${v - 0.0001 - v / commission}</td></tr>`).join("")}
+        ${Object.entries(placedBets).map(([k, v]) => `<tr><td onclick="delete placedBets['${k}']; renderPlacedBets()">✖</td><td>${k}</td><td>${v - fixedCommission}</td></tr>`).join("")}
     `;
 }
 
 function addSingleBet() {
-    placedBets[placeBetResult.value] = parseFloat(placeBetAmount.value) + (placedBets[placeBetResult.value] || 0) - 0.0005;
+    placedBets[placeBetResult.value] = parseFloat(placeBetAmount.value) + (placedBets[placeBetResult.value] || 0);
     renderPlacedBets();
     placeBetAmount.value = "";
     placeBetResult.value = "";
@@ -422,14 +423,15 @@ async function addBet() {
         if (placeBetAmount.value && placeBetResult.value) {
             addSingleBet();
         }
-        const results = Object.keys(placedBets).map(pb => pb || "");
-        const amounts = results.map(r => placedBets[r]).map(a => ethToWei(a.toString()));
+        const results = Object.keys(placedBets).filter(pb => pb);
+        const amounts = results.map(r => placedBets[r]).map(a => a.toString()).map(ethToWei);
         if (!results.length || !amounts.length) {
             triggerError("No bets have been placed, make sure result and amount fields are not empty.")
             return;
         }
         const sum = amounts.reduce((acc, b) => acc.add(b), ethToWei("0")).toString();
         triggerProcessing("Placing bet" + (results.length > 1 ? "s" : ""));
+        console.log(results, amounts.map(a => a.toString()), sum);
         await signedContract.placeBets(activeBet, results, amounts.map(a => a.toString()), { value: sum });
         placedBets = {};
         placeSingleBet.style.opacity = 0;
@@ -438,8 +440,12 @@ async function addBet() {
     } catch (error) {
         console.error(error);
         clearTimeout(hideMessage());
-        triggerError(`Unexpected error: ${error.code ? `code: ${error.code}` : error}`);
+        triggerError(providerErrorMsg(error));
     }
+}
+
+function providerErrorMsg(error) {
+    return `Provider error - ${error.code ? `Code: ${error.code}` : error}`;
 }
 
 async function claimReward() {
@@ -448,7 +454,7 @@ async function claimReward() {
         signedContract.claimBet(activeBet);
     } catch (error) {
         console.error(error);
-        triggerError(`Unexpected error: ${error.code ? `code: ${error.code}` : error}`);
+        triggerError(providerErrorMsg(error));
     }
 }
 
@@ -489,7 +495,7 @@ async function renderBetPool() {
     try {
         const placedBets = await contract.queryFilter(contract.filters.PlacedBets(null, activeBet));
         const betResults = {};
-        placedBets.forEach(pb => { pb.args[4].forEach(result => { betResults[result] = (betResults[result] || 0) + 1; }) });
+        placedBets.forEach(pb => { pb.args[3].forEach(result => { betResults[result] = (betResults[result] || 0) + 1; }) });
         const results = await Promise.all(Object.keys(betResults).map((result) => contract.resultPools(activeBet, result)));
         const resultsPool = {};
         Object.keys(betResults).map((result, idx) => {
@@ -510,7 +516,7 @@ async function renderBetPool() {
         betPool.style.opacity = "100%";
     } catch (error) {
         console.error(error);
-        triggerError(`Unexpected error: ${error.code ? `code: ${error.code}` : error}`);
+        triggerError(providerErrorMsg(error));
     }
 }
 
