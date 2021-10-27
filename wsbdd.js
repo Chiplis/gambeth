@@ -121,7 +121,7 @@ function searchTriggered(e) {
     }
 }
 
-let provider, address, signer, contract, signedContract, owner;
+let provider, contractAddress, signer, contract, signedContract, owner;
 let providerLoaded = false;
 
 
@@ -183,9 +183,9 @@ async function loadProvider() {
         }
 
         provider = new ethers.providers.Web3Provider(window.ethereum);
-        address = "0x0e3FB8eC556be8014025247D1BBA10CF46e8b7Ad";
+        contractAddress = "0x658A9e9AcE57979a706259F75372fEca40c50A0F";
         signer = provider.getSigner();
-        contract = new ethers.Contract(address, contractAbi, provider);
+        contract = new ethers.Contract(contractAddress, contractAbi, provider);
         signedContract = contract.connect(signer);
         if (contract) {
             owner = await signer.getAddress();
