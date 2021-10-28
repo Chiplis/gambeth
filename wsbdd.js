@@ -482,7 +482,7 @@ async function claimReward() {
 }
 
 async function testQueryCreate() {
-    testQuery(createBetSchema.value == "wa" ? "WolframAlpha" : "URL", createBetQueryInner.innerHTML, 'Query failed, you can still create the bet if you know it will succeed when it is scheduled to run', createBetQueryResult);
+    testQuery(createBetSchema.value == "wa" ? "WolframAlpha" : "URL", createBetSchema.value == "wa" ? createBetWolfram.value : createBetQueryInner.innerHTML, 'Query failed, you can still create the bet if you know it will succeed when it is scheduled to run', createBetQueryResult);
 }
 
 async function testQuery(betType, url, errorMsg, after = defaultMessageLocation) {
