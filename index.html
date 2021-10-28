@@ -145,7 +145,7 @@
                             id="create-bet-url" type="text"
                             placeholder="https://www.therocktrading.com/api/ticker/BTCEUR"
                             style="width: 75%; margin: 0.5em" />
-                        <label for="create-bet-url">Determine bet result by choosing the website which contains it</label>
+                        <label style="display: none" for="create-bet-url">Determine bet result by choosing the website which contains it</label>
 
                         <input id="create-bet-wa" type="text" placeholder="Winner of the 2020 Super Bowl"
                             style="width: 75%; margin: 0.5em" />
@@ -155,7 +155,7 @@
                             oninput="createBetQueryInner.innerHTML=parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value)"
                             id="create-bet-path" type="text" placeholder=".result.0.last"
                             style="width: 75%; margin-top: 1em" />
-                        <label for="create-bet-path" id="create-bet-path-label"></label>
+                        <label style="display: none" for="create-bet-path" id="create-bet-path-label"></label>
 
 
                         <div display="none" id="create-bet-query" style="display: flex; flex-direction: column; align-items: center">
