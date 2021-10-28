@@ -44,7 +44,7 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     
     /* To help people avoid overpaying for the oracle contract querying service,
     its last price is saved and then suggested in the frontend. */
-    uint256 public lastQueryPrice;
+    mapping(string => uint256) public lastQueryPrice;
     
     // Queries can't be scheduled more than 60 days in the future
     uint64 constant scheduleThreshold = 60 * 24 * 60 * 60;
@@ -57,7 +57,7 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     but which can prove useful to people taking a look at the bet in the frontend. */
     event CreatedBet(string indexed _id, uint256 initialPool, string description, string query);
     
-    function createBet(string calldata betId, string calldata query, uint64 deadline, uint64 schedule, uint256 commission, uint256 minimum, uint256 initialPool, string calldata description) public payable {
+    function createBet(string betType, string calldata betId, string calldata query, uint64 deadline, uint64 schedule, uint256 commission, uint256 minimum, uint256 initialPool, string calldata description) public payable {
         
         require(
             bytes(betId).length > 0 
@@ -73,9 +73,9 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
         // The remaining balance should be enough to cover the cost of the smart oracle query
         uint256 balance = msg.value - initialPool;
         
-        lastQueryPrice = provable_getPrice("URL");
-        if (lastQueryPrice > balance) {
-            emit LackingFunds(msg.sender, lastQueryPrice);
+        lastQueryPrice[betType] = provable_getPrice(betType);
+        if (lastQueryPrice[betType] > balance) {
+            emit LackingFunds(msg.sender, lastQueryPrice[betType]);
             (bool success, ) = msg.sender.call.value(msg.value)("");
             require(success, "Error when returning funds to bet owner.");
             return;
@@ -86,7 +86,7 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
         
         /* Even though the oracle query is scheduled to run in the future, 
         it immediately returns a query ID which we associate with the newly created bet. */
-        bytes32 queryId = provable_query(schedule, "URL", query);
+        bytes32 queryId = provable_query(schedule, betType, query);
         queryBets[queryId] = betId;
         
         // Nothing fancy going on here, just boring old state updates

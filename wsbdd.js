@@ -12,6 +12,7 @@ const placeBetAmount = document.getElementById("place-bet-amount");
 const createBetAmount = document.getElementById("create-bet-amount");
 const createBetAmountLabel = document.getElementById("create-bet-amount-label");
 const createBetSchema = document.getElementById("create-bet-schema");
+const createBetWolfram = document.getElementById("create-bet-wa");
 const createBetPath = document.getElementById("create-bet-path");
 const betEntries = document.getElementById("bet-entries");
 const betPool = document.getElementById("bet-pool");
@@ -46,6 +47,7 @@ const schemaPath = document.getElementById("bet-path");
 const defaultMessageLocation = document.getElementById("default-message-location");
 const createBetQueryResult = document.getElementById("create-bet-query-result");
 const createBetQuery = document.getElementById("create-bet-query");
+const createBetPathLabel = document.getElementById("create-bet-path-label");
 const createBetQueryInner = document.getElementById("create-bet-query-inner");
 const innerMessage = document.getElementById("inner-message");
 const closeMessage = document.getElementById("close-message");
@@ -78,7 +80,6 @@ const createBetBtn = () => {
     betContainer.style.display = 'none';
     newBet.style.display = 'flex';
     newBet.scrollIntoViewIfNeeded();
-    document.getElementById("schema-option").disabled = true;
     createBetSchema.selectedIndex = 0;
     [betContainer.style.display, newBet.style.display] = ['none', 'flex'];
     steps[currentStep].style.position = "initial";
@@ -178,7 +179,7 @@ async function loadProvider() {
         } else {
             clearTimeout(hideMessage());
             triggerError("No Ethereum provider detected, click to install MetaMask", undefined, () => window.location.href = "https://metamask.io/");
-            providerLoaded = false; 
+            providerLoaded = false;
             return false;
         }
 
@@ -190,7 +191,7 @@ async function loadProvider() {
         if (contract) {
             owner = await signer.getAddress();
             contract.on("LackingFunds", async (sender, funds) => { if (sender == owner) triggerError(`Insufficient query funds, requiring ${weiToEth(funds)} ETH`) });
-            contract.on("CreatedBet", async hashedBetId => { if (hashedBetId.hash == ethers.utils.id(newBetId || "")) triggerSuccess(`Bet created!`, () => { searchBet(newBetId); newBetId = null; }) });
+            contract.on("CreatedBet", async hashedBetId => { if (hashedBetId.hash == ethers.utils.id(newBetId || "")) triggerSuccess(`Bet created!`, () => { renderBetPool(); newBetId = null; }) });
             contract.on("PlacedBets", async (sender, _, betId) => { if (sender == owner) triggerSuccess(`Bet placed!`, () => searchBet(betId)) });
             contract.on("LostBet", async (sender) => { if (sender == owner) triggerSuccess("Bet lost, better luck next time!") });
             contract.on("UnwonBet", async (sender) => { if (sender == owner) triggerSuccess("No one won the bet, you've been refunded") });
@@ -395,7 +396,7 @@ async function createBet() {
         const value = ethToWei(createBetAmount.value || "0").add(initialPool);
 
         triggerProcessing("Creating bet", createBetQueryResult);
-        await signedContract.createBet(activeBet, query, deadline, schedule, commission, ethToWei(createBetMinimum.value), initialPool, description, { value });
+        await signedContract.createBet(createBetSchema.value == "wa" ? "WolframAlpha" : "URL", activeBet, query, deadline, schedule, commission, ethToWei(createBetMinimum.value), initialPool, description, { value });
     } catch (error) {
         newBetId = null;
         console.error(error);
@@ -444,6 +445,27 @@ async function addBet() {
     }
 }
 
+function changeBetType() {
+    const betType = createBetSchema.value.toUpperCase();
+
+    createBetWolfram.style.display = betType != "WA" ? "none" : "block";
+
+    createBetUrl.style.display = betType == "WA" ? "none" : "block";
+    createBetPath.style.display = betType == "WA" ? "none" : "block";
+    createBetQuery.style.display = betType == "WA" ? "none" : "block";
+
+    createBetQueryInner.innerHTML = parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value);
+    switch (betType) {
+        case "XML":
+        case "JSON":
+            createBetPathLabel.innerHTML = `Extract result from ${betType} node using <a href='https://github.com/FlowCommunications/JSONPath#expression-syntax'>JSONPath</a>`
+            break;
+        case "HTML":
+            createBetPathLabel.innerHTML = "Extract result from HTML node using <a href='https://www.w3.org/TR/xpath/'>XPath</a>"
+            break;
+        };
+}
+
 function providerErrorMsg(error) {
     return `Provider error - ${error.code ? `Code: ${error.code}` : error}`;
 }
@@ -458,7 +480,11 @@ async function claimReward() {
     }
 }
 
-async function testQuery(url, errorMsg, after = defaultMessageLocation) {
+async function testQueryCreate() {
+    testQuery(createBetSchema.value == "wa" ? "WolframAlpha" : "URL", createBetQueryInner.innerHTML, 'Query failed, you can still create the bet if you know it will succeed when it is scheduled to run', createBetQueryResult);
+}
+
+async function testQuery(betType, url, errorMsg, after = defaultMessageLocation) {
     if (!url) {
         triggerError("No URL detected.", after);
         return;
@@ -469,7 +495,7 @@ async function testQuery(url, errorMsg, after = defaultMessageLocation) {
             "protocol": "http",
             "type": "web"
         },
-        "datasource": "URL",
+        "datasource": betType,
         "query": url
     }
     const baseURL = "https://api.oraclize.it/api/v1/query";
@@ -488,7 +514,7 @@ async function testQuery(url, errorMsg, after = defaultMessageLocation) {
             return;
         }
         triggerSuccess("Result: " + result, null, after);
-    }, 2000);
+    }, 5000);
 }
 
 async function renderBetPool() {
