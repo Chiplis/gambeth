@@ -450,9 +450,8 @@ function changeBetType() {
 
     createBetWolfram.style.display = betType != "WA" ? "none" : "block";
 
-    createBetUrl.style.display = betType == "WA" ? "none" : "block";
-    createBetPath.style.display = betType == "WA" ? "none" : "block";
-    createBetQuery.style.display = betType == "WA" ? "none" : "block";
+    [createBetUrl, createBetPath, createBetQuery]
+        .forEach(elm => [elm.style.display, document.querySelector("label[for=" + elm.id + "]").style.display] = Array(2).fill("WA" ? "none" : "block"))
 
     createBetQueryInner.innerHTML = parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value);
     switch (betType) {
@@ -463,7 +462,7 @@ function changeBetType() {
         case "HTML":
             createBetPathLabel.innerHTML = "Extract result from HTML node using <a href='https://www.w3.org/TR/xpath/'>XPath</a>"
             break;
-        };
+    };
 }
 
 function providerErrorMsg(error) {
