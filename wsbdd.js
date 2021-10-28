@@ -453,7 +453,7 @@ function changeBetType() {
     [createBetUrl, createBetPath]
         .forEach(elm => [elm.style.display, document.querySelector(`label[for="${elm.id}"]`).style.display] = Array(2).fill(betType == "WA" ? "none" : "block"));
     [createBetWolfram.style.display, document.querySelector(`label[for="${createBetWolfram.id}"]`).style.display] = Array(2).fill(betType != "WA" ? "none" : "block");
-    createBetQuery.style.display = betType == "WA" ? "none" : "block";
+    createBetQuery.style.display = betType == "WA" ? "none" : "flex";
 
     createBetQueryInner.innerHTML = parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value);
     switch (betType) {
