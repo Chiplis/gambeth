@@ -140,7 +140,7 @@
                         </select>
                         <label for="create-bet-schema" style="margin-top: 1em">How should the contract determine the result of your bet? If you're not sure how to do it, WolframAlpha is the easiest approach.</label>
 
-                        <input display="none"
+                        <input style="display: none"
                             oninput="createBetQueryInner.innerHTML=parseBetQuery(createBetSchema.value, this.value, createBetPath.value)"
                             id="create-bet-url" type="text"
                             placeholder="https://www.therocktrading.com/api/ticker/BTCEUR"
@@ -151,14 +151,14 @@
                             style="width: 75%; margin-top: 1em" />
                         <label for="create-bet-wa">Determine bet result using natural language</label>
 
-                        <input display="none"
+                        <input style="display: none"
                             oninput="createBetQueryInner.innerHTML=parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value)"
                             id="create-bet-path" type="text" placeholder=".result.0.last"
                             style="width: 75%; margin-top: 1em" />
                         <label style="display: none" for="create-bet-path" id="create-bet-path-label"></label>
 
 
-                        <div display="none" id="create-bet-query" style="display: flex; flex-direction: column; align-items: center">
+                        <div style="display: none" id="create-bet-query" style="display: flex; flex-direction: column; align-items: center">
                             <div id="create-bet-query-inner"></div>
                         </div>
 
