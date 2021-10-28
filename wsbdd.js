@@ -459,10 +459,10 @@ function changeBetType() {
     switch (betType) {
         case "XML":
         case "JSON":
-            createBetPathLabel.innerHTML = `Extract result from ${betType} node using <a href='https://github.com/FlowCommunications/JSONPath#expression-syntax'>JSONPath</a>`
+            createBetPathLabel.innerHTML = `Extract result from ${betType} node using <a href='https://github.com/FlowCommunications/JSONPath#expression-syntax' style='text-decoration: underline'>JSONPath</a>`
             break;
         case "HTML":
-            createBetPathLabel.innerHTML = "Extract result from HTML node using <a href='https://www.w3.org/TR/xpath/'>XPath</a>"
+            createBetPathLabel.innerHTML = "Extract result from HTML node using <a href='https://www.w3.org/TR/xpath/' style='text-decoration: underline'>XPath</a>"
             break;
     };
 }
