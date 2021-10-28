@@ -451,7 +451,7 @@ function changeBetType() {
     createBetWolfram.style.display = betType != "WA" ? "none" : "block";
 
     [createBetUrl, createBetPath, createBetQuery]
-        .forEach(elm => [elm.style.display, document.querySelector("label[for=" + elm.id + "]").style.display] = Array(2).fill("WA" ? "none" : "block"))
+        .forEach(elm => [elm.style.display, document.querySelector(`label[for="${elm.id}"]`).style.display] = Array(2).fill("WA" ? "none" : "block"));
 
     createBetQueryInner.innerHTML = parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value);
     switch (betType) {
