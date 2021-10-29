@@ -505,11 +505,13 @@ async function testQuery(betType, url, errorMsg, after = defaultMessageLocation)
         let result;
         try {
             const queryId = (await fetch(`${baseURL}/create`, { method: "POST", body: JSON.stringify(payload) }).then(r => r.json()).catch(console.log)).result.id;
-            setTimeout(null, 5000);
-            const fullResult = (await fetch(`${baseURL}/${queryId}/status`).then(r => r.json()).catch(console.error));
-            const error = fullResult.result.checks.find(check => check.errors.length);
-            result = fullResult.result.checks[0].results[0];
-            if (error || !result) throw error;
+            let error;
+            setTimeout(() => {
+                const fullResult = (await fetch(`${baseURL}/${queryId}/status`).then(r => r.json()).catch(console.error));
+                error = fullResult.result.checks.find(check => check.errors.length);
+                result = fullResult.result.checks[0].results[0];
+                if (error || !result) throw error;
+            }, 5000);
         } catch (error) {
             console.error(error);
             triggerError(errorMsg || "Error while trying to fetch result, check query and try again.", after);
