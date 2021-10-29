@@ -529,7 +529,7 @@ async function testQuery(betType, url, errorMsg, after = defaultMessageLocation)
             return;
         }
         triggerSuccess("Result: " + result, null, after);
-    }, 3000);
+    }, 5000);
 }
 
 async function renderBetPool() {
