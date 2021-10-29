@@ -459,6 +459,12 @@ async function addBet() {
 function changeBetType() {
     const betType = createBetSchema.value;
 
+    if (betType == "html") {
+        createBetPath.placeholder = "/html/body/div[1]/div/div/div[2]/main/div[4]/table/tbody/tr[2]/td[3]/text()"
+    } else {
+        createBetPath.placeholder = ".result.0.last"
+    }
+
     createBetWolfram.style.display = betType != "wa" ? "none" : "block";
 
     [createBetUrl, createBetPath]
@@ -469,13 +475,19 @@ function changeBetType() {
     createBetQueryInner.innerHTML = parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value);
     switch (betType) {
         case "json":
-            createBetPathLabel.innerHTML = `Extract result from JSON node using <a href='https://github.com/FlowCommunications/JSONPath#expression-syntax' style='text-decoration: underline'>JSONPath</a>`
-            break;
-        case "html":
-            createBetPathLabel.innerHTML = "Extract result from HTML node using <a href='https://www.w3.org/TR/xpath/' style='text-decoration: underline'>XPath</a>"
+            createBetUrl.placeholder = "https://www.therocktrading.com/api/ticker/BTCEUR"
+            createBetPath.placeholder = ".result.0.last";
+            createBetPathLabel.innerHTML = `Extract result from JSON node using <a href='https://github.com/FlowCommunications/JSONPath#expression-syntax' style='text-decoration: underline'>JSONPath</a>`;
             break;
         case "xml":
-            createBetPathLabel.innerHTML = `Extract result from XML node using <a href='https://www.w3.org/TR/xpath/' style='text-decoration: underline'>XPath</a> or <a href='https://github.com/martinblech/xmltodict' style='text-decoration: underline'>xmltodict</a>`
+            createBetUrl.placeholder = "https://www.fueleconomy.gov/ws/rest/fuelprices";
+            createBetPath.placeholder = ".fuelPrices.diesel";
+            createBetPathLabel.innerHTML = `Extract result from XML node using <a href='https://www.w3.org/TR/xpath/' style='text-decoration: underline'>XPath</a> or <a href='https://github.com/martinblech/xmltodict' style='text-decoration: underline'>xmltodict</a>`;
+            break;
+        case "html":
+            createBetUrl.placeholder = "https://www.investing.com/indices/major-indices";
+            createBetPath.placeholder = "/html/body/div[1]/div/div/div[2]/main/div[4]/table/tbody/tr[2]/td[3]/text()";
+            createBetPathLabel.innerHTML = "Extract result from HTML node using <a href='https://www.w3.org/TR/xpath/' style='text-decoration: underline'>XPath</a>";
             break;
     };
 }
