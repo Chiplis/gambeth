@@ -57,7 +57,7 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     but which can prove useful to people taking a look at the bet in the frontend. */
     event CreatedBet(string indexed _id, uint256 initialPool, string description, string query);
     
-    function createBet(string betType, string calldata betId, string calldata query, uint64 deadline, uint64 schedule, uint256 commission, uint256 minimum, uint256 initialPool, string calldata description) public payable {
+    function createBet(string memory betType, string memory betId, string calldata query, uint64 deadline, uint64 schedule, uint256 commission, uint256 minimum, uint256 initialPool, string calldata description) public payable {
         
         require(
             bytes(betId).length > 0 
