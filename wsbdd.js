@@ -517,7 +517,6 @@ async function testQuery(betType, url, errorMsg, after = defaultMessageLocation)
     triggerProcessing("Querying", after);
     let result;
     const queryId = (await fetch(`${baseURL}/create`, { method: "POST", body: JSON.stringify(payload) }).then(r => r.json()).catch(console.log)).result.id;
-    let error;
     setTimeout(async () => {
         try {
             const fullResult = (await fetch(`${baseURL}/${queryId}/status`).then(r => r.json()).catch(console.error));
