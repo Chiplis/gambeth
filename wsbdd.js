@@ -503,21 +503,22 @@ async function testQuery(betType, url, errorMsg, after = defaultMessageLocation)
     triggerProcessing("Querying", after);
     setTimeout(async () => {
         let result;
-        try {
-            const queryId = (await fetch(`${baseURL}/create`, { method: "POST", body: JSON.stringify(payload) }).then(r => r.json()).catch(console.log)).result.id;
-            let error;
-            setTimeout(async () => {
+        const queryId = (await fetch(`${baseURL}/create`, { method: "POST", body: JSON.stringify(payload) }).then(r => r.json()).catch(console.log)).result.id;
+        let error;
+        setTimeout(async () => {
+            try {
                 const fullResult = (await fetch(`${baseURL}/${queryId}/status`).then(r => r.json()).catch(console.error));
-                error = fullResult.result.checks.find(check => check.errors.length);
+                const error = fullResult.result.checks.find(check => check.errors.length);
                 result = fullResult.result.checks[0].results[0];
                 if (error || !result) throw error;
-            }, 5000);
-        } catch (error) {
-            console.error(error);
-            triggerError(errorMsg || "Error while trying to fetch result, check query and try again.", after);
-            return;
-        }
-        triggerSuccess("Result: " + result, null, after);
+            } catch (error) {
+                console.error(error);
+                triggerError(errorMsg || "Error while trying to fetch result, check query and try again.", after);
+                return;
+            }
+            triggerSuccess("Result: " + result, null, after);
+        }, 5000);
+
     }, 500);
 }
 
