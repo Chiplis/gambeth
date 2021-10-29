@@ -351,11 +351,12 @@ async function createBet() {
         const schema = createBetSchema.value;
         const url = createBetUrl.value;
         const path = createBetPath.value;
-        const query = parseBetQuery(schema, url, path);
+        const query = schema == "wa" ? createBetWolfram.value : parseBetQuery(schema, url, path);
         const schedule = Date.parse(`${scheduleDate.value}`) / 1000;
         const deadline = Date.parse(`${deadlineDate.value}`) / 1000;
         const commission = Math.round(100 / createBetCommission.value);
         const description = createBetDescription.value || "";
+
         if (!window.ethereum) {
             triggerError("No Ethereum provider detected", createBetQuery, () => window.location.href = "https://metamask.io/");
             return;
@@ -386,10 +387,8 @@ async function createBet() {
         } else if (!createBetCommission || createBetCommission.value == 0 || createBetCommission.value > 50) {
             triggerError("Commission can't be 0% nor higher than 50%", createBetQuery, () => renderCreationStep(2));
             return;
-        } else if (schema == "schema") {
-            triggerError("Need to specify query's schema", createBetQuery);
-            return;
         }
+
         activeBet = betId.value.toLowerCase().trim();
         newBetId = activeBet;
         const initialPool = ethToWei(createBetInitialPool.value || "0");
