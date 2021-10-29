@@ -345,6 +345,11 @@ window.contractAbi = [
 		"inputs": [
 			{
 				"internalType": "string",
+				"name": "betType",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
 				"name": "betId",
 				"type": "string"
 			},
@@ -441,7 +446,13 @@ window.contractAbi = [
 		"type": "function"
 	},
 	{
-		"inputs": [],
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
 		"name": "lastQueryPrice",
 		"outputs": [
 			{

@@ -184,7 +184,7 @@ async function loadProvider() {
         }
 
         provider = new ethers.providers.Web3Provider(window.ethereum);
-        contractAddress = "0x658A9e9AcE57979a706259F75372fEca40c50A0F";
+        contractAddress = "0xDD7e4B8e0D34807dbc1062bd5576e73aDe17ba8B";
         signer = provider.getSigner();
         contract = new ethers.Contract(contractAddress, contractAbi, provider);
         signedContract = contract.connect(signer);
