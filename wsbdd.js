@@ -492,6 +492,9 @@ async function claimReward() {
     }
 }
 
+async function testQueryInfo() {
+    testQuery(['xml', 'html', 'json'].map((betQuery.innerHTML || betWolframQuery.innerHTML).startsWith).some(x => x) ? 'URL' : 'WolframAlpha', betQuery.innerHTML || betWolframQuery.innerHTML, 'Query error encountered, bets will be refunded if this happens during scheduled execution');
+}
 async function testQueryCreate() {
     testQuery(createBetSchema.value == "wa" ? "WolframAlpha" : "URL", createBetSchema.value == "wa" ? createBetWolfram.value : createBetQueryInner.innerHTML, 'Query failed, you can still create the bet if you know it will succeed when it is scheduled to run', createBetQueryResult);
 }
