@@ -78,7 +78,7 @@ let fixedCommission = null;
 let currentStep = 0;
 const steps = Array.from(document.getElementsByClassName("create-bet-step"));
 
-const createBetBtn = () => {
+const createBetBtn = async () => {
     newBet.hideBet = betContainer.style.display == 'none';
     betContainer.style.display = 'none';
     newBet.style.display = 'flex';
