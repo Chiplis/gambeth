@@ -64,6 +64,7 @@ const betTotalPool = document.getElementById("bet-total-pool");
 const betInnerTotalPool = document.getElementById("bet-total-pool");
 const betResult = document.getElementById("bet-result");
 const betQuery = document.getElementById("bet-query");
+const betWolframQuery = document.getElementById("bet-wolfram-query");
 const betInnerResult = document.getElementById("bet-inner-result");
 
 const closeNewBet = () => {
@@ -309,10 +310,9 @@ async function searchBet(id) {
 
         wolframBet.style.display = schema ? "none" : "flex";
         urlBet.style.display = schema ? "flex" : "none";
-
+        (schema ? betQuery : betWolframQuery).innerHTML = query;
         urlSchema.innerHTML = schema || "Unknown";
         betUrl.innerHTML = url || query;
-        betQuery.innerHTML = query;
         schemaPath.innerHTML = path || "Unknown";
         const deadline = new Date(await contract.betDeadlines(activeBet) * 1000);
         betDeadline.innerHTML = deadline.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
