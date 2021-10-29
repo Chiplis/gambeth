@@ -195,7 +195,7 @@
                         style="opacity: 0; color: white; background-color: #ed7b64; padding: 0.5rem 0.75rem; border-radius: 100%">
                         +
                     </button>
-                    <button onclick="betInfo.style.display='flex'" class="btn link">
+                    <button onclick="showBetInfo()" class="btn link">
                         Info
                     </button>
                     <button
@@ -210,7 +210,7 @@
                 </div>
                 <div id="bet-info"
                     style="margin: 1em 0; width: 100%; display: none; justify-content: space-around; align-items: center">
-                    <div class="msg details" style="flex-direction: column;">
+                    <div id="url-bet" class="msg details" style="flex-direction: column;">
                         <div style="font-size: 0.9rem">Query</div>
                         <div
                             style="margin-top: 1rem; font-size: 0.7rem; display: flex; flex-direction: column; align-items: space-around; justify-content: center; border: 0; border-radius: 0">
@@ -233,6 +233,13 @@
                             <div style="font-size: 0.8rem; margin-bottom: 0.25rem;">
                                 Path</div>
                             <div id="bet-path"></div>
+                        </div>
+                    </div>
+                    <div class="msg details" id="wolfram-bet" style="flex-direction: column;">
+                        <div style="font-size: 0.9rem">Query</div>
+                        <div
+                            style="margin-top: 1rem; font-size: 0.7rem; display: flex; flex-direction: column; align-items: space-around; justify-content: center; border: 0; border-radius: 0">
+                            <div id="bet-wolfram-query"></div>
                         </div>
                     </div>
                     <div class="msg details" style="flex-direction: column;">

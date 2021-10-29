@@ -55,6 +55,8 @@ const queryTesterUrl = document.getElementById("query-tester-url");
 const queryTesterResult = document.getElementById("query-tester-result");
 const newBet = document.getElementById("new-bet");
 
+const urlBet = document.getElementById("url-bet");
+const wolframBet = document.getElementById("wolfram-bet");
 const betInnerInitialPool = document.getElementById("bet-initial-pool");
 const betInnerCommission = document.getElementById("bet-commission");
 const betInnerMinimum = document.getElementById("bet-minimum");
@@ -167,6 +169,11 @@ function triggerProcessing(msg, after) {
     triggerMessage(msg, "info", ["error", "success"], after, null, false);
     let i = 0;
     processing = setInterval(() => (innerMessage.innerHTML = msg + ".".repeat(i++ % 4)), 300);
+}
+
+async function showBetInfo() {
+    betInfo.style.display='flex';
+    
 }
 
 
@@ -299,6 +306,10 @@ async function searchBet(id) {
         const createdFilter = (await contract.queryFilter(contract.filters.CreatedBet(activeBet)))[0];
         const [initialPool, description, query] = createdFilter.args.slice(1).map(arg => arg.toString());
         const { url, schema, path } = unpackQuery(query);
+
+        wolframBet.style.display = schema ? "none" : "flex";
+        urlBet.style.display = schema ? "flex" : "none";
+
         urlSchema.innerHTML = schema || "Unknown";
         betUrl.innerHTML = url || query;
         betQuery.innerHTML = query;
