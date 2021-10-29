@@ -135,12 +135,12 @@ span {
     color: white;
 }
 
-.error {
+.close, .error {
     color: #f45977;
 }
 
 
-.error:hover {
+.close:hover, .error:hover {
     background-color: #f45977;
     color: white;
 }
