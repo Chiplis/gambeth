@@ -515,7 +515,7 @@ async function testQueryCreate() {
 
 async function testQuery(betType, url, errorMsg, after = defaultMessageLocation) {
     if (!url) {
-        triggerError("No URL detected.", after);
+        triggerError(`No ${betType == "URL" ? "URL" : "Query"} detected.`, after);
         return;
     }
     const payload = {
