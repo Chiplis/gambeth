@@ -174,8 +174,8 @@ function triggerProcessing(msg, after) {
 }
 
 async function showBetInfo() {
-    betInfo.style.display='flex';
-    
+    betInfo.style.display = 'flex';
+
 }
 
 
@@ -515,25 +515,22 @@ async function testQuery(betType, url, errorMsg, after = defaultMessageLocation)
     }
     const baseURL = "https://api.oraclize.it/api/v1/query";
     triggerProcessing("Querying", after);
+    let result;
+    const queryId = (await fetch(`${baseURL}/create`, { method: "POST", body: JSON.stringify(payload) }).then(r => r.json()).catch(console.log)).result.id;
+    let error;
     setTimeout(async () => {
-        let result;
-        const queryId = (await fetch(`${baseURL}/create`, { method: "POST", body: JSON.stringify(payload) }).then(r => r.json()).catch(console.log)).result.id;
-        let error;
-        setTimeout(async () => {
-            try {
-                const fullResult = (await fetch(`${baseURL}/${queryId}/status`).then(r => r.json()).catch(console.error));
-                const error = fullResult.result.checks.find(check => check.errors.length);
-                result = fullResult.result.checks[0].results[0];
-                if (error || !result) throw error;
-            } catch (error) {
-                console.error(error);
-                triggerError(errorMsg || "Error while trying to fetch result, check query and try again.", after);
-                return;
-            }
-            triggerSuccess("Result: " + result, null, after);
-        }, 5000);
-
-    }, 500);
+        try {
+            const fullResult = (await fetch(`${baseURL}/${queryId}/status`).then(r => r.json()).catch(console.error));
+            const error = fullResult.result.checks.find(check => check.errors.length);
+            result = fullResult.result.checks[0].results[0];
+            if (error || !result) throw error;
+        } catch (error) {
+            console.error(error);
+            triggerError(errorMsg || "Error while trying to fetch result, check query and try again.", after);
+            return;
+        }
+        triggerSuccess("Result: " + result, null, after);
+    }, 3000);
 }
 
 async function renderBetPool() {
