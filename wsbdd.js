@@ -506,7 +506,7 @@ async function testQuery(betType, url, errorMsg, after = defaultMessageLocation)
         try {
             const queryId = (await fetch(`${baseURL}/create`, { method: "POST", body: JSON.stringify(payload) }).then(r => r.json()).catch(console.log)).result.id;
             let error;
-            setTimeout(() => {
+            setTimeout(async () => {
                 const fullResult = (await fetch(`${baseURL}/${queryId}/status`).then(r => r.json()).catch(console.error));
                 error = fullResult.result.checks.find(check => check.errors.length);
                 result = fullResult.result.checks[0].results[0];
