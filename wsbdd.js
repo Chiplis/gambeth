@@ -87,9 +87,10 @@ const createBetBtn = () => {
     [betContainer.style.display, newBet.style.display] = ['none', 'flex'];
     steps[currentStep].style.position = "initial";
     steps[currentStep].style.opacity = "100%";
+    const prices = (await Promise.all(["URL", "WolframAlpha"].map(contract.lastQueryPrice))).map(weiToEth).map(price => price.toString());
     (async () => {
         createBetAmountLabel.innerHTML = `The <a href="https://provable.xyz">oracle service</a> that WSBDD uses to interact with the web needs to be paid for by the bet's creator.` + (contract
-            ? ` The suggested amount is ${weiToEth((await contract.lastQueryPrice())).toString()} ETH.`
+            ? ` The suggested amount is ${Math.max(prices[0], prices[1])} ETH.`
             : ``);
     })();
 }
