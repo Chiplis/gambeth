@@ -160,10 +160,10 @@ function triggerError(msg, after, click) {
     triggerMessage(msg, "error", ["info", "success"], after, click);
 }
 
-function triggerSuccess(msg, callback, after) {
+function triggerSuccess(msg, callback, after, delay = 0) {
     triggerMessage(msg, "success", ["info", "error"], after);
     if (callback) {
-        setTimeout(callback, 5000);
+        setTimeout(callback, delay);
     }
 }
 
@@ -200,8 +200,8 @@ async function loadProvider() {
         if (contract) {
             owner = await signer.getAddress();
             contract.on("LackingFunds", async (sender, funds) => { if (sender == owner) triggerError(`Insufficient query funds, requiring ${weiToEth(funds)} ETH`) });
-            contract.on("CreatedBet", async hashedBetId => { if (hashedBetId.hash == ethers.utils.id(newBetId || "")) triggerSuccess(`Bet created!`, () => { searchBet(newBetId); newBetId = null; }) });
-            contract.on("PlacedBets", async (sender, _, betId) => { if (sender == owner) triggerSuccess(`Bet placed!`, () => renderBetPool()) });
+            contract.on("CreatedBet", async hashedBetId => { if (hashedBetId.hash == ethers.utils.id(newBetId || "")) triggerSuccess(`Bet created!`, () => { searchBet(newBetId); newBetId = null; }, 2500) });
+            contract.on("PlacedBets", async (sender, _, betId) => { if (sender == owner) triggerSuccess(`Bet placed!`, renderBetPool) });
             contract.on("LostBet", async (sender) => { if (sender == owner) triggerSuccess("Bet lost, better luck next time!") });
             contract.on("UnwonBet", async (sender) => { if (sender == owner) triggerSuccess("No one won the bet, you've been refunded") });
             contract.on("WonBet", async (sender, amount) => { if (sender == owner) triggerSuccess(`Bet won! ${weiToEth(amount.toString())} ETH transferred to account`) });
