@@ -457,23 +457,25 @@ async function addBet() {
 }
 
 function changeBetType() {
-    const betType = createBetSchema.value.toUpperCase();
+    const betType = createBetSchema.value;
 
-    createBetWolfram.style.display = betType != "WA" ? "none" : "block";
+    createBetWolfram.style.display = betType != "wa" ? "none" : "block";
 
     [createBetUrl, createBetPath]
-        .forEach(elm => [elm.style.display, document.querySelector(`label[for="${elm.id}"]`).style.display] = Array(2).fill(betType == "WA" ? "none" : "block"));
-    [createBetWolfram.style.display, document.querySelector(`label[for="${createBetWolfram.id}"]`).style.display] = Array(2).fill(betType != "WA" ? "none" : "block");
-    createBetQuery.style.display = betType == "WA" ? "none" : "flex";
+        .forEach(elm => [elm.style.display, document.querySelector(`label[for="${elm.id}"]`).style.display] = Array(2).fill(betType == "wa" ? "none" : "block"));
+    [createBetWolfram.style.display, document.querySelector(`label[for="${createBetWolfram.id}"]`).style.display] = Array(2).fill(betType != "wa" ? "none" : "block");
+    createBetQuery.style.display = betType == "wa" ? "none" : "flex";
 
     createBetQueryInner.innerHTML = parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value);
     switch (betType) {
-        case "XML":
-        case "JSON":
-            createBetPathLabel.innerHTML = `Extract result from ${betType} node using <a href='https://github.com/FlowCommunications/JSONPath#expression-syntax' style='text-decoration: underline'>JSONPath</a>`
+        case "json":
+            createBetPathLabel.innerHTML = `Extract result from JSON node using <a href='https://github.com/FlowCommunications/JSONPath#expression-syntax' style='text-decoration: underline'>JSONPath</a>`
             break;
-        case "HTML":
+        case "html":
             createBetPathLabel.innerHTML = "Extract result from HTML node using <a href='https://www.w3.org/TR/xpath/' style='text-decoration: underline'>XPath</a>"
+            break;
+        case "xml":
+            createBetPathLabel.innerHTML = `Extract result from XML node using <a href='https://www.w3.org/TR/xpath/' style='text-decoration: underline'>XPath</a> or <a href='https://github.com/martinblech/xmltodict' style='text-decoration: underline'>xmltodict</a>`
             break;
     };
 }
