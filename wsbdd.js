@@ -408,6 +408,7 @@ async function createBet() {
 
         triggerProcessing("Creating bet", createBetQueryResult);
         await signedContract.createBet(value, createBetSchema.value == "wa" ? "WolframAlpha" : "URL", activeBet, query, deadline, schedule, commission, ethToWei(createBetMinimum.value), initialPool, description);
+    } catch (error) {
         newBetId = null;
         console.error(error);
         triggerError(providerErrorMsg(error), createBetQuery);
