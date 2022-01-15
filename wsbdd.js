@@ -212,7 +212,8 @@ async function loadProvider() {
         providerLoaded = true;
         return true;
     } catch (error) {
-        triggerError("Error while loading Ethereum provider: " + (error.code || error));
+        console.error(error);
+        triggerError("Error while loading Ethereum provider: " + (error.code || error) + (error.code == "CALL_EXCEPTION" ? ". Switch to Ropsten testnet" : ""));
         providerLoaded = false;
         return false;
     }
