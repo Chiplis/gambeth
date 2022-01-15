@@ -195,7 +195,7 @@ async function loadProvider() {
         provider = new ethers.providers.Web3Provider(window.ethereum);
         contractAddress = "0x445bfd90e2ee7c0d03738c96e62ca91198a2dd35";
         signer = provider.getSigner();
-        if (contractAbi) throw "ABI not loaded";
+        if (!contractAbi) throw "ABI not loaded";
         contract = new ethers.Contract(contractAddress, contractAbi, provider);
         signedContract = contract.connect(signer);
         if (contract) {
