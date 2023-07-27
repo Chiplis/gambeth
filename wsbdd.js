@@ -410,7 +410,7 @@ async function createBet() {
         const value = ethToWei(createBetAmount.value || "0").add(initialPool);
 
         triggerProcessing("Creating bet", createBetQueryResult);
-        await signedContract.createBet(createBetSchema.value == "wa" ? "WolframAlpha" : "URL", activeBet, query, deadline, schedule, commission, ethToWei(createBetMinimum.value), initialPool, description, { value: value.toString() });
+        await signedContract.createOracleBet(createBetSchema.value == "wa" ? "WolframAlpha" : "URL", activeBet, query, deadline, schedule, commission, ethToWei(createBetMinimum.value), initialPool, description, { value: value.toString() });
     } catch (error) {
         newBetId = null;
         console.error(error);
