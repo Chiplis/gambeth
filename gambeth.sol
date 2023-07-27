@@ -1,12 +1,12 @@
-pragma solidity > 0.6.1 < 0.7.0;
+pragma solidity >= 0.8.0 < 0.9.0;
 pragma experimental ABIEncoderV2;
 
-import "github.com/provable-things/ethereum-api/blob/master/provableAPI_0.6.sol";
+import "github.com/provable-things/ethereum-api/blob/master/provableAPI.sol";
 
-contract WeiStakesByDecentralizedDegenerates is usingProvable {
+contract Gambeth is usingProvable {
 
-    address payable contractCreator;
-    constructor() public payable {
+    address contractCreator;
+    constructor() payable {
         contractCreator = msg.sender;
     }
 
@@ -18,10 +18,10 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     mapping(string => uint64) public betSchedules;
 
     // There's a 0.0001 ETH fixed commission transferred to the contract's creator for every placed bet
-    uint256 public constant fixedCommission = 1e14;
+    uint256 public constant FIXED_COMMISSION = 1e14;
 
-    // Minimum entry for all bets, bet creators cannot set it lower than this 
-    uint256 public constant minimumBet = fixedCommission * 2;
+    // Minimum entry for all bets, bet creators cannot set it lower than this
+    uint256 public constant MINIMUM_BET = FIXED_COMMISSION * 2;
 
     // Custom minimum entry for each bet, set by their creator
     mapping(string => uint256) public betMinimums;
@@ -33,7 +33,7 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     mapping(bytes32 => string) public queryBets;
 
     // Keep track of all owners to handle commission fees
-    mapping(string => address payable) public betOwners;
+    mapping(string => address) public betOwners;
     mapping(string => uint256) public betCommissions;
 
     // For each bet, how much each has each user put into that bet's pool?
@@ -47,18 +47,18 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     mapping(string => uint256) public lastQueryPrice;
 
     // Queries can't be scheduled more than 60 days in the future
-    uint64 constant scheduleThreshold = 60 * 24 * 60 * 60;
+    uint64 constant public SCHEDULE_THRESHOLD = 60 * 24 * 60 * 60;
 
-    /* Provable's API requires some initial funds to cover the cost of the query. 
+    /* Provable's API requires some initial funds to cover the cost of the query.
     If they are not enough to pay for it, the user should be informed and their funds returned. */
     event LackingFunds(address indexed sender, uint256 funds);
 
-    /* Contains all the information that does not need to be saved as a state variable, 
+    /* Contains all the information that does not need to be saved as a state variable,
     but which can prove useful to people taking a look at the bet in the frontend. */
     event CreatedOracleBet(string indexed _id, uint256 initialPool, string description, string query);
     event CreatedHumanBet(string indexed _id, uint256 initialPool, string description);
 
-    function createBet(address sender, uint256 commission, uint64 deadline, uint64 schedule, uint256 minimum, uint256 initialPool) private {
+    function createBet(address sender, string memory betId, uint256 commission, uint64 deadline, uint64 schedule, uint256 minimum, uint256 initialPool) private {
         // Nothing fancy going on here, just boring old state updates
         betOwners[betId] = sender;
         betCommissions[betId] = commission;
@@ -77,15 +77,15 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
             bytes(betId).length > 0
             && deadline > block.timestamp // Bet can't be set in the past
             && deadline <= schedule // Users should only be able to place bets before it is actually executed
-            && schedule < block.timestamp + scheduleThreshold
+            && schedule < block.timestamp + SCHEDULE_THRESHOLD
             && msg.value >= initialPool
             && commission > 1 // Commission can't be higher than 50%
-            && minimum >= minimumBet
+            && minimum >= MINIMUM_BET
             && !createdBets[betId], // Can't have duplicate bets
             "Unable to create bet, check arguments."
         );
 
-        createBet(msg.sender, commission, deadline, schedule, minimum, initialPool);
+        createBet(msg.sender, betId, commission, deadline, schedule, minimum, initialPool);
         emit CreatedHumanBet(betId, initialPool, description);
     }
 
@@ -95,10 +95,10 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
             bytes(betId).length > 0
             && deadline > block.timestamp // Bet can't be set in the past
             && deadline <= schedule // Users should only be able to place bets before it is actually executed
-            && schedule < block.timestamp + scheduleThreshold
+            && schedule < block.timestamp + SCHEDULE_THRESHOLD
             && msg.value >= initialPool
             && commission > 1 // Commission can't be higher than 50%
-            && minimum >= minimumBet
+            && minimum >= MINIMUM_BET
             && !createdBets[betId], // Can't have duplicate bets
             "Unable to create bet, check arguments."
         );
@@ -109,20 +109,20 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
         lastQueryPrice[betType] = provable_getPrice(betType);
         if (lastQueryPrice[betType] > balance) {
             emit LackingFunds(msg.sender, lastQueryPrice[betType]);
-            (bool success,) = msg.sender.call.value(msg.value)("");
+            (bool success,) = msg.sender.call{value: msg.value}("");
             require(success, "Error when returning funds to bet owner.");
             return;
         }
 
-        // Bet creation should succeed from this point onward 
+        // Bet creation should succeed from this point onward
         createdBets[betId] = true;
 
-        /* Even though the oracle query is scheduled to run in the future, 
+        /* Even though the oracle query is scheduled to run in the future,
         it immediately returns a query ID which we associate with the newly created bet. */
         bytes32 queryId = provable_query(schedule, betType, query);
         queryBets[queryId] = betId;
 
-        createBet(msg.sender, commission, deadline, schedule, minimum, initialPool);
+        createBet(msg.sender, betId, commission, deadline, schedule, minimum, initialPool);
 
         emit CreatedOracleBet(betId, initialPool, description, query);
     }
@@ -161,18 +161,18 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
         );
 
         // Fixed commission transfer
-        (bool success,) = contractCreator.call.value(fixedCommission * results.length)("");
+        (bool success,) = contractCreator.call{value: FIXED_COMMISSION * results.length}("");
         require(success, "Failed to transfer fixed commission to contract creator.");
 
         uint256 total = msg.value;
         for (uint i = 0; i < results.length; i++) {
 
-            /* More than one bet can be placed at the same time, 
+            /* More than one bet can be placed at the same time,
             need to be careful the transaction funds are never less than all combined bets.
             */
             uint256 bet = amounts[i];
             total -= bet;
-            bet -= fixedCommission;
+            bet -= FIXED_COMMISSION;
 
             /* When the oracle fails an empty string is returned,
             so by not allowing anyone to bet on an empty string bets can be refunded if an error happens.
@@ -197,11 +197,11 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     // For each bet, track which users have already claimed their potential reward
     mapping(string => mapping(address => bool)) public claimedBets;
 
-    /* If the oracle service's scheduled callback was not executed after 5 days, 
-    a user can reclaim his funds after the bet's execution threshold has passed. 
+    /* If the oracle service's scheduled callback was not executed after 5 days,
+    a user can reclaim his funds after the bet's execution threshold has passed.
     Note that even if the callback execution is delayed,
     Provable's oracle should've extracted the result at the originally scheduled time. */
-    uint64 constant betThreshold = 5 * 24 * 60 * 60;
+    uint64 constant public BET_THRESHOLD = 5 * 24 * 60 * 60;
 
     // If the user wins the bet, let them know along with the reward amount.
     event WonBet(address indexed winner, uint256 won);
@@ -209,12 +209,12 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     // If the user lost no funds are claimable.
     event LostBet(address indexed loser);
 
-    /* If no one wins the bet the funds can be refunded to the user, 
+    /* If no one wins the bet the funds can be refunded to the user,
     after the bet creator's takes their cut. */
     event UnwonBet(address indexed refunded);
 
     function claimBet(string calldata betId) public {
-        bool betExpired = betSchedules[betId] + betThreshold < block.timestamp;
+        bool betExpired = betSchedules[betId] + BET_THRESHOLD < block.timestamp;
 
         // If the bet has not finished but its threshold has been reached, let the user get back their funds
         require(
@@ -256,9 +256,9 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
         // Bet owner gets their commission
         uint256 ownerFee = reward / betCommissions[betId];
         reward -= ownerFee;
-        (bool success,) = msg.sender.call.value(reward)("");
+        (bool success,) = msg.sender.call{value: reward}("");
         require(success, "Failed to transfer reward to user.");
-        (success,) = betOwners[betId].call.value(ownerFee)("");
+        (success,) = betOwners[betId].call{value: ownerFee}("");
         require(success, "Failed to transfer commission to bet owner.");
     }
 
@@ -267,7 +267,7 @@ contract WeiStakesByDecentralizedDegenerates is usingProvable {
     mapping(string => string) public betResults;
 
     // Function executed by Provable's oracle when the bet is scheduled to run
-    function __callback(bytes32 queryId, string memory result) override public {
+    function __callback(bytes32 queryId, string memory result) public {
         string memory betId = queryBets[queryId];
 
         /* Callback is sometimes executed twice,  so we add an additional check
