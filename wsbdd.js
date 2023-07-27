@@ -6,6 +6,8 @@ const placeBet = document.getElementById("place-bet");
 const scheduleDate = document.getElementById("schedule-date");
 const deadlineDate = document.getElementById("deadline-date");
 const betId = document.getElementById("create-bet-id");
+const betIdLabel = document.getElementById("create-bet-id-label");
+const betIdMsg = "Your bet's name is a unique identifier which lets other users search for it. https://wsbdd.net/?id={BET_ID} is a quick way to share your bet with the world!";
 const createBetUrl = document.getElementById("create-bet-url");
 const placeBetResult = document.getElementById("place-bet-result");
 const placeBetAmount = document.getElementById("place-bet-amount");
@@ -66,6 +68,8 @@ const betResult = document.getElementById("bet-result");
 const betQuery = document.getElementById("bet-query");
 const betWolframQuery = document.getElementById("bet-wolfram-query");
 const betInnerResult = document.getElementById("bet-inner-result");
+
+const betIdChanged = () => betIdLabel.innerHTML = betIdMsg.replace("{BET_ID}", betId.value.trim());
 
 const closeNewBet = () => {
     newBet.hideBet = newBet.style.display = 'none';
@@ -308,7 +312,7 @@ async function searchBet(id) {
         location.searchParams.set("id", activeBet);
         history.pushState({}, "", location.toString());
         betContainer.style.display = "flex";
-        const createdFilter = (await contract.queryFilter(contract.filters.CreatedBet(activeBet)))[0];
+        const createdFilter = (await contract.queryFilter(contract.filters.CreatedOracleBet(activeBet)))[0];
         const [initialPool, description, query] = createdFilter.args.slice(1).map(arg => arg.toString());
         const { url, schema, path } = unpackQuery(query);
 
