@@ -7,7 +7,7 @@ const scheduleDate = document.getElementById("schedule-date");
 const deadlineDate = document.getElementById("deadline-date");
 const betId = document.getElementById("create-bet-id");
 const betIdLabel = document.getElementById("create-bet-id-label");
-const betIdMsg = "Your bet's name is a unique identifier which lets other users search for it. https://wsbdd.net/?id={BET_ID} is a quick way to share your bet with the world!";
+const betIdMsg = "Your bet's name is a unique identifier which lets other users search for it. https://gambeth.com/?id={BET_ID} is a quick way to share your bet with the world!";
 const createBetUrl = document.getElementById("create-bet-url");
 const placeBetResult = document.getElementById("place-bet-result");
 const placeBetAmount = document.getElementById("place-bet-amount");
@@ -93,7 +93,7 @@ const createBetBtn = async () => {
     steps[currentStep].style.opacity = "100%";
     const prices = (await Promise.all(["URL", "WolframAlpha"].map(t => contract.lastQueryPrice(t)))).map(weiToEth).map(price => price.toString());
     (async () => {
-        createBetAmountLabel.innerHTML = `The <a href="https://provable.xyz">oracle service</a> that WSBDD uses to interact with the web needs to be paid for by the bet's creator.` + (contract
+        createBetAmountLabel.innerHTML = `The <a href="https://provable.xyz">oracle service</a> that Gambeth uses to interact with the web needs to be paid for by the bet's creator.` + (contract
             ? ` The suggested amount is ${Math.max(prices[0], prices[1])} ETH.`
             : ``);
     })();

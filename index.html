@@ -1,10 +1,10 @@
 <head>
     <title>Gambeth</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.4.7/ethers.umd.min.js"></script>
-    <script src="./wsbdd-abi.js"></script>
+    <script src="gambeth-abi.js"></script>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <link rel="stylesheet" href="./wsbdd.css">
+    <link rel="stylesheet" href="gambeth.css">
     <link rel=“shortcut icon” href="/favicon.ico" type=“image/x-icon”>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
 <body style="margin: 0; font-size: 25px">
     <div
         style="border: 0; width: 100%; position: fixed; background-color: white; left: 0; display: flex; flex-direction: row; justify-content: space-around; align-items: center;">
-        <a href="/" style="align-items: center;text-decoration: none; display:flex; flex-direction: column" id="wsbdd"
+        <a href="/" style="align-items: center;text-decoration: none; display:flex; flex-direction: column" id="gambeth"
             style="text-decoration: none; margin-bottom: 3vw; flex-direction: column; font-size: 5vw; align-items: center; display: flex; justify-content: center">
             <div style="display: flex">
                 <div style="color: cornflowerblue">Gamb.eth</div>
@@ -361,7 +361,7 @@
                 <div>
                     <h3>How do I sign up?</h3>
                     <p>
-                        You can't! All server communication is delegated to the oracle contract, so using WSBDD is as
+                        You can't! All server communication is delegated to the oracle contract, so using Gambeth is as
                         simple as
                         having <a href="https://metamask.io/">MetaMask</a> installed and some funds in your account.
                     </p>
@@ -370,11 +370,11 @@
                     <h3>How can I trust you?</h3>
                     <p>
                         You don't have to! The entire source code for the project is <a
-                            href="https://github.com/nicolas-siplis/wsbdd">available on Github</a>.
+                            href="https://github.com/Chiplis/wsbdd">available on Github</a>.
                         If that's not enough, you can take a look at the <a
                             href="https://etherscan.io/address/0xbB2Dfc930A209Aa32E49f0b49264ba6b4270782A#code">contract's
                             verified code in Etherscan</a>.
-                        As for how the results are being fetched, WSBDD relies on <a
+                        As for how the results are being fetched, Gambeth relies on <a
                             href="https://provable.xyz/">Provable's blockchain oracle</a>,
                         one of the oldest and most well-known in the field. In the future, I'd like to further integrate
                         with <a href="https://docs.provable.xyz/#ethereum-quick-start-authenticity-proofs">Provable's
@@ -400,7 +400,7 @@
                     <h3>What happens if I win?</h3>
                     <p>
                         First of all, congratulations! After the bet has been executed and the result uploaded to the
-                        blockchain, all you need to do is lookup the bet's ID in WSBDD and click on the "Claim Bet"
+                        blockchain, all you need to do is lookup the bet's ID in Gambeth and click on the "Claim Bet"
                         button.
                         Your earnings will be dependent on two factors: your share of the winner's pool, and the bet's
                         commission costs (fixed 0.0001 ETH + a custom % set by the bet's owner).
@@ -471,5 +471,5 @@
             </div>
         </div>
     </div>
-    <script src="./wsbdd.js"></script>
+    <script src="gambeth.js"></script>
 </body>
