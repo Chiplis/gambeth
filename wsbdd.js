@@ -193,7 +193,7 @@ async function loadProvider() {
         }
 
         provider = new ethers.providers.Web3Provider(window.ethereum);
-        contractAddress = "0x445bfd90e2ee7c0d03738c96e62ca91198a2dd35";
+        contractAddress = "0x4037ce79abd7D1206a66df8a5ff56A91e82D957b";
         signer = provider.getSigner();
         if (!contractAbi) throw "ABI not loaded";
         contract = new ethers.Contract(contractAddress, contractAbi, provider);
@@ -201,7 +201,8 @@ async function loadProvider() {
         if (contract) {
             owner = await signer.getAddress();
             contract.on("LackingFunds", async (sender, funds) => { if (sender == owner) triggerError(`Insufficient query funds, requiring ${weiToEth(funds)} ETH`) });
-            contract.on("CreatedBet", async hashedBetId => { if (hashedBetId.hash == ethers.utils.id(newBetId || "")) triggerSuccess(`Bet created!`, () => { searchBet(newBetId); newBetId = null; }, 2500) });
+            contract.on("CreatedHumanBet", async hashedBetId => { if (hashedBetId.hash == ethers.utils.id(newBetId || "")) triggerSuccess(`Bet created!`, () => { searchBet(newBetId); newBetId = null; }, 2500) });
+            contract.on("CreatedOracleBet", async hashedBetId => { if (hashedBetId.hash == ethers.utils.id(newBetId || "")) triggerSuccess(`Bet created!`, () => { searchBet(newBetId); newBetId = null; }, 2500) });
             contract.on("PlacedBets", async (sender, _, betId) => { if (sender == owner) triggerSuccess(`Bet placed!`, renderBetPool) });
             contract.on("LostBet", async (sender) => { if (sender == owner) triggerSuccess("Bet lost, better luck next time!") });
             contract.on("UnwonBet", async (sender) => { if (sender == owner) triggerSuccess("No one won the bet, you've been refunded") });
@@ -213,7 +214,7 @@ async function loadProvider() {
         return true;
     } catch (error) {
         console.error(error);
-        triggerError("Error while loading Ethereum provider: " + (error.code || error) + (error.code == "CALL_EXCEPTION" ? ". Switch to Ropsten testnet" : ""));
+        triggerError("Error while loading Ethereum provider: " + (error.code || error) + (error.code == "CALL_EXCEPTION" ? ". Switch to Goerli testnet" : ""));
         providerLoaded = false;
         return false;
     }
@@ -221,7 +222,7 @@ async function loadProvider() {
 
 loadProvider();
 
-const ethToWei = (eth) => ethers.utils.parseEther(eth);
+const ethToWei = ethers.utils.parseEther;
 const weiToEth = (wei) => (wei / Math.pow(10, 18)).toString();
 
 const createBetAmountTitle = `Provable's oracle service used by WSBDD needs to be paid for by the bet's creator.`;
