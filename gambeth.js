@@ -197,7 +197,7 @@ async function loadProvider() {
         }
 
         provider = new ethers.providers.Web3Provider(window.ethereum);
-        contractAddress = "0xb52cDC2e2271d6346951bb40c974c2bc19AeD6D3";
+        contractAddress = "0x4037ce79abd7D1206a66df8a5ff56A91e82D957b";
         signer = provider.getSigner();
         if (!contractAbi) throw "ABI not loaded";
         contract = new ethers.Contract(contractAddress, contractAbi, provider);
@@ -218,7 +218,7 @@ async function loadProvider() {
         return true;
     } catch (error) {
         console.error(error);
-        triggerError("Error while loading Ethereum provider: " + (error.code || error) + (error.code == "CALL_EXCEPTION" ? ". Switch to Goerli testnet" : ""));
+        triggerError("Error while loading Ethereum provider: " + (error.code || error) + (error.code == "CALL_EXCEPTION" ? ". Switch to Sepolia testnet" : ""));
         providerLoaded = false;
         return false;
     }
