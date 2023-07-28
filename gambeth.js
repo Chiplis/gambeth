@@ -197,7 +197,7 @@ async function loadProvider() {
         }
 
         provider = new ethers.providers.Web3Provider(window.ethereum);
-        contractAddress = "0x4037ce79abd7D1206a66df8a5ff56A91e82D957b";
+        contractAddress = "0xb52cDC2e2271d6346951bb40c974c2bc19AeD6D3";
         signer = provider.getSigner();
         if (!contractAbi) throw "ABI not loaded";
         contract = new ethers.Contract(contractAddress, contractAbi, provider);
@@ -312,8 +312,11 @@ async function searchBet(id) {
         location.searchParams.set("id", activeBet);
         history.pushState({}, "", location.toString());
         betContainer.style.display = "flex";
-        const createdFilter = (await contract.queryFilter(contract.filters.CreatedOracleBet(activeBet)))[0];
-        const [initialPool, description, query] = createdFilter.args.slice(1).map(arg => arg.toString());
+        const oracleBets = await contract.queryFilter(contract.filters.CreatedOracleBet(activeBet));
+        const humanBets = await contract.queryFilter(contract.filters.CreatedHumanBet(activeBet));
+        const createdFilter = oracleBets.concat(humanBets)[0];
+        const [initialPool, description] = createdFilter.args.slice(1).map(arg => arg.toString());
+        const query = (await contract.queries(activeBet));
         const { url, schema, path } = unpackQuery(query);
 
         wolframBet.style.display = schema ? "none" : "flex";

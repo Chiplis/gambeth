@@ -30,6 +30,7 @@ contract Gambeth is usingProvable {
     mapping(string => bool) public createdBets;
 
     // Once a query is executed by the oracle, associate its ID with the bet's ID to handle updating the bet's state in __callback
+    mapping(string => string) public queries;
     mapping(bytes32 => string) public queryBets;
 
     // Keep track of all owners to handle commission fees
@@ -46,8 +47,12 @@ contract Gambeth is usingProvable {
     its last price is saved and then suggested in the frontend. */
     mapping(string => uint256) public lastQueryPrice;
 
+    mapping(string => string) public betTypes;
+
     // Queries can't be scheduled more than 60 days in the future
     uint64 constant public SCHEDULE_THRESHOLD = 60 * 24 * 60 * 60;
+    // So we use recursive queries that get continuously rescheduled until the deadline
+    uint64 constant public NEXT_SCHEDULE = (SCHEDULE_THRESHOLD / 100) * 95;
 
     /* Provable's API requires some initial funds to cover the cost of the query.
     If they are not enough to pay for it, the user should be informed and their funds returned. */
@@ -55,7 +60,7 @@ contract Gambeth is usingProvable {
 
     /* Contains all the information that does not need to be saved as a state variable,
     but which can prove useful to people taking a look at the bet in the frontend. */
-    event CreatedOracleBet(string indexed _id, uint256 initialPool, string description, string query);
+    event CreatedOracleBet(string indexed _id, uint256 initialPool, string description);
     event CreatedHumanBet(string indexed _id, uint256 initialPool, string description);
 
     function createBet(address sender, string memory betId, uint256 commission, uint64 deadline, uint64 schedule, uint256 minimum, uint256 initialPool) private {
@@ -77,14 +82,13 @@ contract Gambeth is usingProvable {
             bytes(betId).length > 0
             && deadline > block.timestamp // Bet can't be set in the past
             && deadline <= schedule // Users should only be able to place bets before it is actually executed
-            && schedule < block.timestamp + SCHEDULE_THRESHOLD
             && msg.value >= initialPool
             && commission > 1 // Commission can't be higher than 50%
             && minimum >= MINIMUM_BET
             && !createdBets[betId], // Can't have duplicate bets
             "Unable to create bet, check arguments."
         );
-
+        queries[betId] = description;
         createBet(msg.sender, betId, commission, deadline, schedule, minimum, initialPool);
         emit CreatedHumanBet(betId, initialPool, description);
     }
@@ -95,7 +99,6 @@ contract Gambeth is usingProvable {
             bytes(betId).length > 0
             && deadline > block.timestamp // Bet can't be set in the past
             && deadline <= schedule // Users should only be able to place bets before it is actually executed
-            && schedule < block.timestamp + SCHEDULE_THRESHOLD
             && msg.value >= initialPool
             && commission > 1 // Commission can't be higher than 50%
             && minimum >= MINIMUM_BET
@@ -119,12 +122,19 @@ contract Gambeth is usingProvable {
 
         /* Even though the oracle query is scheduled to run in the future,
         it immediately returns a query ID which we associate with the newly created bet. */
-        bytes32 queryId = provable_query(schedule, betType, query);
+        uint256 querySchedule = schedule;
+        if (schedule > block.timestamp + SCHEDULE_THRESHOLD) {
+            querySchedule = block.timestamp + NEXT_SCHEDULE;
+        }
+
+        bytes32 queryId = provable_query(querySchedule, betType, query);
+        betTypes[betId] = betType;
+        queries[betId] = query;
         queryBets[queryId] = betId;
 
         createBet(msg.sender, betId, commission, deadline, schedule, minimum, initialPool);
 
-        emit CreatedOracleBet(betId, initialPool, description, query);
+        emit CreatedOracleBet(betId, initialPool, description);
     }
 
     function decideHumanBet(string memory betId, string memory result) public payable {
@@ -273,6 +283,17 @@ contract Gambeth is usingProvable {
         /* Callback is sometimes executed twice,  so we add an additional check
         to make sure state is only modified the first time. */
         require(msg.sender == provable_cbAddress() && !finishedBets[betId]);
+
+        // Recursive query required since scheduled execution is after 60 day max threshold
+        if (betSchedules[betId] > block.timestamp) {
+            uint256 nextSchedule = betSchedules[betId];
+            if (betSchedules[betId] > block.timestamp + SCHEDULE_THRESHOLD) {
+                nextSchedule = block.timestamp + NEXT_SCHEDULE;
+            }
+            bytes32 nextQueryId = provable_query(nextSchedule, betTypes[betId], queries[betId]);
+            queryBets[nextQueryId] = betId;
+            return;
+        }
 
         betResults[betId] = result;
         finishedBets[betId] = true;

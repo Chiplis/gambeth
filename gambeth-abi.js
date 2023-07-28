@@ -44,12 +44,6 @@ window.contractAbi = [
                 "internalType": "string",
                 "name": "description",
                 "type": "string"
-            },
-            {
-                "indexed": false,
-                "internalType": "string",
-                "name": "query",
-                "type": "string"
             }
         ],
         "name": "CreatedOracleBet",
@@ -324,6 +318,19 @@ window.contractAbi = [
         "type": "constructor"
     },
     {
+        "inputs": [],
+        "name": "BET_THRESHOLD",
+        "outputs": [
+            {
+                "internalType": "uint64",
+                "name": "",
+                "type": "uint64"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
                 "internalType": "string",
@@ -462,6 +469,25 @@ window.contractAbi = [
                 "internalType": "string",
                 "name": "",
                 "type": "string"
+            }
+        ],
+        "name": "betTypes",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
             },
             {
                 "internalType": "address",
@@ -520,7 +546,7 @@ window.contractAbi = [
     },
     {
         "inputs": [],
-        "name": "fixedCommission",
+        "name": "FIXED_COMMISSION",
         "outputs": [
             {
                 "internalType": "uint256",
@@ -552,12 +578,44 @@ window.contractAbi = [
     },
     {
         "inputs": [],
-        "name": "minimumBet",
+        "name": "MINIMUM_BET",
         "outputs": [
             {
                 "internalType": "uint256",
                 "name": "",
                 "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "NEXT_SCHEDULE",
+        "outputs": [
+            {
+                "internalType": "uint64",
+                "name": "",
+                "type": "uint64"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "name": "queries",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
             }
         ],
         "stateMutability": "view",
@@ -601,6 +659,19 @@ window.contractAbi = [
                 "internalType": "uint256",
                 "name": "",
                 "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "SCHEDULE_THRESHOLD",
+        "outputs": [
+            {
+                "internalType": "uint64",
+                "name": "",
+                "type": "uint64"
             }
         ],
         "stateMutability": "view",
