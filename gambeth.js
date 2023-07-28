@@ -197,7 +197,7 @@ async function loadProvider() {
         }
 
         provider = new ethers.providers.Web3Provider(window.ethereum);
-        contractAddress = "0x4037ce79abd7D1206a66df8a5ff56A91e82D957b";
+        contractAddress = "0x8ad94b0c4f1F544E7A4F303dcfa86BcD60122024";
         signer = provider.getSigner();
         if (!contractAbi) throw "ABI not loaded";
         contract = new ethers.Contract(contractAddress, contractAbi, provider);
@@ -229,7 +229,7 @@ loadProvider();
 const ethToWei = ethers.utils.parseEther;
 const weiToEth = (wei) => (wei / Math.pow(10, 18)).toString();
 
-const createBetAmountTitle = `Provable's oracle service used by WSBDD needs to be paid for by the bet's creator.`;
+const createBetAmountTitle = `Provable's oracle service used by Gambeth needs to be paid for by the bet's creator.`;
 createBetAmountLabel.title = createBetAmountTitle;
 
 window.onload = () => {

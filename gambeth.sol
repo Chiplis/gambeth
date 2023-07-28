@@ -176,23 +176,23 @@ contract Gambeth is usingProvable {
 
         uint256 total = msg.value;
         for (uint i = 0; i < results.length; i++) {
-
-            /* More than one bet can be placed at the same time,
-            need to be careful the transaction funds are never less than all combined bets.
-            */
-            uint256 bet = amounts[i];
-            total -= bet;
-            bet -= FIXED_COMMISSION;
-
             /* When the oracle fails an empty string is returned,
             so by not allowing anyone to bet on an empty string bets can be refunded if an error happens.
             */
+            uint256 bet = amounts[i];
             require(
                 bytes(results[i]).length > 0
                 && total >= bet
                 && bet >= betMinimums[betId],
                 "Attempted to place invalid bet, check amounts and results"
             );
+
+
+            /* More than one bet can be placed at the same time,
+            need to be careful the transaction funds are never less than all combined bets.
+            */
+            total -= bet;
+            bet -= FIXED_COMMISSION;
 
             // Update all required state
             resultPools[betId][results[i]] += bet;
