@@ -211,8 +211,8 @@ async function loadProvider() {
             contract.on("LostBet", async (sender) => { if (sender == owner) triggerSuccess("Bet lost, better luck next time!") });
             contract.on("UnwonBet", async (sender) => { if (sender == owner) triggerSuccess("No one won the bet, you've been refunded") });
             contract.on("WonBet", async (sender, amount) => { if (sender == owner) triggerSuccess(`Bet won! ${weiToEth(amount.toString())} ETH transferred to account`) });
-            minimumBet = weiToEth(await contract.minimumBet());
-            fixedCommission = weiToEth(await contract.fixedCommission());
+            minimumBet = weiToEth(await contract.MINIMUM_BET());
+            fixedCommission = weiToEth(await contract.FIXED_COMMISSION());
         }
         providerLoaded = true;
         return true;
