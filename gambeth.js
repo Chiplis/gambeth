@@ -11,6 +11,8 @@ const deadlineDate = document.getElementById("deadline-date");
 const betId = document.getElementById("create-bet-id");
 const betIdLabel = document.getElementById("create-bet-id-label");
 const betIdMsg = "Your bet's name is a unique identifier which lets other users search for it. https://gambeth.com/?id={BET_ID} is a quick way to share your bet with the world!";
+const decideBetResult = document.getElementById("decide-bet-result");
+const betDecision = document.getElementById("bet-decision");
 const createBetUrl = document.getElementById("create-bet-url");
 const placeBetResult = document.getElementById("place-bet-result");
 const placeBetAmount = document.getElementById("place-bet-amount");
@@ -302,7 +304,12 @@ async function renderClaimBet() {
 
 async function renderPlaceBet() {
     const betFinished = await contract.finishedBets(activeBet);
-    const deadlineReached = (await contract.betDeadlines(activeBet)) <= Math.round(new Date().getTime() / 1000);
+    const betType = await contract.betTypes(activeBet);
+    const deadline = await contract.betDeadlines(activeBet) * BigInt(1000);
+    betDecision.style.display = betFinished || betType || new Date() < new Date(Number(deadline.toString()))
+        ? "none"
+        : "block";
+    const deadlineReached = deadline <= Math.round(new Date().getTime());
     const bettingDisabled = betFinished || deadlineReached;
 
     placeBet.style.visibility = "visible";
@@ -311,7 +318,9 @@ async function renderPlaceBet() {
     placeBetInputs.style.display = bettingDisabled ? "none" : "flex";
     placeBetInputs.style.opacity = bettingDisabled ? 0 : "100%";
     placeBetInputs.style.visibility = bettingDisabled ? "hidden" : "visible";
-    placeBetAmount.placeholder = `${weiToEth(await contract.betMinimums(activeBet))} minimum`;
+    const min = weiToEth(await contract.betMinimums(activeBet));
+    placeBetAmount.setAttribute("min", min);
+    placeBetAmount.placeholder = `${min} minimum`;
     placeBet.innerHTML = bettingDisabled ? (betFinished ? "Finished" : "Deadline Reached") : "Place Bet";
     placeSingleBet.style.display = bettingDisabled ? "none" : "block";
     placeBet.disabled = bettingDisabled;
@@ -544,6 +553,16 @@ async function claimReward() {
     try {
         triggerProcessing("Claming reward");
         signedContract.claimBet(activeBet);
+    } catch (error) {
+        console.error(error);
+        triggerError(providerErrorMsg(error));
+    }
+}
+
+async function decideBet() {
+    try {
+        triggerProcessing("Settling bet");
+        signedContract.decideBet(activeBet, decideBetResult.value);
     } catch (error) {
         console.error(error);
         triggerError(providerErrorMsg(error));

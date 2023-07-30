@@ -176,6 +176,10 @@
             <div id="bet-container" style="display: none">
                 <div id="bet-operations"
                     style="display: flex; flex-direction: row; justify-content: space-around; width: 100%">
+                    <div id="bet-decision">
+                        <label for="decide-bet-result"><button class="btn link" id="decide-bet" onclick="decideBet()">Bet Decision</button></label>
+                        <input name="decide-bet-result" id="decide-bet-result"/>
+                    </div>
                     <button class="btn link" id="claim-bet" onclick="claimReward()"></button>
                     <button class="btn link" id="place-bet" onclick="addBet()"></button>
                     <div id="place-bet-inputs" style="display: flex; flex-direction: column">
