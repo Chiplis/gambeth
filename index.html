@@ -1,6 +1,6 @@
 <head>
     <title>Gambeth</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.4.7/ethers.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.6.7/ethers.umd.min.js"></script>
     <script src="gambeth-abi.js"></script>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
@@ -79,7 +79,7 @@
                         style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
                         <div class="btn info" style="border: 0; margin: 0">Minimum entry</div>
                         <div style="display: flex; align-items: center">
-                            <input id="create-bet-minimum" min="0.0002" inputmode="decimal" style="margin: 0.5rem;" />
+                            <input id="create-bet-minimum" inputmode="decimal" style="margin: 0.5rem;" />
                             <div class="info" style="color: cornflowerblue; background-color: transparent">ETH</div>
                         </div>
                         <label for="create-bet-minimum">
@@ -128,12 +128,13 @@
 
                         <select onchange="changeBetType()" style="margin-top: 1rem; text-align: center"
                             name="create-bet-schema" id="create-bet-schema">
-                            <option value="wa" selected>Natural language query with WolframAlpha</option>
-                            <option value="xml">Process XML data</option>
-                            <option value="json">Process JSON data</option>
+                            <option value="bc" selected>Bet creator's decision</option>
+                            <option value="wa">WolframAlpha oracle query</option>
+                            <option value="xml">XML oracle query</option>
+                            <option value="json">JSON oracle query</option>
                             <option value="html">Process HTML data</option>
                         </select>
-                        <label for="create-bet-schema" style="margin-top: 1em">How should the contract determine the result of your bet? If you're not sure how to do it, WolframAlpha is the easiest approach.</label>
+                        <label for="create-bet-schema" style="margin-top: 1em">How should the contract determine the result of your bet?</label>
 
                         <input style="display: none"
                             oninput="createBetQueryInner.innerHTML=parseBetQuery(createBetSchema.value, this.value, createBetPath.value)"
@@ -142,9 +143,9 @@
                             style="width: 75%; margin-top: 1em" />
                         <label style="display: none" for="create-bet-url">Determine bet result by choosing the website which contains it</label>
 
-                        <input id="create-bet-wa" type="text" placeholder="Winner of the 2020 Super Bowl"
+                        <input id="create-bet-wa" type="text" placeholder="Winner of the 2038 Super Bowl"
                             style="width: 75%; margin-top: 1em" />
-                        <label for="create-bet-wa">Determine bet result using natural language</label>
+                        <label for="create-bet-wa">What will the bet determine?</label>
 
                         <input style="display: none"
                             oninput="createBetQueryInner.innerHTML=parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value)"

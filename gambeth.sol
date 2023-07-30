@@ -65,6 +65,7 @@ contract Gambeth is usingProvable {
 
     function createBet(address sender, string memory betId, uint256 commission, uint64 deadline, uint64 schedule, uint256 minimum, uint256 initialPool) private {
         // Nothing fancy going on here, just boring old state updates
+
         betOwners[betId] = sender;
         betCommissions[betId] = commission;
         betDeadlines[betId] = deadline;
@@ -75,6 +76,9 @@ contract Gambeth is usingProvable {
         we allow the creator to incentivize people to participate. */
         userPools[betId][msg.sender] += initialPool;
         betPools[betId] = initialPool;
+
+        // Bet creation should succeed from this point onward
+        createdBets[betId] = true;
     }
 
     function createHumanBet(string memory betId, uint64 deadline, uint64 schedule, uint256 commission, uint256 minimum, uint256 initialPool, string calldata description) public payable {
@@ -116,9 +120,6 @@ contract Gambeth is usingProvable {
             require(success, "Error when returning funds to bet owner.");
             return;
         }
-
-        // Bet creation should succeed from this point onward
-        createdBets[betId] = true;
 
         /* Even though the oracle query is scheduled to run in the future,
         it immediately returns a query ID which we associate with the newly created bet. */
