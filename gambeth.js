@@ -221,7 +221,7 @@ async function loadProvider() {
                 }, 2500)
             });
             contract.on("CreatedOracleBet", async hashedBetId => {
-                if (hashedBetId.hash == ethers.utils.id(newBetId || "")) triggerSuccess(`Bet created!`, () => {
+                if (hashedBetId.hash === ethers.utils.id(newBetId || "")) triggerSuccess(`Bet created!`, () => {
                     searchBet(newBetId);
                     newBetId = null;
                 }, 2500)
@@ -562,7 +562,7 @@ async function claimReward() {
 async function decideBet() {
     try {
         triggerProcessing("Settling bet");
-        signedContract.decideBet(activeBet, decideBetResult.value);
+        signedContract.decideHumanBet(activeBet, decideBetResult.value);
     } catch (error) {
         console.error(error);
         triggerError(providerErrorMsg(error));
