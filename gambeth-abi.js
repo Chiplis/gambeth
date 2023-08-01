@@ -605,6 +605,25 @@ window.contractAbi = [
     {
         "inputs": [
             {
+                "internalType": "uint256",
+                "name": "schedule",
+                "type": "uint256"
+            }
+        ],
+        "name": "oracleMultiplier",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "string",
                 "name": "",
                 "type": "string"

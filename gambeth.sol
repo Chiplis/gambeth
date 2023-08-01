@@ -114,8 +114,8 @@ contract Gambeth is usingProvable {
         uint256 balance = msg.value - initialPool;
 
         lastQueryPrice[betType] = provable_getPrice(betType);
-        if (lastQueryPrice[betType] > balance) {
-            emit LackingFunds(msg.sender, lastQueryPrice[betType]);
+        if (lastQueryPrice[betType] * oracleMultiplier(schedule) > balance) {
+            emit LackingFunds(msg.sender, lastQueryPrice[betType] * oracleMultiplier(schedule));
             (bool success,) = msg.sender.call{value: msg.value}("");
             require(success, "Error when returning funds to bet owner.");
             return;
@@ -136,6 +136,11 @@ contract Gambeth is usingProvable {
         createBet(msg.sender, betId, commission, deadline, schedule, minimum, initialPool);
 
         emit CreatedOracleBet(betId, initialPool, description);
+    }
+
+    function oracleMultiplier(uint256 schedule) public view returns (uint256) {
+        // The farther in the future the query is scheduled, the more we should allocate for the oracle to run
+        return ((schedule - block.timestamp) / SCHEDULE_THRESHOLD) + 2;
     }
 
     function decideHumanBet(string memory betId, string memory result) public payable {
@@ -288,7 +293,7 @@ contract Gambeth is usingProvable {
         // Recursive query required since scheduled execution is after 60 day max threshold
         if (betSchedules[betId] > block.timestamp) {
             uint256 nextSchedule = betSchedules[betId];
-            if (betSchedules[betId] > block.timestamp + SCHEDULE_THRESHOLD) {
+            if (nextSchedule > block.timestamp + SCHEDULE_THRESHOLD) {
                 nextSchedule = block.timestamp + NEXT_SCHEDULE;
             }
             bytes32 nextQueryId = provable_query(nextSchedule, betTypes[betId], queries[betId]);
