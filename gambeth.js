@@ -194,7 +194,7 @@ async function loadProvider() {
         if (contract) {
             owner = await signer.getAddress();
             contract.on("LackingFunds", async (sender, funds) => {
-                if (sender == owner) triggerError(`Insufficient query funds, requiring ${weiToEth(funds)} ETH`)
+                if (sender === owner) triggerError(`Insufficient query funds, requiring ${weiToEth(funds)} ETH`)
             });
             contract.on("CreatedHumanBet", async hashedBetId => {
                 if (hashedBetId.hash === ethers.id(newBetId || "")) triggerSuccess(`Bet created!`, () => {
@@ -208,7 +208,7 @@ async function loadProvider() {
                     newBetId = null;
                 }, 2500)
             });
-            contract.on("PlacedBets", async (sender, _, betId) => {
+            contract.on("PlacedBets", async (sender) => {
                 if (sender === owner) triggerSuccess(`Bet placed!`, renderBetPool)
             });
             contract.on("LostBet", async (sender) => {
@@ -452,7 +452,6 @@ async function createBet() {
 
 async function renderPlacedBets() {
     placeBetInfo.style.display = Object.keys(placedBets).length ? "block" : "none";
-    const commission = (await contract.betCommissions(activeBet)).toString();
     placeBetEntries.innerHTML = `
         ${Object.entries(placedBets).map(([k, v]) => `<tr><td onclick="delete placedBets['${k}']; renderPlacedBets()">✖</td><td>${k}</td><td>${v - fixedCommission}</td></tr>`).join("")}
     `;
