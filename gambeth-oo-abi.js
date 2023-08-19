@@ -1,4 +1,4 @@
-window.contractAbi = [
+window.optimisticOracleAbi = [
     {
         "anonymous": false,
         "inputs": [
@@ -21,51 +21,7 @@ window.contractAbi = [
                 "type": "string"
             }
         ],
-        "name": "CreatedHumanBet",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "string",
-                "name": "_id",
-                "type": "string"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "initialPool",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "string",
-                "name": "description",
-                "type": "string"
-            }
-        ],
-        "name": "CreatedOracleBet",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "sender",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "funds",
-                "type": "uint256"
-            }
-        ],
-        "name": "LackingFunds",
+        "name": "CreatedBet",
         "type": "event"
     },
     {
@@ -147,18 +103,29 @@ window.contractAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
-                "name": "queryId",
-                "type": "bytes32"
+                "internalType": "uint256",
+                "name": "total",
+                "type": "uint256"
             },
             {
-                "internalType": "string",
-                "name": "result",
-                "type": "string"
+                "internalType": "string[]",
+                "name": "results",
+                "type": "string[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "amounts",
+                "type": "uint256[]"
             }
         ],
-        "name": "__callback",
-        "outputs": [],
+        "name": "calculateContractCommission",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
         "stateMutability": "nonpayable",
         "type": "function"
     },
@@ -178,6 +145,59 @@ window.contractAbi = [
     {
         "inputs": [
             {
+                "internalType": "address",
+                "name": "sender",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "token",
+                "type": "address"
+            },
+            {
+                "internalType": "string",
+                "name": "betId",
+                "type": "string"
+            },
+            {
+                "internalType": "uint256",
+                "name": "commission",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint64",
+                "name": "deadline",
+                "type": "uint64"
+            },
+            {
+                "internalType": "uint64",
+                "name": "schedule",
+                "type": "uint64"
+            },
+            {
+                "internalType": "uint256",
+                "name": "minimum",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "initialPool",
+                "type": "uint256"
+            }
+        ],
+        "name": "createBet",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "currency",
+                "type": "address"
+            },
+            {
                 "internalType": "string",
                 "name": "betId",
                 "type": "string"
@@ -213,60 +233,7 @@ window.contractAbi = [
                 "type": "string"
             }
         ],
-        "name": "createHumanBet",
-        "outputs": [],
-        "stateMutability": "payable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "betType",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "betId",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "query",
-                "type": "string"
-            },
-            {
-                "internalType": "uint64",
-                "name": "deadline",
-                "type": "uint64"
-            },
-            {
-                "internalType": "uint64",
-                "name": "schedule",
-                "type": "uint64"
-            },
-            {
-                "internalType": "uint256",
-                "name": "commission",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "minimum",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "initialPool",
-                "type": "uint256"
-            },
-            {
-                "internalType": "string",
-                "name": "description",
-                "type": "string"
-            }
-        ],
-        "name": "createOracleBet",
+        "name": "createOptimisticOracleBet",
         "outputs": [],
         "stateMutability": "payable",
         "type": "function"
@@ -277,16 +244,35 @@ window.contractAbi = [
                 "internalType": "string",
                 "name": "betId",
                 "type": "string"
-            },
+            }
+        ],
+        "name": "getResult",
+        "outputs": [
             {
                 "internalType": "string",
-                "name": "result",
+                "name": "",
                 "type": "string"
             }
         ],
-        "name": "decideHumanBet",
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "token",
+                "type": "address"
+            },
+            {
+                "internalType": "bool",
+                "name": "approved",
+                "type": "bool"
+            }
+        ],
+        "name": "manageToken",
         "outputs": [],
-        "stateMutability": "payable",
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -313,9 +299,17 @@ window.contractAbi = [
         "type": "function"
     },
     {
-        "inputs": [],
-        "stateMutability": "payable",
-        "type": "constructor"
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "betId",
+                "type": "string"
+            }
+        ],
+        "name": "requestOptimisticOracleDecision",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
     },
     {
         "inputs": [],
@@ -433,12 +427,12 @@ window.contractAbi = [
                 "type": "string"
             }
         ],
-        "name": "betResults",
+        "name": "betRequestTimes",
         "outputs": [
             {
-                "internalType": "string",
+                "internalType": "uint256",
                 "name": "",
-                "type": "string"
+                "type": "uint256"
             }
         ],
         "stateMutability": "view",
@@ -458,25 +452,6 @@ window.contractAbi = [
                 "internalType": "uint64",
                 "name": "",
                 "type": "uint64"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "betTypes",
-        "outputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
             }
         ],
         "stateMutability": "view",
@@ -545,77 +520,19 @@ window.contractAbi = [
         "type": "function"
     },
     {
-        "inputs": [],
-        "name": "FIXED_COMMISSION",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
         "inputs": [
             {
                 "internalType": "string",
-                "name": "",
+                "name": "betId",
                 "type": "string"
             }
         ],
-        "name": "lastQueryPrice",
+        "name": "getSettledData",
         "outputs": [
             {
-                "internalType": "uint256",
+                "internalType": "int256",
                 "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "MINIMUM_BET",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "NEXT_SCHEDULE",
-        "outputs": [
-            {
-                "internalType": "uint64",
-                "name": "",
-                "type": "uint64"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "schedule",
-                "type": "uint256"
-            }
-        ],
-        "name": "oracleMultiplier",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
+                "type": "int256"
             }
         ],
         "stateMutability": "view",
@@ -684,19 +601,6 @@ window.contractAbi = [
         "type": "function"
     },
     {
-        "inputs": [],
-        "name": "SCHEDULE_THRESHOLD",
-        "outputs": [
-            {
-                "internalType": "uint64",
-                "name": "",
-                "type": "uint64"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
         "inputs": [
             {
                 "internalType": "string",
@@ -749,4 +653,4 @@ window.contractAbi = [
         "stateMutability": "view",
         "type": "function"
     }
-]
+];
