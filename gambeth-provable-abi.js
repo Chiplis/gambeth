@@ -4,6 +4,25 @@ window.provableOracleAbi = [
         "inputs": [
             {
                 "indexed": true,
+                "internalType": "bytes32",
+                "name": "betId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "description",
+                "type": "string"
+            }
+        ],
+        "name": "DescribedProvableBet",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
                 "internalType": "address",
                 "name": "sender",
                 "type": "address"
@@ -17,32 +36,6 @@ window.provableOracleAbi = [
         ],
         "name": "LackingFunds",
         "type": "event"
-    },
-    {
-        "inputs": [],
-        "name": "NEXT_SCHEDULE",
-        "outputs": [
-            {
-                "internalType": "uint64",
-                "name": "",
-                "type": "uint64"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "SCHEDULE_THRESHOLD",
-        "outputs": [
-            {
-                "internalType": "uint64",
-                "name": "",
-                "type": "uint64"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
     },
     {
         "inputs": [
@@ -65,47 +58,9 @@ window.provableOracleAbi = [
     {
         "inputs": [
             {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "betResults",
-        "outputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "betTypes",
-        "outputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
+                "internalType": "bytes32",
                 "name": "betId",
-                "type": "string"
+                "type": "bytes32"
             }
         ],
         "name": "claimBet",
@@ -119,21 +74,6 @@ window.provableOracleAbi = [
                 "internalType": "address",
                 "name": "currency",
                 "type": "address"
-            },
-            {
-                "internalType": "string",
-                "name": "betType",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "betId",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "query",
-                "type": "string"
             },
             {
                 "internalType": "uint64",
@@ -159,6 +99,21 @@ window.provableOracleAbi = [
                 "internalType": "uint256",
                 "name": "initialPool",
                 "type": "uint256"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "betType",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "betId",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "string",
+                "name": "query",
+                "type": "string"
             }
         ],
         "name": "createProvableBet",
@@ -169,9 +124,101 @@ window.provableOracleAbi = [
     {
         "inputs": [
             {
+                "internalType": "bytes32",
+                "name": "betId",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "string",
+                "name": "description",
+                "type": "string"
+            }
+        ],
+        "name": "describeProvableBet",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "betId",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "string[]",
+                "name": "results",
+                "type": "string[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "amounts",
+                "type": "uint256[]"
+            }
+        ],
+        "name": "placeBets",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "newState",
+                "type": "address"
+            }
+        ],
+        "name": "setState",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "name": "betResults",
+        "outputs": [
+            {
                 "internalType": "string",
                 "name": "",
                 "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "name": "betTypes",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
             }
         ],
         "name": "finishedBets",
@@ -188,9 +235,9 @@ window.provableOracleAbi = [
     {
         "inputs": [
             {
-                "internalType": "string",
+                "internalType": "bytes32",
                 "name": "betId",
-                "type": "string"
+                "type": "bytes32"
             }
         ],
         "name": "getResult",
@@ -207,9 +254,9 @@ window.provableOracleAbi = [
     {
         "inputs": [
             {
-                "internalType": "string",
+                "internalType": "bytes32",
                 "name": "",
-                "type": "string"
+                "type": "bytes32"
             }
         ],
         "name": "lastQueryPrice",
@@ -218,6 +265,19 @@ window.provableOracleAbi = [
                 "internalType": "uint256",
                 "name": "",
                 "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "NEXT_SCHEDULE",
+        "outputs": [
+            {
+                "internalType": "uint64",
+                "name": "",
+                "type": "uint64"
             }
         ],
         "stateMutability": "view",
@@ -245,48 +305,6 @@ window.provableOracleAbi = [
     {
         "inputs": [
             {
-                "internalType": "string",
-                "name": "betId",
-                "type": "string"
-            },
-            {
-                "internalType": "string[]",
-                "name": "results",
-                "type": "string[]"
-            },
-            {
-                "internalType": "uint256[]",
-                "name": "amounts",
-                "type": "uint256[]"
-            }
-        ],
-        "name": "placeBets",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "queries",
-        "outputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
                 "internalType": "bytes32",
                 "name": "",
                 "type": "bytes32"
@@ -295,9 +313,22 @@ window.provableOracleAbi = [
         "name": "queryBets",
         "outputs": [
             {
-                "internalType": "string",
+                "internalType": "bytes32",
                 "name": "",
-                "type": "string"
+                "type": "bytes32"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "SCHEDULE_THRESHOLD",
+        "outputs": [
+            {
+                "internalType": "uint64",
+                "name": "",
+                "type": "uint64"
             }
         ],
         "stateMutability": "view",

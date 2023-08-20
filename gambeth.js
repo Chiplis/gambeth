@@ -119,7 +119,7 @@ function searchTriggered(e) {
     }
 }
 
-let provider, contractAddress, signer, contract, signedContract, owner;
+let provider, signer, stateContract, activeContract, owner;
 let providerLoaded = false;
 
 
@@ -150,6 +150,7 @@ function triggerMessage(msg, add, remove, after = defaultMessageLocation, click,
 }
 
 function triggerError(msg, after = defaultMessageLocation, click) {
+    console.error(msg);
     triggerMessage(msg, "error", ["info", "success"], after, click);
 }
 
@@ -168,13 +169,16 @@ function triggerProcessing(msg, after = defaultMessageLocation) {
 
 async function showBetInfo() {
     betInfo.style.display = 'flex';
-
 }
 
+const stateContractAddress = "0x6cc65C04d0C50eC474Ed31a585B235D8E8044BC5";
+const ooContractAddress = "0xF05f6072e467C0Dda0712B02939e1CAf6e31035A";
+const provableContractAddress = "0x87E7dA2f2deD003Af9A6cB674E5CE3B9b728AF27";
+const humanContractAddress = "";
 
-async function loadProvider() {
+async function loadProvider({betId, betType} = {}) {
     try {
-        if (providerLoaded) return true;
+        if (providerLoaded && !betId && !betType) return true;
 
         if (window.ethereum) {
             await window.ethereum.request({method: "eth_requestAccounts"});
@@ -186,44 +190,70 @@ async function loadProvider() {
         }
 
         provider = new ethers.BrowserProvider(window.ethereum);
-        contractAddress = "0x0e3FB8eC556be8014025247D1BBA10CF46e8b7Ad";
         signer = await provider.getSigner();
-        if (!contractAbi) throw "ABI not loaded";
-        contract = new ethers.Contract(contractAddress, contractAbi, provider);
-        signedContract = contract.connect(signer);
-        if (contract) {
+        if (!gambethStateAbi) throw "ABI not loaded";
+        stateContract = new ethers.Contract(stateContractAddress, gambethStateAbi, provider);
+        if (stateContract) {
             owner = await signer.getAddress();
-            contract.on("LackingFunds", async (sender, funds) => {
-                if (sender === owner) triggerError(`Insufficient query funds, requiring ${weiToEth(funds)} ETH`)
-            });
-            contract.on("CreatedHumanBet", async hashedBetId => {
+            stateContract.on("CreatedBet", async hashedBetId => {
                 if (hashedBetId.hash === ethers.id(newBetId || "")) triggerSuccess(`Bet created!`, () => {
                     searchBet(newBetId);
                     newBetId = null;
                 }, 2500)
             });
-            contract.on("CreatedOracleBet", async hashedBetId => {
-                if (hashedBetId.hash === ethers.id(newBetId || "")) triggerSuccess(`Bet created!`, () => {
-                    searchBet(newBetId);
-                    newBetId = null;
-                }, 2500)
-            });
-            contract.on("PlacedBets", async (sender) => {
+            stateContract.on("PlacedBets", async (sender) => {
                 if (sender === owner) triggerSuccess(`Bet placed!`, renderBetPool)
             });
-            contract.on("LostBet", async (sender) => {
+            stateContract.on("LostBet", async (sender) => {
                 if (sender === owner) triggerSuccess("Bet lost, better luck next time!")
             });
-            contract.on("UnwonBet", async (sender) => {
+            stateContract.on("UnwonBet", async (sender) => {
                 if (sender === owner) triggerSuccess("No one won the bet, you've been refunded")
             });
-            contract.on("WonBet", async (sender, amount) => {
+            stateContract.on("WonBet", async (sender, amount) => {
                 if (sender === owner) triggerSuccess(`Bet won! ${weiToEth(amount.toString())} ETH transferred to account`)
             });
-            minimumBet = weiToEth(await contract.MINIMUM_BET());
+            minimumBet = weiToEth(0);
             createBetMinimum.setAttribute("min", minimumBet);
-            fixedCommission = weiToEth(await contract.FIXED_COMMISSION());
+            fixedCommission = weiToEth(0);
         }
+
+        if (betId) {
+            const betKind = stateContract.betKinds(betId);
+            switch (betKind) {
+                case "OO":
+                    activeContract = new ethers.Contract(ooContractAddress, optimisticOracleAbi, provider).connect(signer);
+                    break;
+                case "HUMAN":
+                    activeContract = new ethers.Contract(humanContractAddress, [], provider).connect(signer);
+                    break;
+                case "PROVABLE":
+                    activeContract = new ethers.Contract(provableContractAddress, provableOracleAbi, provider).connect(signer);
+                    activeContract.on("LackingFunds", async (sender, funds) => {
+                        if (sender === owner) triggerError(`Insufficient query funds, requiring ${weiToEth(funds)} ETH`)
+                    });
+                    activeContract.on("DescribedProvableBet", async (hashedBetId, description) => {
+                        console.log("Found description", hashedBetId);
+                        if (hashedBetId.hash === ethers.id(ethers.encodeBytes32String(activeBet) || "")) {
+                            betInnerDescription.innerHTML = description;
+                        }
+                    });
+                    break;
+            }
+        } else if (betType) {
+            switch (betType) {
+                case "oo":
+                    activeContract = new ethers.Contract(ooContractAddress, optimisticOracleAbi, provider).connect(signer);
+                    break;
+                case "bc":
+                    activeContract = new ethers.Contract(humanContractAddress, [], provider).connect(signer);
+                    break;
+                default:
+                    activeContract = new ethers.Contract(provableContractAddress, provableOracleAbi, provider).connect(signer);
+                    break;
+            }
+        }
+
         providerLoaded = true;
         return true;
     } catch (error) {
@@ -267,7 +297,7 @@ function renderPlaceSingleBet() {
 
 async function renderClaimBet() {
     const addr = await signer.getAddress();
-    if ((await contract.userPools(activeBet, addr)) === 0 || !(await contract.finishedBets(activeBet))) {
+    if ((await stateContract.userPools(activeBet, addr)) === 0 || !(await stateContract.finishedBets(activeBet))) {
         claimBet.style.display = "none";
         claimBet.style.visibility = "hidden";
         claimBet.style.opacity = "0";
@@ -275,21 +305,18 @@ async function renderClaimBet() {
         claimBet.style.display = "block";
         claimBet.style.visibility = "visible";
         claimBet.style.opacity = "100%";
-        const claimedBet = await contract.claimedBets(activeBet, addr);
+        const claimedBet = await stateContract.claimedBets(activeBet, addr);
         claimBet.innerHTML = claimedBet ? "Claimed" : "Claim";
         claimBet.disabled = claimedBet;
     }
 }
 
 async function renderPlaceBet() {
-    const betFinished = await contract.finishedBets(activeBet);
-    const betType = await contract.betTypes(activeBet);
-    const deadline = await contract.betDeadlines(activeBet) * BigInt(1000);
-    betDecision.style.display = betFinished || betType || new Date() < new Date(Number(deadline.toString()))
-        ? "none"
-        : "block";
-    const deadlineReached = deadline <= Math.round(new Date().getTime());
-    const bettingDisabled = betFinished || deadlineReached;
+
+    const deadline = await stateContract.betDeadlines(activeBet) * BigInt(1000);
+    const bettingDisabled = deadline <= Math.round(new Date().getTime());
+
+    betDecision.style.display = bettingDisabled ? "block" : "none";
 
     placeBet.style.visibility = "visible";
     placeBet.style.opacity = "100%";
@@ -297,26 +324,26 @@ async function renderPlaceBet() {
     placeBetInputs.style.display = bettingDisabled ? "none" : "flex";
     placeBetInputs.style.opacity = bettingDisabled ? 0 : "100%";
     placeBetInputs.style.visibility = bettingDisabled ? "hidden" : "visible";
-    const min = weiToEth(await contract.betMinimums(activeBet));
+    const min = weiToEth(await stateContract.betMinimums(activeBet));
     placeBetAmount.setAttribute("min", min);
     placeBetAmount.placeholder = `${min} minimum`;
-    placeBet.innerHTML = bettingDisabled ? (betFinished ? "Finished" : "Deadline Reached") : "Place Bet";
+    placeBet.innerHTML = bettingDisabled ? "Deadline Reached" : "Place Bet";
     placeSingleBet.style.display = bettingDisabled ? "none" : "block";
     placeBet.disabled = bettingDisabled;
 }
 
-async function searchBet(id) {
+async function searchBet(betId) {
     try {
-        if (!(await loadProvider())) return;
+        if (!(await loadProvider({betId}))) return;
         placedBets = {};
         newBet.style.display = "none";
         await resetButtons();
         triggerProcessing("Fetching bet");
         betContainer.style.opacity = "0";
         betContainer.style.visibility = "hidden";
-        activeBet = id || searchBetId.value;
+        activeBet = betId || searchBetId.value;
         searchBetId.value = activeBet;
-        const betExists = await contract.createdBets(activeBet);
+        const betExists = await stateContract.createdBets(activeBet);
         if (!betExists) {
             betContainer.style.display = "none";
             triggerError("Invalid Bet ID");
@@ -326,11 +353,10 @@ async function searchBet(id) {
         location.searchParams.set("id", activeBet);
         history.pushState({}, "", location.toString());
         betContainer.style.display = "flex";
-        const oracleBets = await contract.queryFilter(contract.filters.CreatedOracleBet(activeBet));
-        const humanBets = await contract.queryFilter(contract.filters.CreatedHumanBet(activeBet));
-        const createdFilter = oracleBets.concat(humanBets)[0];
+        const bets = await stateContract.queryFilter(stateContract.filters.CreatedBet(activeBet));
+        const createdFilter = bets[0];
         const [initialPool, description] = createdFilter.args.slice(1).map(arg => arg.toString());
-        const query = (await contract.queries(activeBet));
+        const query = (await stateContract.betQueries(activeBet));
         const {url, schema, path} = unpackQuery(query);
 
         wolframBet.style.display = schema ? "none" : "flex";
@@ -339,19 +365,19 @@ async function searchBet(id) {
         urlSchema.innerHTML = schema || "Unknown";
         betUrl.innerHTML = url || query;
         schemaPath.innerHTML = path || "Unknown";
-        let deadline = await contract.betDeadlines(activeBet) * BigInt(1000);
+        let deadline = await stateContract.betDeadlines(activeBet) * BigInt(1000);
         deadline = new Date(Number(deadline.toString()));
         betDeadline.innerHTML = deadline.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
-        let schedule = await contract.betSchedules(activeBet) * BigInt(1000);
+        let schedule = await stateContract.betSchedules(activeBet) * BigInt(1000);
         schedule = new Date(Number(schedule.toString()));
         betSchedule.innerHTML = schedule.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
-        const result = await contract.betResults(activeBet);
+        const result = await stateContract.betResults(activeBet);
         betInnerDescription.innerHTML = description;
         betInnerInitialPool.innerHTML = weiToEth(initialPool).toString() + "Ð";
-        betInnerTotalPool.innerHTML = weiToEth((await contract.betPools(activeBet)).toString()).toString() + "Ð";
-        const innerCommission = (100 / Number((await contract.betCommissions(activeBet)).toString())).toFixed(5);
+        betInnerTotalPool.innerHTML = weiToEth((await stateContract.betPools(activeBet)).toString()).toString() + "Ð";
+        const innerCommission = (100 / Number((await stateContract.betCommissions(activeBet)).toString())).toFixed(5);
         betInnerCommission.innerHTML = Number.parseFloat(innerCommission) + "%";
-        betInnerMinimum.innerHTML = weiToEth(await contract.betMinimums(activeBet)) + "Ð";
+        betInnerMinimum.innerHTML = weiToEth(await stateContract.betMinimums(activeBet)) + "Ð";
         betDescription.style.display = description ? "flex" : "none";
         betResult.style.display = result ? "flex" : "none";
         betInnerResult.innerHTML = result;
@@ -382,7 +408,8 @@ const parseBetQuery = (schema, url, path) => `${schema}(${url})${schema === "htm
 
 async function createBet() {
     try {
-        if (!(await loadProvider())) return;
+        if (!(await loadProvider({betType: createBetSchema.value}))) return;
+        console.log("Provider loaded successfully");
         betContainer.style.display = "none";
         await resetButtons();
         clearTimeout(hideMessage());
@@ -390,13 +417,12 @@ async function createBet() {
         const schema = createBetSchema.value;
         const url = createBetUrl.value;
         const path = createBetPath.value;
-        const query = ["wa", "bc"].includes(schema)
+        const query = ["wa", "bc", "oo"].includes(schema)
             ? createBetWolfram.value
             : parseBetQuery(schema, url, path);
         const schedule = Date.parse(`${scheduleDate.value}`) / 1000;
         const deadline = Date.parse(`${deadlineDate.value}`) / 1000;
         const commission = Math.round(100 / createBetCommission.value);
-        const description = createBetDescription.value || "";
 
         if (!window.ethereum) {
             triggerError("No Ethereum provider detected", createBetQuery, () => window.location.href = "https://metamask.io/");
@@ -404,10 +430,10 @@ async function createBet() {
         } else if (!betId.value.trim()) {
             triggerError("No bet ID submitted", createBetQuery, () => renderCreationStep(0));
             return;
-        } else if (await contract.createdBets(betId.value)) {
+        } else if (await stateContract.createdBets(ethers.encodeBytes32String(betId.value))) {
             triggerError("Bet ID already exists", createBetQuery, () => renderCreationStep(0));
             return;
-        } else if (await contract.createdBets(betId.value)) {
+        } else if (await stateContract.createdBets(ethers.encodeBytes32String(betId.value))) {
             triggerError("No funds for oracle service", createBetQuery, () => renderCreationStep(1));
             return;
         } else if (!deadline || !schedule) {
@@ -419,30 +445,40 @@ async function createBet() {
         } else if (deadline < Date.parse(new Date()) / 1000) {
             triggerError("Bet's deadline to enter needs to be a future date", createBetQuery, () => renderCreationStep(6));
             return;
-        } else if (createBetMinimum.value < minimumBet) {
-            triggerError(`Minimum bet is ${minimumBet} ETH`, createBetQuery, () => renderCreationStep(3));
+        } else if (weiToEth(createBetMinimum.value) < minimumBet) {
+            triggerError(`Minimum bet is ${minimumBet} ETH, was ${createBetMinimum.value}`, createBetQuery, () => renderCreationStep(3));
             return;
         } else if (!createBetCommission || createBetCommission.value === 0 || createBetCommission.value > 50) {
             triggerError("Commission can't be 0% nor higher than 50%", createBetQuery, () => renderCreationStep(2));
             return;
         }
-
+        console.log("No exceptions");
         activeBet = betId.value.toLowerCase().trim();
         newBetId = activeBet;
         const initialPool = ethToWei(createBetInitialPool.value || "0");
-        const prices = (await Promise.all(["URL", "WolframAlpha"].map(t => contract.lastQueryPrice(t)))).map(weiToEth);
+        let prices = [];
+        try {
+            prices = (await Promise.all(["URL", "WolframAlpha"].map(stateContract.lastQueryPrice))).map(weiToEth);
+        } catch (error) {
+            prices = [];
+        }
         console.log("Prices", prices);
         const oracleFund = prices[1] > prices[0] ? prices[1] : prices[0];
         console.log(schedule);
-        const value = ethToWei(oracleFund) * (await contract.oracleMultiplier(schedule)) + initialPool;
+        const value = !oracleFund ? undefined : (ethToWei(oracleFund) * (await stateContract.oracleMultiplier(schedule)));
         console.log("Oracle fund: ", value);
         triggerProcessing("Creating bet", createBetQueryResult);
-        if (schema !== "bc") {
-            await signedContract.createOracleBet(createBetSchema.value === "wa" ? "WolframAlpha" : "URL", activeBet, query, deadline, schedule, commission, ethToWei(createBetMinimum.value), initialPool, description, {value: value.toString()});
-        } else {
-            await signedContract.createHumanBet(activeBet, deadline, schedule, commission, ethToWei(createBetMinimum.value), initialPool, query, {value: value.toString()});
+        switch (schema) {
+            case "bc":
+                await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", ethers.encodeBytes32String(activeBet), deadline, schedule, commission, ethToWei(createBetMinimum.value), initialPool, query);
+                break;
+            case "oo":
+                await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", ethers.encodeBytes32String(activeBet), deadline, schedule, commission, ethToWei(createBetMinimum.value), initialPool, query);
+                break;
+            default:
+                await activeContract.createProvableBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", deadline, schedule, commission, ethToWei(createBetMinimum.value || 0), initialPool, ethers.encodeBytes32String(createBetSchema.value === "wa" ? "WolframAlpha" : "URL"), ethers.encodeBytes32String(activeBet), query, {value: value.toString()});
         }
-
+        const description = createBetDescription.value || "";
     } catch (error) {
         newBetId = null;
         console.error(error);
@@ -478,7 +514,7 @@ async function addBet() {
         const sum = amounts.reduce((acc, b) => acc + b, ethToWei("0")).toString();
         triggerProcessing("Placing bet" + (results.length > 1 ? "s" : ""));
         console.log(results, amounts.map(a => a.toString()), sum);
-        await signedContract.placeBets(activeBet, results, amounts.map(a => a.toString()), {value: sum});
+        await activeContract.placeBets(activeBet, results, amounts.map(a => a.toString()));
         placedBets = {};
         placeSingleBet.style.opacity = 0;
         placeBetInfo.style.display = "none";
@@ -490,7 +526,7 @@ async function addBet() {
     }
 }
 
-function changeBetType() {
+async function changeBetType() {
     const betType = createBetSchema.value;
 
     if (betType === "html") {
@@ -499,12 +535,12 @@ function changeBetType() {
         createBetPath.placeholder = ".result.0.last"
     }
 
-    createBetWolfram.style.display = ["wa", "bc"].includes(betType) ? "block" : "none";
+    createBetWolfram.style.display = ["wa", "bc", "oo"].includes(betType) ? "block" : "none";
 
     [createBetUrl, createBetPath]
-        .forEach(elm => [elm.style.display, document.querySelector(`label[for="${elm.id}"]`).style.display] = Array(2).fill(["wa", "bc"].includes(betType) ? "none" : "block"));
-    [createBetWolfram.style.display, document.querySelector(`label[for="${createBetWolfram.id}"]`).style.display] = Array(2).fill(["wa", "bc"].includes(betType) ? "block" : "none");
-    createBetQuery.style.display = ["wa", "bc"].includes(betType) ? "none" : "flex";
+        .forEach(elm => [elm.style.display, document.querySelector(`label[for="${elm.id}"]`).style.display] = Array(2).fill(["wa", "bc", "oo"].includes(betType) ? "none" : "block"));
+    [createBetWolfram.style.display, document.querySelector(`label[for="${createBetWolfram.id}"]`).style.display] = Array(2).fill(["wa", "bc", "oo"].includes(betType) ? "block" : "none");
+    createBetQuery.style.display = ["wa", "bc", "oo"].includes(betType) ? "none" : "flex";
 
     createBetQueryInner.innerHTML = parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value);
     switch (betType) {
@@ -524,6 +560,7 @@ function changeBetType() {
             createBetPathLabel.innerHTML = "Extract result from HTML node using <a href='https://www.w3.org/TR/xpath/' style='text-decoration: underline'>XPath</a>";
             break;
     }
+    loadProvider({betType})
 }
 
 function providerErrorMsg(error) {
@@ -533,7 +570,7 @@ function providerErrorMsg(error) {
 async function claimReward() {
     try {
         triggerProcessing("Claming reward");
-        signedContract.claimBet(activeBet);
+        activeContract.claimBet(activeBet);
     } catch (error) {
         console.error(error);
         triggerError(providerErrorMsg(error));
@@ -543,7 +580,7 @@ async function claimReward() {
 async function decideBet() {
     try {
         triggerProcessing("Settling bet");
-        signedContract.decideHumanBet(activeBet, decideBetResult.value);
+        activeContract.decideHumanBet(activeBet, decideBetResult.value);
     } catch (error) {
         console.error(error);
         triggerError(providerErrorMsg(error));
@@ -596,14 +633,14 @@ async function testQuery(betType, url, errorMsg, after = defaultMessageLocation)
 
 async function renderBetPool() {
     try {
-        const placedBets = await contract.queryFilter(contract.filters.PlacedBets(null, activeBet));
+        const placedBets = await stateContract.queryFilter(stateContract.filters.PlacedBets(null, activeBet));
         const betResults = {};
         placedBets.forEach(pb => {
             pb.args[3].forEach(result => {
                 betResults[result] = (betResults[result] || 0) + 1;
             })
         });
-        const results = await Promise.all(Object.keys(betResults).map((result) => contract.resultPools(activeBet, result)));
+        const results = await Promise.all(Object.keys(betResults).map((result) => stateContract.resultPools(activeBet, result)));
         const resultsPool = {};
         Object.keys(betResults).map((result, idx) => {
             resultsPool[result] = weiToEth(results[idx]);

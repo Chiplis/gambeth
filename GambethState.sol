@@ -12,12 +12,13 @@ contract GambethState {
         PROVABLE
     }
 
-    mapping(string => BetKind) betKinds;
+    mapping(bytes32 => string) public betQueries;
+    mapping(bytes32 => BetKind) betKinds;
     address contractCreator;
-    address[] approvedContracts;
+    mapping(address => bool) approvedContracts;
 
     // For each bet, track which users have already claimed their potential reward
-    mapping(string => mapping(address => bool)) public claimedBets;
+    mapping(bytes32 => mapping(address => bool)) public claimedBets;
 
     /* If the oracle service's scheduled callback was not executed after 5 days,
     a user can reclaim his funds after the bet's execution threshold has passed.
@@ -36,72 +37,74 @@ contract GambethState {
     event UnwonBet(address indexed refunded);
 
     mapping(address => bool) approvedTokens;
-    mapping(string => IERC20) public betTokens;
+    mapping(bytes32 => IERC20) public betTokens;
 
     /* There are two different dates associated with each created bet:
     one for the deadline where a user can no longer place new bets,
     and another one that tells the smart oracle contract when to actually
     run. */
-    mapping(string => uint64) public betDeadlines;
-    mapping(string => uint64) public betSchedules;
+    mapping(bytes32 => uint64) public betDeadlines;
+    mapping(bytes32 => uint64) public betSchedules;
 
     // Custom minimum entry for each bet, set by their creator
-    mapping(string => uint256) public betMinimums;
+    mapping(bytes32 => uint256) public betMinimums;
 
     // Keep track of all createdBets to prevent duplicates
-    mapping(string => bool) public createdBets;
+    mapping(bytes32 => bool) public createdBets;
 
     // Keep track of all owners to handle commission fees
-    mapping(string => address) public betOwners;
-    mapping(string => uint256) public betCommissions;
+    mapping(bytes32 => address) public betOwners;
+    mapping(bytes32 => uint256) public betCommissions;
 
     // For each bet, how much each has each user put into that bet's pool?
-    mapping(string => mapping(address => uint256)) public userPools;
+    mapping(bytes32 => mapping(address => uint256)) public userPools;
 
     // What is the total pooled per bet?
-    mapping(string => uint256) public betPools;
+    mapping(bytes32 => uint256) public betPools;
 
     /* Contains all the information that does not need to be saved as a state variable,
     but which can prove useful to people taking a look at the bet in the frontend. */
-    event CreatedBet(string indexed _id, uint256 initialPool, string description);
+    event CreatedBet(bytes32 indexed _id, uint256 initialPool, string description);
 
     // For each bet, how much is the total pooled per result?
-    mapping(string => mapping(string => uint256)) public resultPools;
+    mapping(bytes32 => mapping(string => uint256)) public resultPools;
 
     // For each bet, track how much each user has put into each result
-    mapping(string => mapping(address => mapping(string => uint256))) public userBets;
+    mapping(bytes32 => mapping(address => mapping(string => uint256))) public userBets;
 
     // The table representing each bet's pool is populated according to these events.
-    event PlacedBets(address indexed user, string indexed _id, string id, string[] results);
+    event PlacedBets(address indexed user, bytes32 indexed _id, bytes32 id, string[] results);
 
     modifier ownerOnly() {
         require(msg.sender == contractCreator);
         _;
     }
 
-    function addApprovedContract(address c) public ownerOnly {
-        approvedContracts.push(c);
+    modifier approvedContractOnly {
+        require(approvedContracts[msg.sender], "Contract not approved to call function");
+        _;
     }
 
-    modifier approvedContractOnly {
-        bool approved = false;
-        for (uint i = 0; i < approvedContracts.length; i += 1) {
-            approved = approvedContracts[i] == msg.sender;
-            if (approved) {
-                break;
-            }
-        }
-        require(approved, "Contract not approved to call function");
-        _;
+    function manageContract(address c, bool approved) public ownerOnly {
+        approvedContracts[c] = approved;
     }
 
     function manageToken(address token, bool approved) ownerOnly public {
         approvedTokens[token] = approved;
     }
 
-    function createBet(BetKind kind, address sender, address token, string memory betId, uint256 commission, uint64 deadline, uint64 schedule, uint256 minimum, uint256 initialPool)
+    function setQuery(bytes32 betId, string calldata query)
+    approvedContractOnly public {
+        require(bytes(betQueries[betId]).length == 0, "Attempted to overwrite existing query");
+        betQueries[betId] = query;
+    }
+
+    function createBet(BetKind kind, address sender, address token, bytes32 betId, uint256 commission, uint64 deadline, uint64 schedule, uint256 minimum, uint256 initialPool, string calldata description)
     approvedContractOnly public {
         require(approvedTokens[token] && !createdBets[betId], "Unapproved token for creating bets");
+        bool success = betTokens[betId].transferFrom(sender, address(this), initialPool);
+        require(success, "Not enough balance for initial pool");
+
         // Nothing fancy going on here, just boring old state updates
         betKinds[betId] = kind;
         betOwners[betId] = sender;
@@ -113,16 +116,16 @@ contract GambethState {
 
         /* By adding the initial pool to the bet creator's, but not associating it with any results,
         we allow the creator to incentivize people to participate. */
-        userPools[betId][msg.sender] += initialPool;
+        userPools[betId][sender] += initialPool;
         betPools[betId] = initialPool;
 
         // Bet creation should succeed from this point onward
         createdBets[betId] = true;
 
-        emit CreatedBet(betId, initialPool, "");
+        emit CreatedBet(betId, initialPool, description);
     }
 
-    function placeBets(string calldata betId, string[] calldata results, uint256[] calldata amounts)
+    function placeBets(bytes32 betId, address sender, string[] calldata results, uint256[] calldata amounts)
     approvedContractOnly public {
         require(
             results.length > 0
@@ -143,44 +146,48 @@ contract GambethState {
 
             // Update all required state
             resultPools[betId][results[i]] += amounts[i];
-            userPools[betId][msg.sender] += amounts[i];
+            userPools[betId][sender] += amounts[i];
             betPools[betId] += amounts[i];
-            userBets[betId][msg.sender][results[i]] += amounts[i];
+            userBets[betId][sender][results[i]] += amounts[i];
         }
 
-        bool success = token.transferFrom(msg.sender, address(this), total);
+        bool success = token.transferFrom(sender, address(this), total);
 
         require(success, "Error transferring funds to contract while placing bet.");
 
-        emit PlacedBets(msg.sender, betId, betId, results);
+        emit PlacedBets(sender, betId, betId, results);
     }
 
-    function claimBet(string calldata betId, string memory result)
+    function claimBet(bytes32 betId, address sender, string memory result)
     approvedContractOnly public {
-        require(!claimedBets[betId][msg.sender] && userPools[betId][msg.sender] != 0, "Unable to claim bet");
+        require(!claimedBets[betId][sender] && userPools[betId][sender] != 0, "Unable to claim bet");
 
-        claimedBets[betId][msg.sender] = true;
+        claimedBets[betId][sender] = true;
 
         // Did the user bet on the correct result?
-        uint256 userBet = userBets[betId][msg.sender][result];
+        uint256 userBet = userBets[betId][sender][result];
 
         // How much did everyone pool into the correct result?
         uint256 winnerPool = resultPools[betId][result];
 
         uint256 reward = 0;
-        // If no one won then all bets are refunded
         if (winnerPool == 0) {
-            emit UnwonBet(msg.sender);
-            reward = userPools[betId][msg.sender];
+            emit UnwonBet(sender);
+            // If no one won then all bets are refunded
+            if (betKinds[betId] == BetKind.PROVABLE) {
+                reward = userPools[betId][sender];
+            } else {
+                return;
+            }
         } else if (userBet != 0) {
             // User won the bet and receives their corresponding share of the loser's pool
             uint256 loserPool = betPools[betId] - winnerPool;
-            emit WonBet(msg.sender, reward);
+            emit WonBet(sender, reward);
             // User gets their corresponding fraction of the loser's pool, along with their original bet
             reward = loserPool / (winnerPool / userBet) + userBet;
         } else {
             // Sad violin noises
-            emit LostBet(msg.sender);
+            emit LostBet(sender);
             return;
         }
 
@@ -188,7 +195,7 @@ contract GambethState {
         uint256 ownerFee = reward / 100 * betCommissions[betId];
         reward -= ownerFee;
         IERC20 token = betTokens[betId];
-        bool success = token.transfer(msg.sender, reward);
+        bool success = token.transfer(sender, reward);
         require(success, "Failed to transfer reward to user.");
         success = token.transfer(betOwners[betId], ownerFee);
         require(success, "Failed to transfer commission to bet owner.");
