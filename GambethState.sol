@@ -1,24 +1,42 @@
-pragma solidity 0.8.20;
+import "https://github.com/UMAprotocol/protocol/blob/master/packages/core/contracts/optimistic-oracle-v2/interfaces/OptimisticOracleV2Interface.sol";
 
-import "https://github.com/UMAprotocol/protocol/blob/master/packages/core/contracts/optimistic-oracle-v2/implementation/OptimisticOracleV2.sol";
+contract GambethState {
 
-abstract contract GambethInterface {
-
-    address contractCreator;
     constructor() payable {
         contractCreator = msg.sender;
     }
-    modifier ownerOnly() {
-        require(msg.sender == contractCreator);
-        _;
+
+    enum BetKind {
+        OO,
+        HUMAN,
+        PROVABLE
     }
 
-    function manageToken(address token, bool approved) ownerOnly public {
-        approvedTokens[token] = approved;
-    }
+    mapping(string => BetKind) betKinds;
+    address contractCreator;
+    address[] approvedContracts;
+
+    // For each bet, track which users have already claimed their potential reward
+    mapping(string => mapping(address => bool)) public claimedBets;
+
+    /* If the oracle service's scheduled callback was not executed after 5 days,
+    a user can reclaim his funds after the bet's execution threshold has passed.
+    Note that even if the callback execution is delayed,
+    Provable's oracle should've extracted the result at the originally scheduled time. */
+    uint64 constant public BET_THRESHOLD = 5 * 24 * 60 * 60;
+
+    // If the user wins the bet, let them know along with the reward amount.
+    event WonBet(address indexed winner, uint256 won);
+
+    // If the user lost no funds are claimable.
+    event LostBet(address indexed loser);
+
+    /* If no one wins the bet the funds can be refunded to the user,
+    after the bet's creator takes their cut. */
+    event UnwonBet(address indexed refunded);
 
     mapping(address => bool) approvedTokens;
-    mapping(string => IERC20) betTokens;
+    mapping(string => IERC20) public betTokens;
 
     /* There are two different dates associated with each created bet:
     one for the deadline where a user can no longer place new bets,
@@ -32,10 +50,6 @@ abstract contract GambethInterface {
 
     // Keep track of all createdBets to prevent duplicates
     mapping(string => bool) public createdBets;
-
-    // Once a query is executed by the oracle, associate its ID with the bet's ID to handle updating the bet's state in __callback
-    mapping(string => string) public queries;
-    mapping(bytes32 => string) public queryBets;
 
     // Keep track of all owners to handle commission fees
     mapping(string => address) public betOwners;
@@ -60,11 +74,36 @@ abstract contract GambethInterface {
     // The table representing each bet's pool is populated according to these events.
     event PlacedBets(address indexed user, string indexed _id, string id, string[] results);
 
-    mapping(string => bool) public finishedBets;
+    modifier ownerOnly() {
+        require(msg.sender == contractCreator);
+        _;
+    }
 
-    function createBet(address sender, address token, string memory betId, uint256 commission, uint64 deadline, uint64 schedule, uint256 minimum, uint256 initialPool) public {
-        require(approvedTokens[token], "Unapproved token for creating bets");
+    function addApprovedContract(address c) public ownerOnly {
+        approvedContracts.push(c);
+    }
+
+    modifier approvedContractOnly {
+        bool approved = false;
+        for (uint i = 0; i < approvedContracts.length; i += 1) {
+            approved = approvedContracts[i] == msg.sender;
+            if (approved) {
+                break;
+            }
+        }
+        require(approved, "Contract not approved to call function");
+        _;
+    }
+
+    function manageToken(address token, bool approved) ownerOnly public {
+        approvedTokens[token] = approved;
+    }
+
+    function createBet(BetKind kind, address sender, address token, string memory betId, uint256 commission, uint64 deadline, uint64 schedule, uint256 minimum, uint256 initialPool)
+    approvedContractOnly public {
+        require(approvedTokens[token] && !createdBets[betId], "Unapproved token for creating bets");
         // Nothing fancy going on here, just boring old state updates
+        betKinds[betId] = kind;
         betOwners[betId] = sender;
         betTokens[betId] = IERC20(token);
         betCommissions[betId] = commission;
@@ -79,15 +118,16 @@ abstract contract GambethInterface {
 
         // Bet creation should succeed from this point onward
         createdBets[betId] = true;
+
+        emit CreatedBet(betId, initialPool, "");
     }
 
     function placeBets(string calldata betId, string[] calldata results, uint256[] calldata amounts)
-    public payable {
+    approvedContractOnly public {
         require(
             results.length > 0
             && results.length == amounts.length
             && createdBets[betId]
-            && !finishedBets[betId]
             && betDeadlines[betId] >= block.timestamp,
             "Unable to place bets, check arguments."
         );
@@ -108,19 +148,18 @@ abstract contract GambethInterface {
             userBets[betId][msg.sender][results[i]] += amounts[i];
         }
 
-        bool success = token.transferFrom(msg.sender, address(this), total + calculateContractCommission(total, results, amounts));
+        bool success = token.transferFrom(msg.sender, address(this), total);
 
         require(success, "Error transferring funds to contract while placing bet.");
 
         emit PlacedBets(msg.sender, betId, betId, results);
     }
 
-    function claimBet(string calldata betId)
-    validateClaimedBet(betId) public {
-        claimedBets[betId][msg.sender] = true;
+    function claimBet(string calldata betId, string memory result)
+    approvedContractOnly public {
+        require(!claimedBets[betId][msg.sender] && userPools[betId][msg.sender] != 0, "Unable to claim bet");
 
-        // What's the final result?
-        string memory result = getResult(betId);
+        claimedBets[betId][msg.sender] = true;
 
         // Did the user bet on the correct result?
         uint256 userBet = userBets[betId][msg.sender][result];
@@ -155,28 +194,7 @@ abstract contract GambethInterface {
         require(success, "Failed to transfer commission to bet owner.");
     }
 
-    // For each bet, track which users have already claimed their potential reward
-    mapping(string => mapping(address => bool)) public claimedBets;
-
-    /* If the oracle service's scheduled callback was not executed after 5 days,
-    a user can reclaim his funds after the bet's execution threshold has passed.
-    Note that even if the callback execution is delayed,
-    Provable's oracle should've extracted the result at the originally scheduled time. */
-    uint64 constant public BET_THRESHOLD = 5 * 24 * 60 * 60;
-
-    // If the user wins the bet, let them know along with the reward amount.
-    event WonBet(address indexed winner, uint256 won);
-
-    // If the user lost no funds are claimable.
-    event LostBet(address indexed loser);
-
-    /* If no one wins the bet the funds can be refunded to the user,
-    after the bet creator's takes their cut. */
-    event UnwonBet(address indexed refunded);
-
-    function calculateContractCommission(uint256 total, string[] calldata results, uint256[] calldata amounts) public virtual returns (uint256);
-
-    function getResult(string calldata betId) public virtual returns (string memory);
-
-    modifier validateClaimedBet(string calldata betId) virtual;
+    function calculateContractCommission(uint256, string[] calldata, uint256[] calldata) pure public returns (uint256) {
+        return 0;
+    }
 }
