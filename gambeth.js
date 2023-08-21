@@ -522,7 +522,7 @@ async function createBet() {
                 await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commission, await numberToToken(createBetMinimum.value), initialPool, query);
                 break;
             default:
-                await activeContract.createProvableBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", deadline, schedule, commission, await numberToToken(createBetMinimum.value || 0), initialPool, ethers.encodeBytes32String(createBetSchema.value === "wa" ? "WolframAlpha" : "URL"), ethers.encodeBytes32String(activeBet), query, {value: value.toString()});
+                await activeContract.createProvableBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", deadline, schedule, commission, await numberToToken(createBetMinimum.value || 0), initialPool, createBetSchema.value === "wa" ? "WolframAlpha" : "URL", activeBet, query, {value: value.toString()});
         }
         const description = createBetDescription.value || "";
     } catch (error) {
