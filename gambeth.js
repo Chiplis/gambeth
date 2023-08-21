@@ -695,7 +695,11 @@ async function renderBetPool() {
 
         const allEntries = Object.entries(betResults);
 
-        allEntries.sort((a, b) => resultsPool[b[0]] - resultsPool[a[0]]);
+        allEntries.sort((a, b) => {
+            console.log("Results pool", resultsPool);
+            console.log("a - b", a, b);
+            return resultsPool[b[0]] - resultsPool[a[0]]
+        });
         const entries = allEntries
             .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td><td>${(resultsPool[k])}</td></tr>`)
             .join("");
