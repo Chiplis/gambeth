@@ -2,8 +2,12 @@ import "https://github.com/UMAprotocol/protocol/blob/master/packages/core/contra
 
 contract GambethState {
 
-    constructor() payable {
+    constructor() {
         contractCreator = msg.sender;
+        approvedContracts[0xD41f39c42EA095c0bC0539CEfeD2867D8a5f71Bf] = true;
+        approvedContracts[0x03Df3D511f18c8F49997d2720d3c33EBCd399e77] = true;
+        approvedTokens[0x07865c6E87B9F70255377e024ace6630C1Eaa37F] = true;
+        tokenDecimals[0x07865c6E87B9F70255377e024ace6630C1Eaa37F] = 1e6;
     }
 
     enum BetKind {
@@ -13,10 +17,10 @@ contract GambethState {
     }
 
     mapping(bytes32 => string) public betQueries;
-    mapping(bytes32 => BetKind) betKinds;
+    mapping(bytes32 => BetKind) public betKinds;
     address contractCreator;
     mapping(address => bool) approvedContracts;
-
+    mapping(address => uint256) public tokenDecimals;
     // For each bet, track which users have already claimed their potential reward
     mapping(bytes32 => mapping(address => bool)) public claimedBets;
 
@@ -89,8 +93,9 @@ contract GambethState {
         approvedContracts[c] = approved;
     }
 
-    function manageToken(address token, bool approved) ownerOnly public {
+    function manageToken(address token, uint256 decimals, bool approved) ownerOnly public {
         approvedTokens[token] = approved;
+        tokenDecimals[token] = decimals;
     }
 
     function setQuery(bytes32 betId, string calldata query)
@@ -102,7 +107,7 @@ contract GambethState {
     function createBet(BetKind kind, address sender, address token, bytes32 betId, uint256 commission, uint64 deadline, uint64 schedule, uint256 minimum, uint256 initialPool, string calldata description)
     approvedContractOnly public {
         require(approvedTokens[token] && !createdBets[betId], "Unapproved token for creating bets");
-        bool success = betTokens[betId].transferFrom(sender, address(this), initialPool);
+        bool success = IERC20(token).transferFrom(sender, address(this), initialPool);
         require(success, "Not enough balance for initial pool");
 
         // Nothing fancy going on here, just boring old state updates

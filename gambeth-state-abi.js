@@ -1,7 +1,7 @@
 window.gambethStateAbi = [
     {
         "inputs": [],
-        "stateMutability": "payable",
+        "stateMutability": "nonpayable",
         "type": "constructor"
     },
     {
@@ -151,6 +151,25 @@ window.gambethStateAbi = [
                 "internalType": "uint64",
                 "name": "",
                 "type": "uint64"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "name": "betKinds",
+        "outputs": [
+            {
+                "internalType": "enum GambethState.BetKind",
+                "name": "",
+                "type": "uint8"
             }
         ],
         "stateMutability": "view",
@@ -449,6 +468,11 @@ window.gambethStateAbi = [
                 "type": "address"
             },
             {
+                "internalType": "uint256",
+                "name": "decimals",
+                "type": "uint256"
+            },
+            {
                 "internalType": "bool",
                 "name": "approved",
                 "type": "bool"
@@ -527,6 +551,25 @@ window.gambethStateAbi = [
         "name": "setQuery",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "tokenDecimals",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
         "type": "function"
     },
     {

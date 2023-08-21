@@ -1,6 +1,19 @@
-const ethToWei = ethers.parseEther;
-const weiToEth = ethers.formatEther;
+const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
 
+const numberToToken = async (n, m) => {
+    if (!activeBet && !m) return BigInt(n);
+    const betToken = await stateContract.betTokens(activeBet);
+    let d = m || await stateContract.tokenDecimals(BigInt(betToken) ? betToken : usdcAddress);
+    if (!d) return BigInt(0);
+    return BigInt(n) * BigInt(d);
+}
+
+const tokenToNumber = async (n, m) => {
+    if (!activeBet && !m) return BigInt(n);
+    let d = m || await stateContract.tokenDecimals(await stateContract.betTokens(activeBet) || usdcAddress);
+    if (!d) return BigInt(0);
+    return BigInt(n) / BigInt(d);
+}
 const claimBet = document.getElementById("claim-bet");
 const placeBetInputs = document.getElementById("place-bet-inputs");
 const placeBet = document.getElementById("place-bet");
@@ -171,15 +184,14 @@ async function showBetInfo() {
     betInfo.style.display = 'flex';
 }
 
-const stateContractAddress = "0x6cc65C04d0C50eC474Ed31a585B235D8E8044BC5";
-const ooContractAddress = "0xF05f6072e467C0Dda0712B02939e1CAf6e31035A";
-const provableContractAddress = "0x87E7dA2f2deD003Af9A6cB674E5CE3B9b728AF27";
+const stateContractAddress = "0x4D4213122634dD59064B7a7cd900B83c31B0D1fb";
+const ooContractAddress = "0xD41f39c42EA095c0bC0539CEfeD2867D8a5f71Bf";
+const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 
 async function loadProvider({betId, betType} = {}) {
     try {
-        if (providerLoaded && !betId && !betType) return true;
-
+        console.log("Loading provider with ", {betId, betType});
         if (window.ethereum) {
             await window.ethereum.request({method: "eth_requestAccounts"});
         } else {
@@ -211,26 +223,27 @@ async function loadProvider({betId, betType} = {}) {
                 if (sender === owner) triggerSuccess("No one won the bet, you've been refunded")
             });
             stateContract.on("WonBet", async (sender, amount) => {
-                if (sender === owner) triggerSuccess(`Bet won! ${weiToEth(amount.toString())} ETH transferred to account`)
+                if (sender === owner) triggerSuccess(`Bet won! ${await tokenToNumber(amount.toString())} ETH transferred to account`)
             });
-            minimumBet = weiToEth(0);
+            minimumBet = await tokenToNumber(0);
             createBetMinimum.setAttribute("min", minimumBet);
-            fixedCommission = weiToEth(0);
+            fixedCommission = await tokenToNumber(0);
         }
 
         if (betId) {
-            const betKind = stateContract.betKinds(betId);
+            const betKind = await stateContract.betKinds(ethers.encodeBytes32String(betId));
+            console.log("Bet kind", betKind, betKind === 0n);
             switch (betKind) {
-                case "OO":
+                case 0n:
                     activeContract = new ethers.Contract(ooContractAddress, optimisticOracleAbi, provider).connect(signer);
                     break;
-                case "HUMAN":
+                case 1n:
                     activeContract = new ethers.Contract(humanContractAddress, [], provider).connect(signer);
                     break;
-                case "PROVABLE":
+                case 2n:
                     activeContract = new ethers.Contract(provableContractAddress, provableOracleAbi, provider).connect(signer);
                     activeContract.on("LackingFunds", async (sender, funds) => {
-                        if (sender === owner) triggerError(`Insufficient query funds, requiring ${weiToEth(funds)} ETH`)
+                        if (sender === owner) triggerError(`Insufficient query funds, requiring ${await tokenToNumber(funds)} ETH`)
                     });
                     activeContract.on("DescribedProvableBet", async (hashedBetId, description) => {
                         console.log("Found description", hashedBetId);
@@ -239,6 +252,8 @@ async function loadProvider({betId, betType} = {}) {
                         }
                     });
                     break;
+                default:
+
             }
         } else if (betType) {
             switch (betType) {
@@ -255,6 +270,17 @@ async function loadProvider({betId, betType} = {}) {
         }
 
         providerLoaded = true;
+
+        if (!localStorage.tokenApproved) {
+            try {
+                let usdc = new ethers.Contract(usdcAddress, tokenAbi, provider).connect(await provider.getSigner());
+                await usdc.approve(stateContractAddress, 0);
+                localStorage.tokenApproved = true;
+            } catch (error) {
+                localStorage.tokenApproved = false;
+            }
+        }
+
         return true;
     } catch (error) {
         console.error(error);
@@ -297,7 +323,16 @@ function renderPlaceSingleBet() {
 
 async function renderClaimBet() {
     const addr = await signer.getAddress();
-    if ((await stateContract.userPools(activeBet, addr)) === 0 || !(await stateContract.finishedBets(activeBet))) {
+    let finishedBet = false;
+    try {
+        finishedBet = await activeContract.finishedBets(activeBet);
+    } catch {
+        try {
+            await activeContract.getSettledData(activeBet);
+            finishedBet = true;
+        } catch {}
+    }
+    if ((await stateContract.userPools(activeBet, addr)) === 0 || !finishedBet) {
         claimBet.style.display = "none";
         claimBet.style.visibility = "hidden";
         claimBet.style.opacity = "0";
@@ -316,7 +351,9 @@ async function renderPlaceBet() {
     const deadline = await stateContract.betDeadlines(activeBet) * BigInt(1000);
     const bettingDisabled = deadline <= Math.round(new Date().getTime());
 
-    betDecision.style.display = bettingDisabled ? "block" : "none";
+    betDecision.style.display = await stateContract.betKinds(activeBet) === 1n
+        ? ((bettingDisabled && await stateContract.betOwners(activeBet) === owner) ? "block" : "none")
+        : "none";
 
     placeBet.style.visibility = "visible";
     placeBet.style.opacity = "100%";
@@ -324,7 +361,7 @@ async function renderPlaceBet() {
     placeBetInputs.style.display = bettingDisabled ? "none" : "flex";
     placeBetInputs.style.opacity = bettingDisabled ? 0 : "100%";
     placeBetInputs.style.visibility = bettingDisabled ? "hidden" : "visible";
-    const min = weiToEth(await stateContract.betMinimums(activeBet));
+    const min = await tokenToNumber(await stateContract.betMinimums(activeBet));
     placeBetAmount.setAttribute("min", min);
     placeBetAmount.placeholder = `${min} minimum`;
     placeBet.innerHTML = bettingDisabled ? "Deadline Reached" : "Place Bet";
@@ -334,15 +371,16 @@ async function renderPlaceBet() {
 
 async function searchBet(betId) {
     try {
-        if (!(await loadProvider({betId}))) return;
+        await loadProvider({betId});
         placedBets = {};
         newBet.style.display = "none";
         await resetButtons();
         triggerProcessing("Fetching bet");
         betContainer.style.opacity = "0";
         betContainer.style.visibility = "hidden";
-        activeBet = betId || searchBetId.value;
-        searchBetId.value = activeBet;
+        console.log(betId, searchBetId.value);
+        activeBet = ethers.encodeBytes32String(betId || searchBetId.value);
+        console.log(activeBet);
         const betExists = await stateContract.createdBets(activeBet);
         if (!betExists) {
             betContainer.style.display = "none";
@@ -350,7 +388,7 @@ async function searchBet(betId) {
             return;
         }
         const location = new URL(window.location.toString());
-        location.searchParams.set("id", activeBet);
+        location.searchParams.set("id", ethers.decodeBytes32String(activeBet));
         history.pushState({}, "", location.toString());
         betContainer.style.display = "flex";
         const bets = await stateContract.queryFilter(stateContract.filters.CreatedBet(activeBet));
@@ -371,13 +409,19 @@ async function searchBet(betId) {
         let schedule = await stateContract.betSchedules(activeBet) * BigInt(1000);
         schedule = new Date(Number(schedule.toString()));
         betSchedule.innerHTML = schedule.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
-        const result = await stateContract.betResults(activeBet);
+        console.log("Active bet", activeBet);
+        let result;
+        try {
+            result = await activeContract.getResult(activeBet);
+        } catch(error) {
+            result = "";
+        }
         betInnerDescription.innerHTML = description;
-        betInnerInitialPool.innerHTML = weiToEth(initialPool).toString() + "Ð";
-        betInnerTotalPool.innerHTML = weiToEth((await stateContract.betPools(activeBet)).toString()).toString() + "Ð";
+        betInnerInitialPool.innerHTML = (await tokenToNumber(initialPool)).toString() + "Ð";
+        betInnerTotalPool.innerHTML = (await tokenToNumber((await stateContract.betPools(activeBet)))).toString() + "Ð";
         const innerCommission = (100 / Number((await stateContract.betCommissions(activeBet)).toString())).toFixed(5);
         betInnerCommission.innerHTML = Number.parseFloat(innerCommission) + "%";
-        betInnerMinimum.innerHTML = weiToEth(await stateContract.betMinimums(activeBet)) + "Ð";
+        betInnerMinimum.innerHTML = await tokenToNumber(await stateContract.betMinimums(activeBet)) + "Ð";
         betDescription.style.display = description ? "flex" : "none";
         betResult.style.display = result ? "flex" : "none";
         betInnerResult.innerHTML = result;
@@ -445,7 +489,7 @@ async function createBet() {
         } else if (deadline < Date.parse(new Date()) / 1000) {
             triggerError("Bet's deadline to enter needs to be a future date", createBetQuery, () => renderCreationStep(6));
             return;
-        } else if (weiToEth(createBetMinimum.value) < minimumBet) {
+        } else if (await tokenToNumber(createBetMinimum.value) < minimumBet) {
             triggerError(`Minimum bet is ${minimumBet} ETH, was ${createBetMinimum.value}`, createBetQuery, () => renderCreationStep(3));
             return;
         } else if (!createBetCommission || createBetCommission.value === 0 || createBetCommission.value > 50) {
@@ -453,30 +497,31 @@ async function createBet() {
             return;
         }
         console.log("No exceptions");
-        activeBet = betId.value.toLowerCase().trim();
+        activeBet = ethers.encodeBytes32String(betId.value.toLowerCase().trim());
         newBetId = activeBet;
-        const initialPool = ethToWei(createBetInitialPool.value || "0");
+        const initialPool = await numberToToken(createBetInitialPool.value || "0");
+        console.log("Initial pool", initialPool);
         let prices = [];
         try {
-            prices = (await Promise.all(["URL", "WolframAlpha"].map(stateContract.lastQueryPrice))).map(weiToEth);
+            prices = (await Promise.all(["URL", "WolframAlpha"].map(stateContract.lastQueryPrice))).map(tokenToNumber);
         } catch (error) {
             prices = [];
         }
         console.log("Prices", prices);
         const oracleFund = prices[1] > prices[0] ? prices[1] : prices[0];
         console.log(schedule);
-        const value = !oracleFund ? undefined : (ethToWei(oracleFund) * (await stateContract.oracleMultiplier(schedule)));
+        const value = !oracleFund ? undefined : (await numberToToken(oracleFund) * (await stateContract.oracleMultiplier(schedule)));
         console.log("Oracle fund: ", value);
         triggerProcessing("Creating bet", createBetQueryResult);
         switch (schema) {
             case "bc":
-                await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", ethers.encodeBytes32String(activeBet), deadline, schedule, commission, ethToWei(createBetMinimum.value), initialPool, query);
+                await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commission, await numberToToken(createBetMinimum.value), initialPool, query);
                 break;
             case "oo":
-                await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", ethers.encodeBytes32String(activeBet), deadline, schedule, commission, ethToWei(createBetMinimum.value), initialPool, query);
+                await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commission, await numberToToken(createBetMinimum.value), initialPool, query);
                 break;
             default:
-                await activeContract.createProvableBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", deadline, schedule, commission, ethToWei(createBetMinimum.value || 0), initialPool, ethers.encodeBytes32String(createBetSchema.value === "wa" ? "WolframAlpha" : "URL"), ethers.encodeBytes32String(activeBet), query, {value: value.toString()});
+                await activeContract.createProvableBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", deadline, schedule, commission, await numberToToken(createBetMinimum.value || 0), initialPool, ethers.encodeBytes32String(createBetSchema.value === "wa" ? "WolframAlpha" : "URL"), ethers.encodeBytes32String(activeBet), query, {value: value.toString()});
         }
         const description = createBetDescription.value || "";
     } catch (error) {
@@ -489,7 +534,7 @@ async function createBet() {
 async function renderPlacedBets() {
     placeBetInfo.style.display = Object.keys(placedBets).length ? "block" : "none";
     placeBetEntries.innerHTML = `
-        ${Object.entries(placedBets).map(([k, v]) => `<tr><td onclick="delete placedBets['${k}']; renderPlacedBets()">✖</td><td>${k}</td><td>${v - fixedCommission}</td></tr>`).join("")}
+        ${Object.entries(placedBets).map(([k, v]) => `<tr><td onclick="delete placedBets['${k}']; renderPlacedBets()">✖</td><td>${k}</td><td>${BigInt(v) - fixedCommission}</td></tr>`).join("")}
     `;
 }
 
@@ -506,12 +551,12 @@ async function addBet() {
             addSingleBet();
         }
         const results = Object.keys(placedBets).filter(pb => pb);
-        const amounts = results.map(r => placedBets[r]).map(a => a.toString()).map(ethToWei);
+        const amounts = await Promise.all(results.map(r => placedBets[r]).map(a => a.toString()).map(numberToToken));
         if (!results.length || !amounts.length) {
             triggerError("No bets have been placed, make sure result and amount fields are not empty.")
             return;
         }
-        const sum = amounts.reduce((acc, b) => acc + b, ethToWei("0")).toString();
+        const sum = amounts.reduce((acc, b) => acc + b, BigInt(0)).toString();
         triggerProcessing("Placing bet" + (results.length > 1 ? "s" : ""));
         console.log(results, amounts.map(a => a.toString()), sum);
         await activeContract.placeBets(activeBet, results, amounts.map(a => a.toString()));
@@ -571,6 +616,7 @@ async function claimReward() {
     try {
         triggerProcessing("Claming reward");
         activeContract.claimBet(activeBet);
+        await searchBet(activeBet);
     } catch (error) {
         console.error(error);
         triggerError(providerErrorMsg(error));
@@ -642,9 +688,9 @@ async function renderBetPool() {
         });
         const results = await Promise.all(Object.keys(betResults).map((result) => stateContract.resultPools(activeBet, result)));
         const resultsPool = {};
-        Object.keys(betResults).map((result, idx) => {
-            resultsPool[result] = weiToEth(results[idx]);
-        })
+        await Promise.all(Object.keys(betResults).map(async (result, idx) => {
+            resultsPool[result] = await tokenToNumber(results[idx]);
+        }))
 
         const allEntries = Object.entries(betResults);
 
@@ -653,7 +699,7 @@ async function renderBetPool() {
             .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td><td>${(resultsPool[k])}</td></tr>`)
             .join("");
 
-        poolName.innerHTML = activeBet + " Pool";
+        poolName.innerHTML = ethers.decodeBytes32String(activeBet) + " Pool";
         betEntries.innerHTML = entries;
 
         betPool.style.visibility = "visible";

@@ -44,6 +44,7 @@ contract GambethOptimisticOracle is GambethOracle {
 
     // Submit a data request to the Optimistic oracle.
     function requestOptimisticOracleDecision(bytes32 betId) public {
+        require(state.betSchedules(betId) <= block.timestamp, "Bet still not scheduled to run");
         betRequestTimes[betId] = block.timestamp; // Set the request time to the current block time.
         IERC20 bondCurrency = state.betTokens(betId); // Use Görli WETH as the bond currency.
         uint256 reward = 0; // Set the reward to 0 (so we dont have to fund it from this contract).
