@@ -271,16 +271,15 @@ async function loadProvider({betId, betType} = {}) {
 
         providerLoaded = true;
 
-        if (!JSON.parse(localStorage.tokenApproved) && !JSON.parse(localStorage.awaitingApproval || false)) {
+        let usdc = new ethers.Contract(usdcAddress, tokenAbi, provider).connect(await provider.getSigner());
+        let allowance = await usdc.allowance(owner, stateContractAddress);
+        console.log("Allowance", allowance);
+        if (allowance === 0n) {
             try {
-                localStorage.awaitingApproval = true;
-                let usdc = new ethers.Contract(usdcAddress, tokenAbi, provider).connect(await provider.getSigner());
                 await usdc.approve(stateContractAddress, 0);
-                localStorage.tokenApproved = true;
             } catch (error) {
-                localStorage.tokenApproved = false;
+                triggerError(error);
             }
-            localStorage.awaitingApproval = false;
         }
 
         return true;
