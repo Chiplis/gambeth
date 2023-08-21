@@ -271,7 +271,7 @@ async function loadProvider({betId, betType} = {}) {
 
         providerLoaded = true;
 
-        if (!JSON.parse(localStorage.tokenApproved) && !JSON.parse(localStorage.awaitingApproval)) {
+        if (!JSON.parse(localStorage.tokenApproved) && !JSON.parse(localStorage.awaitingApproval || false)) {
             try {
                 localStorage.awaitingApproval = true;
                 let usdc = new ethers.Contract(usdcAddress, tokenAbi, provider).connect(await provider.getSigner());
