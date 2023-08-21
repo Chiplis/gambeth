@@ -1,4 +1,5 @@
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
+let usdc;
 
 const numberToToken = async (n, m) => {
     if (!activeBet && !m) return BigInt(n);
@@ -271,7 +272,7 @@ async function loadProvider({betId, betType} = {}) {
 
         providerLoaded = true;
 
-        let usdc = new ethers.Contract(usdcAddress, tokenAbi, provider).connect(await provider.getSigner());
+        usdc = new ethers.Contract(usdcAddress, tokenAbi, provider).connect(await provider.getSigner());
         let allowance = await usdc.allowance(owner, stateContractAddress);
         console.log("Allowance", allowance);
         if (allowance === 0n) {
@@ -417,12 +418,13 @@ async function searchBet(betId) {
         } catch(error) {
             result = "";
         }
+        let symbol = await usdc.symbol();
         betInnerDescription.innerHTML = description;
-        betInnerInitialPool.innerHTML = (await tokenToNumber(initialPool)).toString() + "Ð";
-        betInnerTotalPool.innerHTML = (await tokenToNumber((await stateContract.betPools(activeBet)))).toString() + "Ð";
+        betInnerInitialPool.innerHTML = (await tokenToNumber(initialPool)).toString() + " " + symbol;
+        betInnerTotalPool.innerHTML = (await tokenToNumber((await stateContract.betPools(activeBet)))).toString() + " " + symbol;
         const innerCommission = (100 / Number((await stateContract.betCommissions(activeBet)).toString())).toFixed(5);
         betInnerCommission.innerHTML = Number.parseFloat(innerCommission) + "%";
-        betInnerMinimum.innerHTML = await tokenToNumber(await stateContract.betMinimums(activeBet)) + "Ð";
+        betInnerMinimum.innerHTML = await tokenToNumber(await stateContract.betMinimums(activeBet)) + " " + symbol;
         betDescription.style.display = description ? "flex" : "none";
         betResult.style.display = result ? "flex" : "none";
         betInnerResult.innerHTML = result;
@@ -695,11 +697,7 @@ async function renderBetPool() {
 
         const allEntries = Object.entries(betResults);
 
-        allEntries.sort((a, b) => {
-            console.log("Results pool", resultsPool);
-            console.log("a - b", a, b);
-            return resultsPool[b[0]] - resultsPool[a[0]]
-        });
+        allEntries.sort((a, b) => resultsPool[b[0]] < resultsPool[a[0]] ? -1 : 1);
         const entries = allEntries
             .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td><td>${(resultsPool[k])}</td></tr>`)
             .join("");
