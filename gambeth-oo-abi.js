@@ -18,6 +18,30 @@ window.optimisticOracleAbi = [
                 "internalType": "bytes32",
                 "name": "",
                 "type": "bytes32"
+            },
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "betChoices",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
             }
         ],
         "name": "betRequestTimes",
@@ -80,6 +104,11 @@ window.optimisticOracleAbi = [
                 "internalType": "uint256",
                 "name": "initialPool",
                 "type": "uint256"
+            },
+            {
+                "internalType": "string[]",
+                "name": "results",
+                "type": "string[]"
             },
             {
                 "internalType": "string",

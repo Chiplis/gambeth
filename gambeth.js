@@ -17,6 +17,7 @@ const tokenToNumber = async (n, m) => {
 }
 const claimBet = document.getElementById("claim-bet");
 const placeBetInputs = document.getElementById("place-bet-inputs");
+const chooseBetInputs = document.getElementById("choose-bet-inputs");
 const placeBet = document.getElementById("place-bet");
 const scheduleDate = document.getElementById("schedule-date");
 const deadlineDate = document.getElementById("deadline-date");
@@ -37,12 +38,15 @@ const searchBetId = document.getElementById("search-bet");
 const poolName = document.getElementById("pool-name");
 const message = document.getElementById("message");
 const betContainer = document.getElementById("bet-container");
+const createBetChoicesList = document.getElementById("create-bet-choices-list");
 const createBetMinimum = document.getElementById("create-bet-minimum");
 const placeSingleBet = document.getElementById("place-single-bet");
 
 const createBetDescription = document.getElementById("create-bet-description");
 const createBetInitialPool = document.getElementById("create-bet-initial-pool");
 const createBetCommission = document.getElementById("create-bet-commission");
+const createBetChoices = document.getElementById("create-bet-choices");
+const createBetChoice = document.getElementById("create-bet-choice");
 
 const placeBetInfo = document.getElementById("place-bet-info");
 const placeBetEntries = document.getElementById("place-bet-entries");
@@ -100,7 +104,8 @@ const createBetBtn = async () => {
     steps[currentStep].style.opacity = "100%";
 }
 
-const renderCreationStep = (idx) => {
+const renderCreationStep = (idx, direction) => {
+
     steps[currentStep].style.opacity = "0";
     steps[currentStep].style.visibility = "hidden";
     const p = steps[currentStep];
@@ -108,17 +113,23 @@ const renderCreationStep = (idx) => {
         p.style.position = "absolute"
     }, 200);
     currentStep = idx;
+
+    if (steps[currentStep].style.display === "none") {
+        direction === "next" ? renderNextCreationStep() : renderPreviousCreationStep();
+        return;
+    }
+
     steps[currentStep].style.visibility = "visible";
     steps[currentStep].style.position = "initial";
     steps[currentStep].style.opacity = "100%";
 }
 
 const renderPreviousCreationStep = () => {
-    renderCreationStep(currentStep === 0 ? steps.length - 1 : currentStep - 1);
+    renderCreationStep(currentStep === 0 ? steps.length - 1 : currentStep - 1, "previous");
 }
 
 const renderNextCreationStep = () => {
-    renderCreationStep((currentStep + 1) % steps.length);
+    renderCreationStep((currentStep + 1) % steps.length, "next");
 }
 
 searchBetId.onkeydown = searchTriggered;
@@ -185,8 +196,8 @@ async function showBetInfo() {
     betInfo.style.display = 'flex';
 }
 
-const stateContractAddress = "0x4D4213122634dD59064B7a7cd900B83c31B0D1fb";
-const ooContractAddress = "0xD41f39c42EA095c0bC0539CEfeD2867D8a5f71Bf";
+const stateContractAddress = "0x78B9A19691b7B4588Fb3e002dE1E487F0dB18c74";
+const ooContractAddress = "0xd08f108d483c13A3EDA6276063532D9E5FdFf376";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 
@@ -224,7 +235,9 @@ async function loadProvider({betId, betType} = {}) {
                 if (sender === owner) triggerSuccess("No one won the bet, you've been refunded")
             });
             stateContract.on("WonBet", async (sender, amount) => {
-                if (sender === owner) triggerSuccess(`Bet won! ${await tokenToNumber(amount.toString())} ETH transferred to account`)
+                debugger;
+                console.log("Won bet with", amount + " reward");
+                if (sender === owner) triggerSuccess(`Bet won! ${await tokenToNumber(amount.toString())} USDC transferred to account`)
             });
             minimumBet = await tokenToNumber(0);
             createBetMinimum.setAttribute("min", minimumBet);
@@ -244,7 +257,7 @@ async function loadProvider({betId, betType} = {}) {
                 case 2n:
                     activeContract = new ethers.Contract(provableContractAddress, provableOracleAbi, provider).connect(signer);
                     activeContract.on("LackingFunds", async (sender, funds) => {
-                        if (sender === owner) triggerError(`Insufficient query funds, requiring ${await tokenToNumber(funds)} ETH`)
+                        if (sender === owner) triggerError(`Insufficient query funds, requiring ${await tokenToNumber(funds)} USDC`)
                     });
                     activeContract.on("DescribedProvableBet", async (hashedBetId, description) => {
                         console.log("Found description", hashedBetId);
@@ -277,7 +290,7 @@ async function loadProvider({betId, betType} = {}) {
         console.log("Allowance", allowance);
         if (allowance === 0n) {
             try {
-                await usdc.approve(stateContractAddress, 0);
+                await usdc.approve(stateContractAddress, 999999999999);
             } catch (error) {
                 triggerError(error);
             }
@@ -314,14 +327,16 @@ async function resetButtons() {
 }
 
 function renderPlaceSingleBet() {
-    const filledBet = (placeBetResult.value && placeBetAmount.value);
+    const filledBet = (placeBetResult.value && placeBetAmount.value) || (chooseBetInputs.style.display !== "none");
     placeSingleBet.onclick = filledBet ? () => {
-        addSingleBet();
+        addSingleBet(placeBetResult.value || chooseBetInputs.value, placeBetAmount.value);
         renderPlaceSingleBet();
     } : "";
     placeSingleBet.style.cursor = filledBet ? "pointer" : "default";
     placeSingleBet.style.opacity = filledBet ? "1" : "0";
 }
+
+renderPlaceSingleBet();
 
 async function renderClaimBet() {
     const addr = await signer.getAddress();
@@ -332,7 +347,8 @@ async function renderClaimBet() {
         try {
             await activeContract.getSettledData(activeBet);
             finishedBet = true;
-        } catch {}
+        } catch {
+        }
     }
     if ((await stateContract.userPools(activeBet, addr)) === 0 || !finishedBet) {
         claimBet.style.display = "none";
@@ -348,12 +364,36 @@ async function renderClaimBet() {
     }
 }
 
+async function activeBetKind() {
+    switch (await stateContract.betKinds(activeBet)) {
+        case 0n:
+            return "oo";
+        case 1n:
+            return "human";
+        case 2n:
+            return "provable";
+    }
+}
+
+async function activeBetChoices() {
+    const results = [];
+    let i = 0;
+    while (true) {
+        let result = await activeContract.betChoices(activeBet, BigInt(i++));
+        if (!result) return results;
+        results.push(result);
+    }
+}
+
 async function renderPlaceBet() {
 
     const deadline = await stateContract.betDeadlines(activeBet) * BigInt(1000);
     const bettingDisabled = deadline <= Math.round(new Date().getTime());
+    const betKind = await activeBetKind();
 
-    betDecision.style.display = await stateContract.betKinds(activeBet) === 1n
+    console.log("Bet kind", betKind);
+
+    betDecision.style.display = betKind === "human"
         ? ((bettingDisabled && await stateContract.betOwners(activeBet) === owner) ? "block" : "none")
         : "none";
 
@@ -369,6 +409,19 @@ async function renderPlaceBet() {
     placeBet.innerHTML = bettingDisabled ? "Deadline Reached" : "Place Bet";
     placeSingleBet.style.display = bettingDisabled ? "none" : "block";
     placeBet.disabled = bettingDisabled;
+
+    if (betKind === "oo") {
+        placeBetInputs.style.display = "none";
+        chooseBetInputs.style.display = "block";
+        chooseBetInputs.innerHTML = (await activeBetChoices())
+            .map(choice => `<option value="${choice}">${choice}</option>`)
+            .join("");
+
+    } else {
+        placeBetInputs.style.display = "block";
+        chooseBetInputs.style.display = "none";
+    }
+
 }
 
 async function searchBet(betId) {
@@ -381,7 +434,7 @@ async function searchBet(betId) {
         betContainer.style.opacity = "0";
         betContainer.style.visibility = "hidden";
         console.log(betId, searchBetId.value);
-        activeBet = ethers.encodeBytes32String(betId || searchBetId.value);
+        activeBet = !betId && !searchBetId.value ? activeBet : ethers.encodeBytes32String(betId || searchBetId.value);
         console.log(activeBet);
         const betExists = await stateContract.createdBets(activeBet);
         if (!betExists) {
@@ -415,7 +468,7 @@ async function searchBet(betId) {
         let result;
         try {
             result = await activeContract.getResult(activeBet);
-        } catch(error) {
+        } catch (error) {
             result = "";
         }
         let symbol = await usdc.symbol();
@@ -493,7 +546,7 @@ async function createBet() {
             triggerError("Bet's deadline to enter needs to be a future date", createBetQuery, () => renderCreationStep(6));
             return;
         } else if (await tokenToNumber(createBetMinimum.value) < minimumBet) {
-            triggerError(`Minimum bet is ${minimumBet} ETH, was ${createBetMinimum.value}`, createBetQuery, () => renderCreationStep(3));
+            triggerError(`Minimum bet is ${minimumBet} USDC, was ${createBetMinimum.value} USDC`, createBetQuery, () => renderCreationStep(3));
             return;
         } else if (!createBetCommission || createBetCommission.value === 0 || createBetCommission.value > 50) {
             triggerError("Commission can't be 0% nor higher than 50%", createBetQuery, () => renderCreationStep(2));
@@ -516,12 +569,18 @@ async function createBet() {
         const value = !oracleFund ? undefined : (await numberToToken(oracleFund) * (await stateContract.oracleMultiplier(schedule)));
         console.log("Oracle fund: ", value);
         triggerProcessing("Creating bet", createBetQueryResult);
+        const results = createBetChoicesList.innerHTML
+            .replaceAll("<li>", "\n")
+            .replaceAll("</li>", "")
+            .split("\n")
+            .filter(e => e);
+        console.log("Bet results", results);
         switch (schema) {
             case "bc":
                 await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commission, await numberToToken(createBetMinimum.value), initialPool, query);
                 break;
             case "oo":
-                await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commission, await numberToToken(createBetMinimum.value), initialPool, query);
+                await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commission, await numberToToken(createBetMinimum.value), initialPool, results, query);
                 break;
             default:
                 await activeContract.createProvableBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", deadline, schedule, commission, await numberToToken(createBetMinimum.value || 0), initialPool, createBetSchema.value === "wa" ? "WolframAlpha" : "URL", activeBet, query, {value: value.toString()});
@@ -536,34 +595,48 @@ async function createBet() {
 
 async function renderPlacedBets() {
     placeBetInfo.style.display = Object.keys(placedBets).length ? "block" : "none";
+    console.log(placedBets);
     placeBetEntries.innerHTML = `
         ${Object.entries(placedBets).map(([k, v]) => `<tr><td onclick="delete placedBets['${k}']; renderPlacedBets()">✖</td><td>${k}</td><td>${BigInt(v) - fixedCommission}</td></tr>`).join("")}
     `;
 }
 
-function addSingleBet() {
-    placedBets[placeBetResult.value] = parseFloat(placeBetAmount.value) + (placedBets[placeBetResult.value] || 0);
+function addSingleBet(result, amount) {
+    placedBets[result] = parseFloat(amount) + (placedBets[result] || 0);
     renderPlacedBets();
     placeBetAmount.value = "";
     placeBetResult.value = "";
 }
 
 async function addBet() {
+    if (await activeBetKind() === "oo") {
+        console.log(chooseBetInputs.value);
+        await placeContractBet();
+    } else {
+        await addFreeBet();
+    }
+}
+
+async function placeContractBet() {
+    const results = Object.keys(placedBets).filter(pb => pb);
+    const amounts = await Promise.all(results.map(r => placedBets[r]).map(a => a.toString()).map(numberToToken));
+    if (!results.length || !amounts.length) {
+        triggerError("No bets have been placed, make sure result and amount fields are not empty.")
+        return;
+    }
+    const sum = amounts.reduce((acc, b) => acc + b, BigInt(0)).toString();
+    triggerProcessing("Placing bet" + (results.length > 1 ? "s" : ""));
+    console.log(results, amounts.map(a => a.toString()), sum);
+    await activeContract.placeBets(activeBet, results, amounts.map(a => a.toString()));
+    placedBets = {};
+}
+
+async function addFreeBet() {
     try {
         if (placeBetAmount.value && placeBetResult.value) {
-            addSingleBet();
+            addSingleBet(placeBetResult.value, placeBetAmount.value);
         }
-        const results = Object.keys(placedBets).filter(pb => pb);
-        const amounts = await Promise.all(results.map(r => placedBets[r]).map(a => a.toString()).map(numberToToken));
-        if (!results.length || !amounts.length) {
-            triggerError("No bets have been placed, make sure result and amount fields are not empty.")
-            return;
-        }
-        const sum = amounts.reduce((acc, b) => acc + b, BigInt(0)).toString();
-        triggerProcessing("Placing bet" + (results.length > 1 ? "s" : ""));
-        console.log(results, amounts.map(a => a.toString()), sum);
-        await activeContract.placeBets(activeBet, results, amounts.map(a => a.toString()));
-        placedBets = {};
+        await placeContractBet();
         placeSingleBet.style.opacity = 0;
         placeBetInfo.style.display = "none";
         placeBetEntries.innerHTML = "";
@@ -574,8 +647,23 @@ async function addBet() {
     }
 }
 
+async function addBetChoice() {
+    console.log("Adding bet");
+    createBetChoice.value ||= "";
+    if (!(createBetChoice.value.trim()) || createBetChoicesList.innerHTML.toLowerCase().includes(createBetChoice.value.toLowerCase())) {
+        return;
+    }
+    createBetChoicesList.innerHTML += `<li>${createBetChoice.value}</li>`
+    createBetChoice.value = "";
+}
+
+changeBetType();
+
 async function changeBetType() {
+    console.log("Changing bet type");
+
     const betType = createBetSchema.value;
+    createBetChoices.style.display = betType === "oo" ? "block" : "none";
 
     if (betType === "html") {
         createBetPath.placeholder = "/html/body/div[1]/div/div/div[2]/main/div[4]/table/tbody/tr[2]/td[3]/text()"
@@ -608,7 +696,7 @@ async function changeBetType() {
             createBetPathLabel.innerHTML = "Extract result from HTML node using <a href='https://www.w3.org/TR/xpath/' style='text-decoration: underline'>XPath</a>";
             break;
     }
-    loadProvider({betType})
+    await loadProvider({betType})
 }
 
 function providerErrorMsg(error) {
@@ -618,8 +706,8 @@ function providerErrorMsg(error) {
 async function claimReward() {
     try {
         triggerProcessing("Claming reward");
-        activeContract.claimBet(activeBet);
-        await searchBet(activeBet);
+        await activeContract.claimBet(activeBet);
+        await searchBet();
     } catch (error) {
         console.error(error);
         triggerError(providerErrorMsg(error));

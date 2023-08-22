@@ -187,9 +187,9 @@ contract GambethState {
         } else if (userBet != 0) {
             // User won the bet and receives their corresponding share of the loser's pool
             uint256 loserPool = betPools[betId] - winnerPool;
-            emit WonBet(sender, reward);
             // User gets their corresponding fraction of the loser's pool, along with their original bet
             reward = loserPool / (winnerPool / userBet) + userBet;
+            emit WonBet(sender, reward);
         } else {
             // Sad violin noises
             emit LostBet(sender);

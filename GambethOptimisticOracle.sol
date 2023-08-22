@@ -1,3 +1,5 @@
+pragma solidity 0.8.20;
+
 import "./GambethOracle.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "https://github.com/UMAprotocol/protocol/blob/master/packages/core/contracts/optimistic-oracle-v2/implementation/OptimisticOracleV2.sol";
@@ -8,9 +10,10 @@ contract GambethOptimisticOracle is GambethOracle {
     OptimisticOracleV2Interface oo = OptimisticOracleV2Interface(ooAddress);
     bytes32 priceIdentifier = bytes32("NUMERICAL");
     mapping(bytes32 => uint256) public betRequestTimes;
+    mapping(bytes32 => mapping(uint => string)) public betChoices;
 
     function getResult(bytes32 betId) override public view returns (string memory) {
-        return Strings.toString(getSettledData(betId) / 1e18);
+        return betChoices[betId][uint(getSettledData(betId) / 1e18)];
     }
 
     modifier validateClaimedBet(bytes32 betId) override {
@@ -30,7 +33,7 @@ contract GambethOptimisticOracle is GambethOracle {
         return oo.getRequest(address(this), priceIdentifier, betRequestTimes[betId], bytes(state.betQueries(betId))).resolvedPrice;
     }
 
-    function createOptimisticBet(address currency, bytes32 betId, uint64 deadline, uint64 schedule, uint256 commission, uint256 minimum, uint256 initialPool, string calldata query) public {
+    function createOptimisticBet(address currency, bytes32 betId, uint64 deadline, uint64 schedule, uint256 commission, uint256 minimum, uint256 initialPool, string[] memory results, string calldata query) public {
         require(
             betId != 0x0
             && deadline > block.timestamp // Bet can't be set in the past
@@ -38,6 +41,9 @@ contract GambethOptimisticOracle is GambethOracle {
             && !state.createdBets(betId), // Can't have duplicate bets
             "Unable to create bet, check arguments."
         );
+        for (uint i = 0; i < results.length; i++) {
+            betChoices[betId][i] = results[i];
+        }
         state.createBet(GambethState.BetKind.OO, msg.sender, currency, betId, commission, deadline, schedule, minimum, initialPool, query);
         state.setQuery(betId, query);
     }
