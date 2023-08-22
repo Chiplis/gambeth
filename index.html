@@ -64,7 +64,7 @@
                         <select onchange="changeBetType()" style="margin-top: 1rem; text-align: center"
                                 name="create-bet-schema" id="create-bet-schema">
                             <option value="oo" selected>Optimistic oracle decision</option>
-                            <option value="bc" selected>Bet creator's decision</option>
+                            <option value="bc">Bet creator's decision</option>
                             <option value="wa">WolframAlpha oracle query</option>
                             <option value="xml">XML oracle query</option>
                             <option value="json">JSON oracle query</option>
@@ -94,7 +94,7 @@
                         </div>
                         <div id="create-bet-query-result"></div>
                     </div>
-                    <div class="create-bet-step" id="create-bet-choices" style="display: none; visibility: hidden">
+                    <div class="create-bet-step" id="create-bet-choices">
                         <div class="btn info" style="border: 0; margin: 0">Choices</div>
                         <div style="display: flex; align-items: center">
                             <input id="create-bet-choice" style="font-size: 1em; margin: 0.5rem;"/>

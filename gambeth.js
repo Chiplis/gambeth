@@ -530,7 +530,7 @@ async function createBet() {
         const schema = createBetSchema.value;
         const url = createBetUrl.value;
         const path = createBetPath.value;
-        const query = ["wa", "bc", "oo"].includes(schema)
+        let query = ["wa", "bc", "oo"].includes(schema)
             ? createBetWolfram.value
             : parseBetQuery(schema, url, path);
         const schedule = Date.parse(`${scheduleDate.value}`) / 1000;
@@ -587,7 +587,12 @@ async function createBet() {
             .replaceAll("</li>", "")
             .split("\n")
             .filter(e => e);
-        console.log("Bet results", results);
+        if (results.length) {
+            query += " Choose " + results.map((choice, idx) => `${idx} for ${choice}, `).join("");
+            query = query.slice(0, query.length - 2);
+            query += `. Choose ${results.length} if the question can't be answered at the current time or if none of the previous options are correct.`
+        }
+        console.log("Bet results/query", results, query);
         switch (schema) {
             case "bc":
                 await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commission, await numberToToken(createBetMinimum.value), initialPool, query);
