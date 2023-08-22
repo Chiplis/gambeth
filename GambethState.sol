@@ -16,7 +16,6 @@ contract GambethState {
         PROVABLE
     }
 
-    mapping(bytes32 => string) public betQueries;
     mapping(bytes32 => BetKind) public betKinds;
     address contractCreator;
     mapping(address => bool) approvedContracts;
@@ -96,12 +95,6 @@ contract GambethState {
     function manageToken(address token, uint256 decimals, bool approved) ownerOnly public {
         approvedTokens[token] = approved;
         tokenDecimals[token] = decimals;
-    }
-
-    function setQuery(bytes32 betId, string calldata query)
-    approvedContractOnly public {
-        require(bytes(betQueries[betId]).length == 0, "Attempted to overwrite existing query");
-        betQueries[betId] = query;
     }
 
     function createBet(BetKind kind, address sender, address token, bytes32 betId, uint256 commission, uint64 deadline, uint64 schedule, uint256 minimum, uint256 initialPool, string calldata description)

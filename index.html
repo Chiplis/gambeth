@@ -1,6 +1,6 @@
 <head>
     <title>Gambeth</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.6.7/ethers.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
     <script src="gambeth-oo-abi.js"></script>
     <script src="gambeth-provable-abi.js"></script>
     <script src="gambeth-state-abi.js"></script>
@@ -190,12 +190,12 @@
                         <input name="place-bet-result" id="place-bet-result" type="text"
                             oninput="renderPlaceSingleBet()" placeholder="Expected result" />
                     </div>
-                    <div>
+                    <div id="place-bet-amount-container">
                         <label for="place-bet-amount">Amount (USDC)</label>
                         <input name="place-bet-amount" id="place-bet-amount" oninput="renderPlaceSingleBet()"
                                type="number" step="0.0001" placeholder="Amount (USDC)" />
                     </div>
-                    <div>
+                    <div id="place-bet-choice-container">
                         <label for="choose-bet-inputs">Choose a result</label>
                         <select id="choose-bet-inputs" onchange="renderPlaceSingleBet()">
                         </select>

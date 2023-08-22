@@ -1,5 +1,24 @@
 window.optimisticOracleAbi = [
     {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "betId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "query",
+                "type": "string"
+            }
+        ],
+        "name": "CreatedOptimisticBet",
+        "type": "event"
+    },
+    {
         "inputs": [
             {
                 "internalType": "address",
@@ -45,6 +64,25 @@ window.optimisticOracleAbi = [
             }
         ],
         "name": "betRequestTimes",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "name": "betResults",
         "outputs": [
             {
                 "internalType": "uint256",
@@ -127,14 +165,32 @@ window.optimisticOracleAbi = [
                 "internalType": "bytes32",
                 "name": "betId",
                 "type": "bytes32"
-            }
-        ],
-        "name": "getResult",
-        "outputs": [
+            },
             {
                 "internalType": "string",
-                "name": "",
+                "name": "query",
                 "type": "string"
+            }
+        ],
+        "name": "decideBet",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "name": "finishedBets",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
             }
         ],
         "stateMutability": "view",
@@ -148,12 +204,12 @@ window.optimisticOracleAbi = [
                 "type": "bytes32"
             }
         ],
-        "name": "getSettledData",
+        "name": "getResult",
         "outputs": [
             {
-                "internalType": "int256",
+                "internalType": "string",
                 "name": "",
-                "type": "int256"
+                "type": "string"
             }
         ],
         "stateMutability": "view",
@@ -185,12 +241,12 @@ window.optimisticOracleAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
-                "name": "betId",
-                "type": "bytes32"
+                "internalType": "address",
+                "name": "newState",
+                "type": "address"
             }
         ],
-        "name": "requestOptimisticOracleDecision",
+        "name": "setState",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -198,12 +254,17 @@ window.optimisticOracleAbi = [
     {
         "inputs": [
             {
-                "internalType": "address",
-                "name": "newState",
-                "type": "address"
+                "internalType": "bytes32",
+                "name": "betId",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "string",
+                "name": "query",
+                "type": "string"
             }
         ],
-        "name": "setState",
+        "name": "settleAndClaimBet",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"

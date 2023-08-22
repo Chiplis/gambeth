@@ -41,6 +41,8 @@ const betContainer = document.getElementById("bet-container");
 const createBetChoicesList = document.getElementById("create-bet-choices-list");
 const createBetMinimum = document.getElementById("create-bet-minimum");
 const placeSingleBet = document.getElementById("place-single-bet");
+const placeBetAmountContainer = document.getElementById("place-bet-amount-container");
+const placeBetChoiceContainer = document.getElementById("place-bet-choice-container");
 
 const createBetDescription = document.getElementById("create-bet-description");
 const createBetInitialPool = document.getElementById("create-bet-initial-pool");
@@ -197,7 +199,7 @@ async function showBetInfo() {
 }
 
 const stateContractAddress = "0x78B9A19691b7B4588Fb3e002dE1E487F0dB18c74";
-const ooContractAddress = "0xd08f108d483c13A3EDA6276063532D9E5FdFf376";
+const ooContractAddress = "0x627Ee3091E5a479b1570d9AA2CC621A419e0C13b";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 
@@ -235,7 +237,6 @@ async function loadProvider({betId, betType} = {}) {
                 if (sender === owner) triggerSuccess("No one won the bet, you've been refunded")
             });
             stateContract.on("WonBet", async (sender, amount) => {
-                debugger;
                 console.log("Won bet with", amount + " reward");
                 if (sender === owner) triggerSuccess(`Bet won! ${await tokenToNumber(amount.toString())} USDC transferred to account`)
             });
@@ -340,14 +341,11 @@ renderPlaceSingleBet();
 
 async function renderClaimBet() {
     const addr = await signer.getAddress();
-    let finishedBet = false;
-    try {
-        finishedBet = await activeContract.finishedBets(activeBet);
-    } catch {
-        try {
-            await activeContract.getSettledData(activeBet);
-            finishedBet = true;
-        } catch {
+    let finishedBet = await activeContract.finishedBets(activeBet);
+    if (await activeBetKind() === "oo") {
+        let reqTime = await activeContract.betRequestTimes(activeBet);
+        if (reqTime) {
+            finishedBet ||= reqTime + BigInt(30) < BigInt(Math.round(new Date().getTime() / 1000));
         }
     }
     if ((await stateContract.userPools(activeBet, addr)) === 0 || !finishedBet) {
@@ -407,6 +405,8 @@ async function renderPlaceBet() {
     placeBetAmount.setAttribute("min", min);
     placeBetAmount.placeholder = `${min} minimum`;
     placeBet.innerHTML = bettingDisabled ? "Deadline Reached" : "Place Bet";
+    placeBetAmountContainer.style.display = bettingDisabled ? "none" : "block";
+    placeBetChoiceContainer.style.display = bettingDisabled ? "none" : "block";
     placeSingleBet.style.display = bettingDisabled ? "none" : "block";
     placeBet.disabled = bettingDisabled;
 
@@ -449,7 +449,7 @@ async function searchBet(betId) {
         const bets = await stateContract.queryFilter(stateContract.filters.CreatedBet(activeBet));
         const createdFilter = bets[0];
         const [initialPool, description] = createdFilter.args.slice(1).map(arg => arg.toString());
-        const query = (await stateContract.betQueries(activeBet));
+        const query = description;
         const {url, schema, path} = unpackQuery(query);
 
         wolframBet.style.display = schema ? "none" : "flex";
@@ -465,12 +465,7 @@ async function searchBet(betId) {
         schedule = new Date(Number(schedule.toString()));
         betSchedule.innerHTML = schedule.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
         console.log("Active bet", activeBet);
-        let result;
-        try {
-            result = await activeContract.getResult(activeBet);
-        } catch (error) {
-            result = "";
-        }
+        let result = await activeContract.getResult(activeBet);
         let symbol = await usdc.symbol();
         betInnerDescription.innerHTML = description;
         betInnerInitialPool.innerHTML = (await tokenToNumber(initialPool)).toString() + " " + symbol;
@@ -491,6 +486,12 @@ async function searchBet(betId) {
         console.error(error);
         triggerError(providerErrorMsg(error));
     }
+}
+
+async function settleBet() {
+    const query = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args[1];
+    console.log(query);
+    await activeContract.decideBet(activeBet, query);
 }
 
 function unpackQuery(u) {
@@ -706,7 +707,12 @@ function providerErrorMsg(error) {
 async function claimReward() {
     try {
         triggerProcessing("Claming reward");
-        await activeContract.claimBet(activeBet);
+        if (await activeBetKind() === "oo") {
+            const query = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args[1];
+            await activeContract.settleAndClaimBet(activeBet, query);
+        } else {
+            await activeContract.claimBet(activeBet);
+        }
         await searchBet();
     } catch (error) {
         console.error(error);

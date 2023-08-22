@@ -4,7 +4,7 @@ import "./GambethState.sol";
 
 abstract contract GambethOracle {
 
-    GambethState state = GambethState(address(0x4D4213122634dD59064B7a7cd900B83c31B0D1fb));
+    GambethState state = GambethState(address(0x78B9A19691b7B4588Fb3e002dE1E487F0dB18c74));
 
     function getResult(bytes32 betId) public virtual returns (string memory);
 
