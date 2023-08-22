@@ -276,7 +276,9 @@ async function loadProvider({betId, betType} = {}) {
                     activeContract = new ethers.Contract(ooContractAddress, optimisticOracleAbi, provider).connect(signer);
                     break;
                 case "bc":
-                    activeContract = new ethers.Contract(humanContractAddress, [], provider).connect(signer);
+                    activeContract = humanContractAddress
+                        ? new ethers.Contract(humanContractAddress, [], provider).connect(signer)
+                        : null;
                     break;
                 default:
                     activeContract = new ethers.Contract(provableContractAddress, provableOracleAbi, provider).connect(signer);
@@ -409,7 +411,17 @@ async function renderPlaceBet() {
     placeBetChoiceContainer.style.display = bettingDisabled ? "none" : "block";
     placeSingleBet.style.display = bettingDisabled ? "none" : "block";
     placeBet.disabled = bettingDisabled;
-
+    if (await activeBetKind() === "oo") {
+        let reqTime = await activeContract.betRequestTimes(activeBet);
+        if (!reqTime && await stateContract.betSchedules(activeBet) * BigInt(1000) < new Date().getTime()) {
+            placeBet.innerHTML = "Settle Bet";
+            placeBet.style.cursor = "pointer";
+            placeBet.onclick = settleBet;
+            placeBet.disabled = false;
+        }
+    } else {
+        placeBet.onclick = addBet;
+    }
     if (betKind === "oo") {
         placeBetInputs.style.display = "none";
         chooseBetInputs.style.display = "block";
