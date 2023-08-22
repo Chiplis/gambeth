@@ -681,7 +681,7 @@ async function changeBetType() {
     console.log("Changing bet type");
 
     const betType = createBetSchema.value;
-    createBetChoices.style.display = betType === "oo" ? "block" : "none";
+    createBetChoices.style.display = betType === "oo" ? "flex" : "none";
 
     if (betType === "html") {
         createBetPath.placeholder = "/html/body/div[1]/div/div/div[2]/main/div[4]/table/tbody/tr[2]/td[3]/text()"
