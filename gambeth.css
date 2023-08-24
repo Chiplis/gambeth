@@ -41,6 +41,10 @@ span {
     text-align: center;
 }
 
+.create-bet-step {
+    transition: opacity 1000ms linear;
+}
+
 .msg {
     box-sizing: border-box;
     appearance: none;

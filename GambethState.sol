@@ -4,16 +4,13 @@ contract GambethState {
 
     constructor() {
         contractCreator = msg.sender;
-        approvedContracts[0xD41f39c42EA095c0bC0539CEfeD2867D8a5f71Bf] = true;
-        approvedContracts[0x03Df3D511f18c8F49997d2720d3c33EBCd399e77] = true;
         approvedTokens[0x07865c6E87B9F70255377e024ace6630C1Eaa37F] = true;
         tokenDecimals[0x07865c6E87B9F70255377e024ace6630C1Eaa37F] = 1e6;
     }
 
     enum BetKind {
-        OO,
-        HUMAN,
-        PROVABLE
+        OPTIMISTIC_ORACLE,
+        HUMAN
     }
 
     mapping(bytes32 => BetKind) public betKinds;
@@ -22,6 +19,8 @@ contract GambethState {
     mapping(address => uint256) public tokenDecimals;
     // For each bet, track which users have already claimed their potential reward
     mapping(bytes32 => mapping(address => bool)) public claimedBets;
+
+    mapping(bytes32 => uint256) betCommissionDenominator;
 
     /* If the oracle service's scheduled callback was not executed after 5 days,
     a user can reclaim his funds after the bet's execution threshold has passed.
@@ -48,9 +47,6 @@ contract GambethState {
     run. */
     mapping(bytes32 => uint64) public betDeadlines;
     mapping(bytes32 => uint64) public betSchedules;
-
-    // Custom minimum entry for each bet, set by their creator
-    mapping(bytes32 => uint256) public betMinimums;
 
     // Keep track of all createdBets to prevent duplicates
     mapping(bytes32 => bool) public createdBets;
@@ -97,9 +93,10 @@ contract GambethState {
         tokenDecimals[token] = decimals;
     }
 
-    function createBet(BetKind kind, address sender, address token, bytes32 betId, uint256 commission, uint64 deadline, uint64 schedule, uint256 minimum, uint256 initialPool, string calldata description)
+    function createBet(BetKind kind, address sender, address token, bytes32 betId, uint256 commissionDenominator, uint256 commission, uint64 deadline, uint64 schedule, uint256 initialPool, string calldata description)
     approvedContractOnly public {
         require(approvedTokens[token] && !createdBets[betId], "Unapproved token for creating bets");
+        require(commissionDenominator > 0, "Invalid commission denominator");
         bool success = IERC20(token).transferFrom(sender, address(this), initialPool);
         require(success, "Not enough balance for initial pool");
 
@@ -108,9 +105,9 @@ contract GambethState {
         betOwners[betId] = sender;
         betTokens[betId] = IERC20(token);
         betCommissions[betId] = commission;
+        betCommissionDenominator[betId] = commissionDenominator;
         betDeadlines[betId] = deadline;
         betSchedules[betId] = schedule;
-        betMinimums[betId] = minimum;
 
         /* By adding the initial pool to the bet creator's, but not associating it with any results,
         we allow the creator to incentivize people to participate. */
@@ -138,7 +135,7 @@ contract GambethState {
         for (uint i = 0; i < results.length; i++) {
             // By not allowing anyone to bet on an empty string bets can be refunded if an error happens.
             total += amounts[i];
-            require(bytes(results[i]).length > 0 && amounts[i] >= betMinimums[betId],
+            require(bytes(results[i]).length > 0 && amounts[i] > 0,
                 "Attempted to place invalid bet, check amounts and results"
             );
 
@@ -158,40 +155,34 @@ contract GambethState {
 
     function claimBet(bytes32 betId, address sender, string memory result)
     approvedContractOnly public {
-        require(!claimedBets[betId][sender] && userPools[betId][sender] != 0, "Unable to claim bet");
-
-        claimedBets[betId][sender] = true;
-
         // Did the user bet on the correct result?
         uint256 userBet = userBets[betId][sender][result];
 
         // How much did everyone pool into the correct result?
         uint256 winnerPool = resultPools[betId][result];
 
-        uint256 reward = 0;
-        if (winnerPool == 0) {
-            emit UnwonBet(sender);
-            // If no one won then all bets are refunded
-            if (betKinds[betId] == BetKind.PROVABLE) {
-                reward = userPools[betId][sender];
-            } else {
-                return;
-            }
-        } else if (userBet != 0) {
-            // User won the bet and receives their corresponding share of the loser's pool
-            uint256 loserPool = betPools[betId] - winnerPool;
-            // User gets their corresponding fraction of the loser's pool, along with their original bet
-            reward = loserPool / (winnerPool / userBet) + userBet;
-            emit WonBet(sender, reward);
-        } else {
-            // Sad violin noises
-            emit LostBet(sender);
+        if (claimedBets[betId][sender] || (userBet == 0 && winnerPool != 0)) {
             return;
         }
 
+        claimedBets[betId][sender] = true;
+
+        uint256 reward = 0;
+        if (userBet == 0) {
+            emit UnwonBet(sender);
+        } else {
+            // User won the bet and receives their corresponding share of the loser's pool
+            uint256 loserPool = betPools[betId] - winnerPool;
+            // User gets their corresponding fraction of the loser's pool, along with their original bet
+            reward = loserPool / (winnerPool / userBet);
+            emit WonBet(sender, reward + userBet);
+        }
+
         // Bet owner gets their commission
-        uint256 ownerFee = reward / 100 * betCommissions[betId];
+        uint256 ownerFee = (reward / betCommissionDenominator[betId]) * betCommissions[betId];
         reward -= ownerFee;
+        // Guarantee owner's take never makes the winner lose money
+        reward += userBet;
         IERC20 token = betTokens[betId];
         bool success = token.transfer(sender, reward);
         require(success, "Failed to transfer reward to user.");

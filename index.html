@@ -114,20 +114,7 @@
                             <div class="info" style="color: cornflowerblue; background-color: transparent">%</div>
                         </div>
                         <label id="create-bet-commission-label" for="create-bet-commission">
-                            Can't be 0% nor higher than 50%.
-                            It needs to divide evenly into 100, if not it will automatically be rounded to a value that
-                            does.
-                        </label>
-                    </div>
-                    <div class="create-bet-step"
-                        style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
-                        <div class="btn info" style="border: 0; margin: 0">Minimum entry</div>
-                        <div style="display: flex; align-items: center">
-                            <input id="create-bet-minimum" inputmode="decimal" style="margin: 0.5rem;" />
-                            <div class="info" style="color: cornflowerblue; background-color: transparent">USDC</div>
-                        </div>
-                        <label for="create-bet-minimum">
-                            Minimum bet required to participate.
+                            Will be taken when winners collect their earnings, must be an integer.
                         </label>
                     </div>
                     <div class="create-bet-step"
@@ -150,7 +137,7 @@
                         </label>
                     </div>
                     <div class="create-bet-step"
-                        style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
+                        style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex; flex-direction: column; justify-content: center; align-items: center">
                         <div class="btn info" style="border: 0; margin: 0">Dates</div>
                         <input id="deadline-date" type="datetime-local" style="margin: 0.5rem;"
                             onchange="console.log(deadlineDate)"
@@ -285,12 +272,6 @@
                             <div style="font-size: 0.8rem; margin-bottom: 0.25rem;">
                                 Commission</div>
                             <div id="bet-commission"></div>
-                        </div>
-                        <div
-                            style="margin-top: 1rem; font-size: 0.7rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
-                            <div style="font-size: 0.8rem; margin-bottom: 0.25rem;">
-                                Minimum</div>
-                            <div id="bet-minimum"></div>
                         </div>
                     </div>
                     <div class="msg details" style="flex-direction: column;">

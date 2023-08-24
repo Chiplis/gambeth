@@ -39,7 +39,6 @@ const poolName = document.getElementById("pool-name");
 const message = document.getElementById("message");
 const betContainer = document.getElementById("bet-container");
 const createBetChoicesList = document.getElementById("create-bet-choices-list");
-const createBetMinimum = document.getElementById("create-bet-minimum");
 const placeSingleBet = document.getElementById("place-single-bet");
 const placeBetAmountContainer = document.getElementById("place-bet-amount-container");
 const placeBetChoiceContainer = document.getElementById("place-bet-choice-container");
@@ -75,7 +74,6 @@ const urlBet = document.getElementById("url-bet");
 const wolframBet = document.getElementById("wolfram-bet");
 const betInnerInitialPool = document.getElementById("bet-initial-pool");
 const betInnerCommission = document.getElementById("bet-commission");
-const betInnerMinimum = document.getElementById("bet-minimum");
 const betInnerTotalPool = document.getElementById("bet-total-pool");
 const betResult = document.getElementById("bet-result");
 const betQuery = document.getElementById("bet-query");
@@ -89,7 +87,6 @@ const closeNewBet = () => {
     betContainer.style.display = newBet.hideBet ? 'none' : 'flex';
 }
 
-let minimumBet = null;
 let fixedCommission = null;
 
 let currentStep = 0;
@@ -106,32 +103,27 @@ const createBetBtn = async () => {
     steps[currentStep].style.opacity = "100%";
 }
 
-const renderCreationStep = (idx, direction) => {
+const renderCreationStep = (idx) => {
+    steps[currentStep].style.opacity = "0%";
 
-    steps[currentStep].style.opacity = "0";
-    steps[currentStep].style.visibility = "hidden";
-    const p = steps[currentStep];
     setTimeout(() => {
-        p.style.position = "absolute"
-    }, 200);
-    currentStep = idx;
-
-    if (steps[currentStep].style.display === "none") {
-        direction === "next" ? renderNextCreationStep() : renderPreviousCreationStep();
-        return;
-    }
-
-    steps[currentStep].style.visibility = "visible";
-    steps[currentStep].style.position = "initial";
-    steps[currentStep].style.opacity = "100%";
+        steps[currentStep].style.display = "none";
+        steps[currentStep].style.visibility = "hidden";
+        steps[currentStep].style.position = "absolute";
+        currentStep = idx;
+        steps[currentStep].style.display = "flex";
+        steps[currentStep].style.visibility = "visible";
+        steps[currentStep].style.position = "initial";
+        steps[currentStep].style.opacity = "100%";
+    }, 1);
 }
 
 const renderPreviousCreationStep = () => {
-    renderCreationStep(currentStep === 0 ? steps.length - 1 : currentStep - 1, "previous");
+    renderCreationStep(currentStep === 0 ? steps.length - 1 : currentStep - 1);
 }
 
 const renderNextCreationStep = () => {
-    renderCreationStep((currentStep + 1) % steps.length, "next");
+    renderCreationStep((currentStep + 1) % steps.length);
 }
 
 searchBetId.onkeydown = searchTriggered;
@@ -198,11 +190,11 @@ async function showBetInfo() {
     betInfo.style.display = 'flex';
 }
 
-const stateContractAddress = "0x78B9A19691b7B4588Fb3e002dE1E487F0dB18c74";
-const ooContractAddress = "0x627Ee3091E5a479b1570d9AA2CC621A419e0C13b";
+const stateContractAddress = "0x0BF0Df02B720C177C094817978C4455BB8Bf6a11";
+const ooContractAddress = "0xe0b300EF11209d25795786ae8D5326d33D6b1190";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
-
+let awaitingApproval = false;
 async function loadProvider({betId, betType} = {}) {
     try {
         console.log("Loading provider with ", {betId, betType});
@@ -240,8 +232,6 @@ async function loadProvider({betId, betType} = {}) {
                 console.log("Won bet with", amount + " reward");
                 if (sender === owner) triggerSuccess(`Bet won! ${await tokenToNumber(amount.toString())} USDC transferred to account`)
             });
-            minimumBet = await tokenToNumber(0);
-            createBetMinimum.setAttribute("min", minimumBet);
             fixedCommission = await tokenToNumber(0);
         }
 
@@ -291,9 +281,10 @@ async function loadProvider({betId, betType} = {}) {
         usdc = new ethers.Contract(usdcAddress, tokenAbi, provider).connect(await provider.getSigner());
         let allowance = await usdc.allowance(owner, stateContractAddress);
         console.log("Allowance", allowance);
-        if (allowance === 0n) {
+        if (allowance === 0n && !awaitingApproval) {
             try {
                 await usdc.approve(stateContractAddress, 999999999999);
+                awaitingApproval = true;
             } catch (error) {
                 triggerError(error);
             }
@@ -315,10 +306,6 @@ window.onload = () => {
     if (betId) {
         searchBet(betId.toLowerCase().trim());
     }
-}
-
-function commissionChanged() {
-    createBetCommission.value = Number.parseFloat((100 / Math.round(100 / createBetCommission.value)).toFixed(10));
 }
 
 async function resetButtons() {
@@ -343,14 +330,12 @@ renderPlaceSingleBet();
 
 async function renderClaimBet() {
     const addr = await signer.getAddress();
-    let finishedBet = await activeContract.finishedBets(activeBet);
-    if (await activeBetKind() === "oo") {
-        let reqTime = await activeContract.betRequestTimes(activeBet);
-        if (reqTime) {
-            finishedBet ||= reqTime + BigInt(30) < BigInt(Math.round(new Date().getTime() / 1000));
-        }
-    }
-    if ((await stateContract.userPools(activeBet, addr)) === 0 || !finishedBet) {
+    const finishedBet = await activeContract.finishedBets(activeBet);
+    const result = await activeContract.getResult(activeBet);
+    const resolutionRequested = BigInt(await activeContract.betRequester(activeBet)) !== 0n;
+    const scheduleReached = await stateContract.betSchedules(activeBet) * BigInt(1000) < BigInt(new Date().getTime());
+    const showClaim = (finishedBet && await stateContract.userBets(activeBet, addr, result) !== 0n) || (!resolutionRequested && scheduleReached) || (resolutionRequested && !finishedBet);
+    if (!showClaim) {
         claimBet.style.display = "none";
         claimBet.style.visibility = "hidden";
         claimBet.style.opacity = "0";
@@ -358,10 +343,16 @@ async function renderClaimBet() {
         claimBet.style.display = "block";
         claimBet.style.visibility = "visible";
         claimBet.style.opacity = "100%";
-        const claimedBet = await stateContract.claimedBets(activeBet, addr);
-        claimBet.innerHTML = claimedBet ? "Claimed" : "Claim";
-        claimBet.disabled = claimedBet;
     }
+    const claimedBet = await stateContract.claimedBets(activeBet, addr);
+    claimBet.innerHTML = claimedBet
+        ? "Claimed"
+        : resolutionRequested
+            ? (finishedBet ? "Claim" : "Settling")
+            : "Settle";
+    console.log(claimBet.innerHTML);
+    claimBet.disabled = claimBet.innerHTML === "Claimed" || claimBet.innerHTML === "Settling";
+    claimBet.style.cursor = claimBet.disabled ? "initial" : "pointer";
 }
 
 async function activeBetKind() {
@@ -403,25 +394,11 @@ async function renderPlaceBet() {
     placeBetInputs.style.display = bettingDisabled ? "none" : "flex";
     placeBetInputs.style.opacity = bettingDisabled ? 0 : "100%";
     placeBetInputs.style.visibility = bettingDisabled ? "hidden" : "visible";
-    const min = await tokenToNumber(await stateContract.betMinimums(activeBet));
-    placeBetAmount.setAttribute("min", min);
-    placeBetAmount.placeholder = `${min} minimum`;
     placeBet.innerHTML = bettingDisabled ? "Deadline Reached" : "Place Bet";
     placeBetAmountContainer.style.display = bettingDisabled ? "none" : "block";
     placeBetChoiceContainer.style.display = bettingDisabled ? "none" : "block";
     placeSingleBet.style.display = bettingDisabled ? "none" : "block";
     placeBet.disabled = bettingDisabled;
-    if (await activeBetKind() === "oo") {
-        let reqTime = await activeContract.betRequestTimes(activeBet);
-        if (!reqTime && await stateContract.betSchedules(activeBet) * BigInt(1000) < new Date().getTime()) {
-            placeBet.innerHTML = "Settle Bet";
-            placeBet.style.cursor = "pointer";
-            placeBet.onclick = settleBet;
-            placeBet.disabled = false;
-        }
-    } else {
-        placeBet.onclick = addBet;
-    }
     if (betKind === "oo") {
         placeBetInputs.style.display = "none";
         chooseBetInputs.style.display = "block";
@@ -484,7 +461,6 @@ async function searchBet(betId) {
         betInnerTotalPool.innerHTML = (await tokenToNumber((await stateContract.betPools(activeBet)))).toString() + " " + symbol;
         const innerCommission = (100 / Number((await stateContract.betCommissions(activeBet)).toString())).toFixed(5);
         betInnerCommission.innerHTML = Number.parseFloat(innerCommission) + "%";
-        betInnerMinimum.innerHTML = await tokenToNumber(await stateContract.betMinimums(activeBet)) + " " + symbol;
         betDescription.style.display = description ? "flex" : "none";
         betResult.style.display = result ? "flex" : "none";
         betInnerResult.innerHTML = result;
@@ -521,10 +497,10 @@ const parseBetQuery = (schema, url, path) => `${schema}(${url})${schema === "htm
 
 async function createBet() {
     try {
-        if (!(await loadProvider({betType: createBetSchema.value}))) return;
+        // if (!(await loadProvider({betType: createBetSchema.value}))) return;
         console.log("Provider loaded successfully");
         betContainer.style.display = "none";
-        await resetButtons();
+        // await resetButtons();
         clearTimeout(hideMessage());
 
         const schema = createBetSchema.value;
@@ -535,19 +511,18 @@ async function createBet() {
             : parseBetQuery(schema, url, path);
         const schedule = Date.parse(`${scheduleDate.value}`) / 1000;
         const deadline = Date.parse(`${deadlineDate.value}`) / 1000;
-        const commission = Math.round(100 / createBetCommission.value);
+        let commission = createBetCommission.value || 0;
+        let commissionDenominator = 100;
+        while (!Number.isInteger(commission)) {
+            commission *= 10;
+            commissionDenominator *= 10;
+        }
 
         if (!window.ethereum) {
             triggerError("No Ethereum provider detected", createBetQuery, () => window.location.href = "https://metamask.io/");
             return;
         } else if (!betId.value.trim()) {
             triggerError("No bet ID submitted", createBetQuery, () => renderCreationStep(0));
-            return;
-        } else if (await stateContract.createdBets(ethers.encodeBytes32String(betId.value))) {
-            triggerError("Bet ID already exists", createBetQuery, () => renderCreationStep(0));
-            return;
-        } else if (await stateContract.createdBets(ethers.encodeBytes32String(betId.value))) {
-            triggerError("No funds for oracle service", createBetQuery, () => renderCreationStep(1));
             return;
         } else if (!deadline || !schedule) {
             triggerError("Need to specify both deadline and scheduled execution", createBetQuery, () => renderCreationStep(6));
@@ -558,11 +533,11 @@ async function createBet() {
         } else if (deadline < Date.parse(new Date()) / 1000) {
             triggerError("Bet's deadline to enter needs to be a future date", createBetQuery, () => renderCreationStep(6));
             return;
-        } else if (await tokenToNumber(createBetMinimum.value) < minimumBet) {
-            triggerError(`Minimum bet is ${minimumBet} USDC, was ${createBetMinimum.value} USDC`, createBetQuery, () => renderCreationStep(3));
+        } else if (isNaN(Number.parseFloat(createBetCommission.value)) || createBetCommission.value > 50) {
+            triggerError("Commission should be a number between 0 and 100", createBetQuery, () => renderCreationStep(2));
             return;
-        } else if (!createBetCommission || createBetCommission.value === 0 || createBetCommission.value > 50) {
-            triggerError("Commission can't be 0% nor higher than 50%", createBetQuery, () => renderCreationStep(2));
+        } else if (await stateContract.createdBets(ethers.encodeBytes32String(betId.value))) {
+            triggerError("Bet ID already exists", createBetQuery, () => renderCreationStep(0));
             return;
         }
         console.log("No exceptions");
@@ -595,13 +570,13 @@ async function createBet() {
         console.log("Bet results/query", results, query);
         switch (schema) {
             case "bc":
-                await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commission, await numberToToken(createBetMinimum.value), initialPool, query);
+                await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, query);
                 break;
             case "oo":
-                await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commission, await numberToToken(createBetMinimum.value), initialPool, results, query);
+                await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, results, query);
                 break;
             default:
-                await activeContract.createProvableBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", deadline, schedule, commission, await numberToToken(createBetMinimum.value || 0), initialPool, createBetSchema.value === "wa" ? "WolframAlpha" : "URL", activeBet, query, {value: value.toString()});
+                await activeContract.createProvableBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", deadline, schedule, commission, initialPool, createBetSchema.value === "wa" ? "WolframAlpha" : "URL", activeBet, query, {value: value.toString()});
         }
         const description = createBetDescription.value || "";
     } catch (error) {
@@ -723,10 +698,16 @@ function providerErrorMsg(error) {
 
 async function claimReward() {
     try {
-        triggerProcessing("Claming reward");
         if (await activeBetKind() === "oo") {
             const query = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args[1];
-            await activeContract.settleAndClaimBet(activeBet, query);
+            if (!(await activeContract.betRequestTimes(activeBet))) {
+                triggerProcessing("Reward will be transferred after bet's been settled.");
+                await activeContract.requestBetResolution(activeBet, query);
+            } else {
+                triggerProcessing("Claming reward");
+                await activeContract.claimBet(activeBet, query);
+            }
+            triggerSuccess("");
         } else {
             await activeContract.claimBet(activeBet);
         }
