@@ -55,7 +55,7 @@
                     <div class="create-bet-step"
                          style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
                         <div class="btn info" style="border: 0; margin: 0">Query</div>
-
+                        <label for="create-bet-schema" style="margin-top: 1em">How should the contract determine the result of your bet?</label>
                         <select onchange="changeBetType()" style="color: white; margin-top: 1rem; text-align: center"
                                 name="create-bet-schema" id="create-bet-schema">
                             <option value="oo" selected>Optimistic oracle decision</option>
@@ -65,24 +65,20 @@
                             <option value="json">JSON oracle query</option>
                             <option value="html">Process HTML data</option>
                         </select>
-                        <label for="create-bet-schema" style="margin-top: 1em">How should the contract determine the result of your bet?</label>
-
+                        <label style="display: none" for="create-bet-url">Determine bet result by choosing the website which contains it</label>
                         <input style="display: none"
                                oninput="createBetQueryInner.innerHTML=parseBetQuery(createBetSchema.value, this.value, createBetPath.value)"
                                id="create-bet-url" type="text"
                                placeholder="https://www.therocktrading.com/api/ticker/BTCEUR"
                                style="width: 75%; margin-top: 1em" />
-                        <label style="display: none" for="create-bet-url">Determine bet result by choosing the website which contains it</label>
-
+                        <label for="create-bet-wa">What will the bet determine?</label>
                         <input id="create-bet-wa" type="text" placeholder="Winner of the 2038 Super Bowl"
                                style="width: 75%; margin-top: 1em" />
-                        <label for="create-bet-wa">What will the bet determine?</label>
-
+                        <label style="display: none" for="create-bet-path" id="create-bet-path-label"></label>
                         <input style="display: none"
                                oninput="createBetQueryInner.innerHTML=parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value)"
                                id="create-bet-path" type="text" placeholder=".result.0.last"
                                style="width: 75%; margin-top: 1em" />
-                        <label style="display: none" for="create-bet-path" id="create-bet-path-label"></label>
 
                         <div id="create-bet-query" style="display: flex; margin-top: 1em; flex-direction: column; align-items: center">
                             <div id="create-bet-query-inner"></div>
