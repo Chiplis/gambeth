@@ -43,7 +43,6 @@ const placeSingleBet = document.getElementById("place-single-bet");
 const placeBetAmountContainer = document.getElementById("place-bet-amount-container");
 const placeBetChoiceContainer = document.getElementById("place-bet-choice-container");
 
-const createBetDescription = document.getElementById("create-bet-description");
 const createBetInitialPool = document.getElementById("create-bet-initial-pool");
 const createBetCommission = document.getElementById("create-bet-commission");
 const createBetChoices = document.getElementById("create-bet-choices");
@@ -51,8 +50,6 @@ const createBetChoice = document.getElementById("create-bet-choice");
 
 const placeBetInfo = document.getElementById("place-bet-info");
 const placeBetEntries = document.getElementById("place-bet-entries");
-const betDescription = document.getElementById("bet-description");
-const betInnerDescription = document.getElementById("bet-inner-description");
 const betUrl = document.getElementById("bet-url");
 const betDeadline = document.getElementById("bet-deadline");
 const betSchedule = document.getElementById("bet-schedule");
@@ -190,11 +187,12 @@ async function showBetInfo() {
     betInfo.style.display = 'flex';
 }
 
-const stateContractAddress = "0x0BF0Df02B720C177C094817978C4455BB8Bf6a11";
-const ooContractAddress = "0xe0b300EF11209d25795786ae8D5326d33D6b1190";
+const stateContractAddress = "0xd6198c972278233Ffd94bd99281740643B852F63";
+const ooContractAddress = "0xF1aB120166F7cCadAf7Be187EAE50695B9D6fbC1";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
+
 async function loadProvider({betId, betType} = {}) {
     try {
         console.log("Loading provider with ", {betId, betType});
@@ -250,12 +248,6 @@ async function loadProvider({betId, betType} = {}) {
                     activeContract.on("LackingFunds", async (sender, funds) => {
                         if (sender === owner) triggerError(`Insufficient query funds, requiring ${await tokenToNumber(funds)} USDC`)
                     });
-                    activeContract.on("DescribedProvableBet", async (hashedBetId, description) => {
-                        console.log("Found description", hashedBetId);
-                        if (hashedBetId.hash === ethers.id(ethers.encodeBytes32String(activeBet) || "")) {
-                            betInnerDescription.innerHTML = description;
-                        }
-                    });
                     break;
                 default:
 
@@ -283,8 +275,8 @@ async function loadProvider({betId, betType} = {}) {
         console.log("Allowance", allowance);
         if (allowance === 0n && !awaitingApproval) {
             try {
-                await usdc.approve(stateContractAddress, 999999999999);
                 awaitingApproval = true;
+                await usdc.approve(stateContractAddress, 999999999999);
             } catch (error) {
                 triggerError(error);
             }
@@ -437,8 +429,7 @@ async function searchBet(betId) {
         betContainer.style.display = "flex";
         const bets = await stateContract.queryFilter(stateContract.filters.CreatedBet(activeBet));
         const createdFilter = bets[0];
-        const [initialPool, description] = createdFilter.args.slice(1).map(arg => arg.toString());
-        const query = description;
+        const [initialPool, query] = createdFilter.args.slice(1).map(arg => arg.toString());
         const {url, schema, path} = unpackQuery(query);
 
         wolframBet.style.display = schema ? "none" : "flex";
@@ -456,14 +447,11 @@ async function searchBet(betId) {
         console.log("Active bet", activeBet);
         let result = await activeContract.getResult(activeBet);
         let symbol = await usdc.symbol();
-        betInnerDescription.innerHTML = description;
         betInnerInitialPool.innerHTML = (await tokenToNumber(initialPool)).toString() + " " + symbol;
         betInnerTotalPool.innerHTML = (await tokenToNumber((await stateContract.betPools(activeBet)))).toString() + " " + symbol;
-        const innerCommission = (100 / Number((await stateContract.betCommissions(activeBet)).toString())).toFixed(5);
+        const innerCommission = Number(await stateContract.betCommissions(activeBet)) / Number(await stateContract.betCommissionDenominator(activeBet));
         betInnerCommission.innerHTML = Number.parseFloat(innerCommission) + "%";
-        betDescription.style.display = description ? "flex" : "none";
-        betResult.style.display = result ? "flex" : "none";
-        betInnerResult.innerHTML = result;
+        betInnerResult.innerHTML = result || "Unresolved";
         Promise.all([renderPlaceBet(), renderClaimBet(), renderBetPool()]).then(() => {
             hideMessage();
             betContainer.style.opacity = "100%";
@@ -474,12 +462,6 @@ async function searchBet(betId) {
         console.error(error);
         triggerError(providerErrorMsg(error));
     }
-}
-
-async function settleBet() {
-    const query = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args[1];
-    console.log(query);
-    await activeContract.decideBet(activeBet, query);
 }
 
 function unpackQuery(u) {
@@ -511,12 +493,11 @@ async function createBet() {
             : parseBetQuery(schema, url, path);
         const schedule = Date.parse(`${scheduleDate.value}`) / 1000;
         const deadline = Date.parse(`${deadlineDate.value}`) / 1000;
-        let commission = createBetCommission.value || 0;
-        let commissionDenominator = 100;
-        while (!Number.isInteger(commission)) {
-            commission *= 10;
-            commissionDenominator *= 10;
-        }
+        let commission = Number(createBetCommission.value).toString() || "0";
+        let exponent = commission.includes(".") ? commission.length - commission.indexOf(".") : 0;
+        commission = commission.replace(".", "");
+        let commissionDenominator = exponent ? Math.pow(10, exponent - 1) : 1;
+        console.log(commission, exponent, commissionDenominator);
 
         if (!window.ethereum) {
             triggerError("No Ethereum provider detected", createBetQuery, () => window.location.href = "https://metamask.io/");
@@ -573,12 +554,12 @@ async function createBet() {
                 await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, query);
                 break;
             case "oo":
+                console.log(activeBet, deadline, schedule, commissionDenominator, commission, initialPool, results, query);
                 await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, results, query);
                 break;
             default:
                 await activeContract.createProvableBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", deadline, schedule, commission, initialPool, createBetSchema.value === "wa" ? "WolframAlpha" : "URL", activeBet, query, {value: value.toString()});
         }
-        const description = createBetDescription.value || "";
     } catch (error) {
         newBetId = null;
         console.error(error);

@@ -17,13 +17,8 @@
 
 <body style="margin: 0; font-size: 25px">
     <div
-        style="border: 0; width: 100%; position: fixed; background-color: white; left: 0; display: flex; flex-direction: row; justify-content: space-around; align-items: center;">
-        <a href="/" style="align-items: center;text-decoration: none; display:flex; flex-direction: column" id="gambeth"
-            style="text-decoration: none; margin-bottom: 3vw; flex-direction: column; font-size: 5vw; align-items: center; display: flex; justify-content: center">
-            <div style="display: flex">
-                <div style="color: cornflowerblue">Gamb.eth</div>
-            </div>
-        </a>
+        style="border: 0; min-height:50px; background-color: #828ceb; width: 100%; position: fixed; left: 0; display: flex; flex-direction: row; justify-content: space-around; align-items: center;">
+        <img src="gambeth.png" alt="Gambeth" style="width: 25%"/>
         <div style="display: flex">
             <div class="btn link create-bet" style="border: 0" onclick="createBetBtn()">
                 New Bet
@@ -129,14 +124,6 @@
                         </label>
                     </div>
                     <div class="create-bet-step"
-                        style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
-                        <div class="btn info" style="border: 0; margin: 0">Description</div>
-                        <input id="create-bet-description" type="text" style="margin: 0.5rem;" />
-                        <label for="create-bet-description">
-                            The description should explain in detail the terms of the bet.
-                        </label>
-                    </div>
-                    <div class="create-bet-step"
                         style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex; flex-direction: column; justify-content: center; align-items: center">
                         <div class="btn info" style="border: 0; margin: 0">Dates</div>
                         <input id="deadline-date" type="datetime-local" style="margin: 0.5rem;"
@@ -231,10 +218,10 @@
                             <div id="bet-path"></div>
                         </div>
                     </div>
-                    <div class="msg details" id="wolfram-bet" style="flex-direction: column;">
-                        <div style="font-size: 0.9rem">Query</div>
+                    <div class="msg details" id="wolfram-bet" style="display: flex; justify-content: center; flex-direction: column; max-width: 30%;">
+                        <div style="font-size: 0.9rem">About</div>
                         <div
-                            style="margin-top: 1rem; font-size: 0.7rem; display: flex; flex-direction: column; align-items: space-around; justify-content: center; border: 0; border-radius: 0">
+                            style="margin-top: 1rem; font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 0; border-radius: 0">
                             <div id="bet-wolfram-query"></div>
                         </div>
                     </div>
@@ -275,12 +262,6 @@
                         </div>
                     </div>
                     <div class="msg details" style="flex-direction: column;">
-                        <div id="bet-description"
-                            style="font-size: 0.7rem; display: flex; flex-direction: column; align-items: space-around; justify-content: center; border: 0; border-radius: 0">
-                            <div style="font-size: 0.8rem; margin-bottom: 0.25rem;">
-                                Description</div>
-                            <div id="bet-inner-description"></div>
-                        </div>
                         <div id="bet-result"
                             style="margin-top: 1rem; font-size: 0.7rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
                             <div style="font-size: 0.8rem; margin-bottom: 0.25rem;">

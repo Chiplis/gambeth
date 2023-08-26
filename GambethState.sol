@@ -15,12 +15,12 @@ contract GambethState {
 
     mapping(bytes32 => BetKind) public betKinds;
     address contractCreator;
-    mapping(address => bool) approvedContracts;
+    mapping(address => bool) public approvedContracts;
     mapping(address => uint256) public tokenDecimals;
     // For each bet, track which users have already claimed their potential reward
     mapping(bytes32 => mapping(address => bool)) public claimedBets;
 
-    mapping(bytes32 => uint256) betCommissionDenominator;
+    mapping(bytes32 => uint256) public betCommissionDenominator;
 
     /* If the oracle service's scheduled callback was not executed after 5 days,
     a user can reclaim his funds after the bet's execution threshold has passed.
@@ -38,7 +38,7 @@ contract GambethState {
     after the bet's creator takes their cut. */
     event UnwonBet(address indexed refunded);
 
-    mapping(address => bool) approvedTokens;
+    mapping(address => bool) public approvedTokens;
     mapping(bytes32 => IERC20) public betTokens;
 
     /* There are two different dates associated with each created bet:
@@ -93,7 +93,7 @@ contract GambethState {
         tokenDecimals[token] = decimals;
     }
 
-    function createBet(BetKind kind, address sender, address token, bytes32 betId, uint256 commissionDenominator, uint256 commission, uint64 deadline, uint64 schedule, uint256 initialPool, string calldata description)
+    function createBet(BetKind kind, address sender, address token, bytes32 betId, uint256 commissionDenominator, uint256 commission, uint64 deadline, uint64 schedule, uint256 initialPool, string calldata query)
     approvedContractOnly public {
         require(approvedTokens[token] && !createdBets[betId], "Unapproved token for creating bets");
         require(commissionDenominator > 0, "Invalid commission denominator");
@@ -117,7 +117,7 @@ contract GambethState {
         // Bet creation should succeed from this point onward
         createdBets[betId] = true;
 
-        emit CreatedBet(betId, initialPool, description);
+        emit CreatedBet(betId, initialPool, query);
     }
 
     function placeBets(bytes32 betId, address sender, string[] calldata results, uint256[] calldata amounts)

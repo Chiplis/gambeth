@@ -17,9 +17,9 @@ contract GambethOptimisticOracle is OptimisticRequester {
     mapping(bytes32 => bool) public finishedBets;
     mapping(bytes32 => mapping(uint => string)) public betChoices;
     mapping(bytes32 => uint256) public betResults;
-    mapping(bytes32 => mapping(uint256 => mapping(bytes => bytes32))) requestBets;
+    mapping(bytes32 => mapping(uint256 => mapping(bytes => bytes32))) public requestBets;
     mapping(bytes32 => int256) public betProposals;
-    mapping(bytes32 => mapping(bytes32 => bool)) betQueries;
+    mapping(bytes32 => mapping(bytes32 => bool)) public betQueries;
     mapping(bytes32 => address) public betRequester;
 
     event CreatedOptimisticBet(bytes32 indexed betId, string query);

@@ -1,3 +1,8 @@
+html {
+    background-color: #828ceb;
+    color: #fdcebb;
+}
+
 * {
     font-family: 'Poppins', sans-serif;
 }
@@ -90,13 +95,13 @@ span {
 .search {
     color: white;
     border: 0;
-    background-color: #edbf64;
+    background-color: #f59e7b;
 }
 
 .search::placeholder {
     color: white;
     opacity: 1;
-    background-color: #edbf64;
+    background-color: #f59e7b;
 }
 
 .info {
@@ -109,12 +114,12 @@ span {
 }
 
 .link {
-    color: #ed7b64;
+    color: #f59e7b;
 }
 
 .link:hover {
     color:white;
-    background-color: #ed7b64;
+    background-color: #f59e7b;
 }
 
 .details {
@@ -189,7 +194,7 @@ span {
 }
 
 .styled-table thead tr {
-    background-color: #edbf64;
+    background-color: #f59e7b;
     color: #ffffff;
     text-align: left;
 }
@@ -211,7 +216,7 @@ span {
 }
 
 .styled-table tbody tr:last-of-type {
-    border-bottom: 2px solid #edbf64;
+    border-bottom: 2px solid #f59e7b;
 }
 
 #bet-container {
