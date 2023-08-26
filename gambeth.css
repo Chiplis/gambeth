@@ -26,7 +26,7 @@ td {
 
 label {
     font-weight:bold;
-    color: cornflowerblue;
+    color: #fdcebb;
     font-size: 0.85rem;
 }
 
@@ -105,12 +105,12 @@ span {
 }
 
 .info {
-    color: cornflowerblue;
+    color: #fdcebb;
 }
 
 .info:hover {
     color:white;
-    background-color: cornflowerblue;
+    background-color: #fdcebb;
 }
 
 .link {
@@ -123,12 +123,12 @@ span {
 }
 
 .details {
-    color: cornflowerblue;
+    color: #fdcebb;
 }
 
 .details:hover {
     color:white;
-    background-color: cornflowerblue;
+    background-color: #fdcebb;
 }
 
 .btn:disabled:hover {
@@ -137,7 +137,7 @@ span {
 
 .btn::placeholder {
     opacity: 1;
-    color: cornflowerblue;
+    color: #fdcebb;
 }
 
 .btn:hover::placeholder {
@@ -155,12 +155,12 @@ span {
 }
 
 .processing {
-    color: cornflowerblue;
+    color: #fdcebb;
 }
 
 .processing:hover {
     color: white;
-    background-color: cornflowerblue;
+    background-color: #fdcebb;
 }
 
 .success {
