@@ -1,6 +1,6 @@
 html {
     background-color: #828ceb;
-    color: #fdcebb;
+    color: white;
 }
 
 * {
@@ -26,23 +26,23 @@ td {
 
 label {
     font-weight:bold;
-    color: #fdcebb;
+    color: white;
     font-size: 0.85rem;
 }
 
 input {
     padding: 12px 4px;
-    border-top: 0px;
-    border-left: 0px;
-    border-right: 0px;
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
     border-style: dashed;
     text-align: center;
 }
 
 span {
-    border-top: 0px;
-    border-left: 0px;
-    border-right: 0px;
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
     text-align: center;
 }
 
@@ -56,7 +56,6 @@ span {
     background-color: transparent;
     display: flex;
     align-self: center;
-    font-weight: 400;
     line-height: 1;
     margin: 1rem;
     padding: 0.75rem;
@@ -80,7 +79,6 @@ span {
     display: flex;
     align-self: center;
     font-size: 1em;
-    font-weight: 400;
     line-height: 1;
     margin: 0.25rem;
     padding: 0.75rem;
@@ -88,6 +86,7 @@ span {
     text-align: center;
     text-transform: uppercase;
     font-weight: 700;
+    color: white;
     -webkit-appearance: none;
     transition: opacity 200ms linear, visibility 200ms linear, background-color 300ms ease-in-out, box-shadow 300ms ease-in-out, color 300ms ease-in-out;
 }
@@ -95,40 +94,40 @@ span {
 .search {
     color: white;
     border: 0;
-    background-color: #f59e7b;
+    background-color: #ff6927;
 }
 
 .search::placeholder {
     color: white;
     opacity: 1;
-    background-color: #f59e7b;
+    background-color: #ff6927;
 }
 
 .info {
-    color: #fdcebb;
+    color: white;
 }
 
 .info:hover {
     color:white;
-    background-color: #fdcebb;
+    background-color: #ff6927;
 }
 
 .link {
-    color: #f59e7b;
+    color: #ff6927;
 }
 
 .link:hover {
     color:white;
-    background-color: #f59e7b;
+    background-color: #ff6927;
 }
 
 .details {
-    color: #fdcebb;
+    color: white;
 }
 
 .details:hover {
     color:white;
-    background-color: #fdcebb;
+    background-color: #ff6927;
 }
 
 .btn:disabled:hover {
@@ -137,7 +136,7 @@ span {
 
 .btn::placeholder {
     opacity: 1;
-    color: #fdcebb;
+    color: white;
 }
 
 .btn:hover::placeholder {
@@ -155,12 +154,12 @@ span {
 }
 
 .processing {
-    color: #fdcebb;
+    color: white;
 }
 
 .processing:hover {
     color: white;
-    background-color: #fdcebb;
+    background-color: #ff6927;
 }
 
 .success {
@@ -194,7 +193,7 @@ span {
 }
 
 .styled-table thead tr {
-    background-color: #f59e7b;
+    background-color: #ff6927;
     color: #ffffff;
     text-align: left;
 }
@@ -216,12 +215,11 @@ span {
 }
 
 .styled-table tbody tr:last-of-type {
-    border-bottom: 2px solid #f59e7b;
+    border-bottom: 2px solid #ff6927;
 }
 
 #bet-container {
     flex-wrap: wrap;
-    display: flex;
     flex-direction: column;
     flex-grow: 0;
     flex-shrink: 0;
