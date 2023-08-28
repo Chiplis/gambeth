@@ -63,8 +63,6 @@ const createBetPathLabel = document.getElementById("create-bet-path-label");
 const createBetQueryInner = document.getElementById("create-bet-query-inner");
 const innerMessage = document.getElementById("inner-message");
 const closeMessage = document.getElementById("close-message");
-const queryTesterUrl = document.getElementById("query-tester-url");
-const queryTesterResult = document.getElementById("query-tester-result");
 const newBet = document.getElementById("new-bet");
 
 const urlBet = document.getElementById("url-bet");
@@ -341,7 +339,7 @@ async function renderClaimBet() {
         ? "Claimed"
         : resolutionRequested
             ? (finishedBet ? "Claim" : "Settling")
-            : "Settle";
+            : "Claim";
     console.log(claimBet.innerHTML);
     claimBet.disabled = claimBet.innerHTML === "Claimed" || claimBet.innerHTML === "Settling";
     claimBet.style.cursor = claimBet.disabled ? "initial" : "pointer";
@@ -692,7 +690,7 @@ async function claimReward() {
         } else {
             await activeContract.claimBet(activeBet);
         }
-        await searchBet();
+        await searchBet(activeBet);
     } catch (error) {
         console.error(error);
         triggerError(providerErrorMsg(error));
@@ -707,50 +705,6 @@ async function decideBet() {
         console.error(error);
         triggerError(providerErrorMsg(error));
     }
-}
-
-async function testQueryInfo() {
-    testQuery(['xml', 'html', 'json'].map(s => (betQuery.innerHTML || betWolframQuery.innerHTML).startsWith(s)).some(x => x) ? 'URL' : 'WolframAlpha', betQuery.innerHTML || betWolframQuery.innerHTML, 'Query error encountered, bets will be refunded if this happens during scheduled execution');
-}
-
-async function testQueryCreate() {
-    testQuery(createBetSchema.value === "wa" ? "WolframAlpha" : "URL", createBetSchema.value === "wa" ? createBetWolfram.value : createBetQueryInner.innerHTML, 'Query failed, you can still create the bet if you know it will succeed when it is scheduled to run', createBetQueryResult);
-}
-
-async function testQuery(betType, url, errorMsg, after = defaultMessageLocation) {
-    if (!url) {
-        triggerError(`No ${betType === "URL" ? "URL" : "Query"} detected.`, after);
-        return;
-    }
-    const payload = {
-        "context": {
-            "name": "oraclize_website_testquery",
-            "protocol": "http",
-            "type": "web"
-        },
-        "datasource": betType,
-        "query": url
-    }
-    const baseURL = "https://api.oraclize.it/api/v1/query";
-    triggerProcessing("Querying", after);
-    let result;
-    const queryId = (await fetch(`${baseURL}/create`, {
-        method: "POST",
-        body: JSON.stringify(payload)
-    }).then(r => r.json()).catch(console.log)).result.id;
-    setTimeout(async () => {
-        try {
-            const fullResult = (await fetch(`${baseURL}/${queryId}/status`).then(r => r.json()).catch(console.error));
-            const error = fullResult.result.checks.find(check => check.errors.length);
-            result = fullResult.result.checks[0].results[0];
-            if (error || !result) throw error;
-        } catch (error) {
-            console.error(error);
-            triggerError(errorMsg || "Error while trying to fetch result, check query and try again.", after);
-            return;
-        }
-        triggerSuccess("Result: " + result, null, after);
-    }, 5000);
 }
 
 async function renderBetPool() {
