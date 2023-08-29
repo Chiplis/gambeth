@@ -185,8 +185,8 @@ async function showBetInfo() {
     betInfo.style.display = 'flex';
 }
 
-const stateContractAddress = "0xd6198c972278233Ffd94bd99281740643B852F63";
-const ooContractAddress = "0xF1aB120166F7cCadAf7Be187EAE50695B9D6fbC1";
+const stateContractAddress = "0xA1A0dAA33d43A4d20F94c432583d1DD5Dd2Ba4a1";
+const ooContractAddress = "0x24D9A48c6F2464B9DAa9bC550F17F6520055991b";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
@@ -324,7 +324,8 @@ async function renderClaimBet() {
     const result = await activeContract.getResult(activeBet);
     const resolutionRequested = BigInt(await activeContract.betRequester(activeBet)) !== 0n;
     const scheduleReached = await stateContract.betSchedules(activeBet) * BigInt(1000) < BigInt(new Date().getTime());
-    const showClaim = (finishedBet && await stateContract.userBets(activeBet, addr, result) !== 0n) || (!resolutionRequested && scheduleReached) || (resolutionRequested && !finishedBet);
+    let showClaim = finishedBet || (!resolutionRequested && scheduleReached) || (resolutionRequested && !finishedBet);
+    showClaim &&= !result.length ? true : await stateContract.userBets(activeBet, addr, result) !== 0n;
     if (!showClaim) {
         claimBet.style.display = "none";
         claimBet.style.visibility = "hidden";
@@ -339,7 +340,7 @@ async function renderClaimBet() {
         ? "Claimed"
         : resolutionRequested
             ? (finishedBet ? "Claim" : "Settling")
-            : "Claim";
+            : "Settle";
     console.log(claimBet.innerHTML);
     claimBet.disabled = claimBet.innerHTML === "Claimed" || claimBet.innerHTML === "Settling";
     claimBet.style.cursor = claimBet.disabled ? "initial" : "pointer";
@@ -369,26 +370,28 @@ async function activeBetChoices() {
 async function renderPlaceBet() {
 
     const deadline = await stateContract.betDeadlines(activeBet) * BigInt(1000);
-    const bettingDisabled = deadline <= Math.round(new Date().getTime());
+    const lockedPool = deadline <= Math.round(new Date().getTime());
+    const schedule = await stateContract.betSchedules(activeBet) * BigInt(1000);
+    const scheduleReached = schedule <= Math.round(new Date().getTime());
     const betKind = await activeBetKind();
 
     console.log("Bet kind", betKind);
 
     betDecision.style.display = betKind === "human"
-        ? ((bettingDisabled && await stateContract.betOwners(activeBet) === owner) ? "block" : "none")
+        ? ((lockedPool && await stateContract.betOwners(activeBet) === owner) ? "block" : "none")
         : "none";
 
     placeBet.style.visibility = "visible";
     placeBet.style.opacity = "100%";
 
-    placeBetInputs.style.display = bettingDisabled ? "none" : "flex";
-    placeBetInputs.style.opacity = bettingDisabled ? 0 : "100%";
-    placeBetInputs.style.visibility = bettingDisabled ? "hidden" : "visible";
-    placeBet.innerHTML = bettingDisabled ? "Deadline Reached" : "Place Bet";
-    placeBetAmountContainer.style.display = bettingDisabled ? "none" : "block";
-    placeBetChoiceContainer.style.display = bettingDisabled ? "none" : "block";
-    placeSingleBet.style.display = bettingDisabled ? "none" : "block";
-    placeBet.disabled = bettingDisabled;
+    placeBetInputs.style.display = lockedPool ? "none" : "flex";
+    placeBetInputs.style.opacity = lockedPool ? 0 : "100%";
+    placeBetInputs.style.visibility = lockedPool ? "hidden" : "visible";
+    placeBet.innerHTML = lockedPool ? (scheduleReached ? "Bet finished" : "Pool locked") : "Place bet";
+    placeBetAmountContainer.style.display = lockedPool ? "none" : "block";
+    placeBetChoiceContainer.style.display = lockedPool ? "none" : "block";
+    placeSingleBet.style.display = lockedPool ? "none" : "block";
+    placeBet.disabled = lockedPool;
     if (betKind === "oo") {
         placeBetInputs.style.display = "none";
         chooseBetInputs.style.display = "block";
@@ -599,7 +602,8 @@ async function placeContractBet() {
     const sum = amounts.reduce((acc, b) => acc + b, BigInt(0)).toString();
     triggerProcessing("Placing bet" + (results.length > 1 ? "s" : ""));
     console.log(results, amounts.map(a => a.toString()), sum);
-    await activeContract.placeBets(activeBet, results, amounts.map(a => a.toString()));
+    const finalAmounts = amounts.map(a => a.toString());
+    await activeContract.fillOrder(finalAmounts, finalAmounts.map(() => 1), finalAmounts.map(() => 1), 0, activeBet, results, [[]]);
     placedBets = {};
 }
 
@@ -726,7 +730,7 @@ async function renderBetPool() {
 
         allEntries.sort((a, b) => resultsPool[b[0]] < resultsPool[a[0]] ? -1 : 1);
         const entries = allEntries
-            .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td><td>${(resultsPool[k])}</td></tr>`)
+            .map(([k, v]) => `<tr><td>${k}</td><td>${(resultsPool[k])}</td></tr>`)
             .join("");
 
         poolName.innerHTML = ethers.decodeBytes32String(activeBet) + " Pool";

@@ -1,3 +1,5 @@
+pragma solidity 0.8.20;
+
 import "https://github.com/UMAprotocol/protocol/blob/master/packages/core/contracts/optimistic-oracle-v2/interfaces/OptimisticOracleV2Interface.sol";
 
 contract GambethState {
@@ -5,6 +7,7 @@ contract GambethState {
     constructor() {
         contractCreator = msg.sender;
         approvedTokens[0x07865c6E87B9F70255377e024ace6630C1Eaa37F] = true;
+        approvedContracts[0x24D9A48c6F2464B9DAa9bC550F17F6520055991b] = true;
         tokenDecimals[0x07865c6E87B9F70255377e024ace6630C1Eaa37F] = 1e6;
     }
 
@@ -120,7 +123,7 @@ contract GambethState {
         emit CreatedBet(betId, initialPool, query);
     }
 
-    function placeBets(bytes32 betId, address sender, string[] calldata results, uint256[] calldata amounts)
+    function placeBets(bytes32 betId, address sender, string[] memory results, uint256[] memory amounts)
     approvedContractOnly public {
         require(
             results.length > 0
@@ -192,5 +195,90 @@ contract GambethState {
 
     function calculateContractCommission(uint256, string[] calldata, uint256[] calldata) pure public returns (uint256) {
         return 0;
+    }
+
+    enum OrderType { BUY, SELL }
+
+    mapping(bytes32 => Order[]) public orders;
+
+    function addOrder(address sender, bytes32 betId, Order memory order) internal {
+        require(order.amount != 0, "Invalid new order state");
+        // If before pool lockout, should be able to simply place a bet
+        if (betDeadlines[betId] >= block.timestamp && order.orderType == OrderType.BUY) {
+            uint[] memory amounts = new uint[](1);
+            amounts[0] = order.amount;
+            string[] memory results = new string[](1);
+            results[0] = order.result;
+            placeBets(betId, sender, results, amounts);
+        } else {
+            orders[betId].push(order);
+        }
+    }
+
+    function fillOrder(address sender, uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, OrderType orderType, bytes32 betId, string[] calldata results, uint[][] calldata idxs) approvedContractOnly public {
+
+        for (uint r = 0; r < results.length; r++) {
+            string calldata result = results[r];
+            uint orderAmount = orderAmounts[r];
+            uint numerator = numerators[r];
+            uint denominator = denominators[r];
+            uint[] calldata indexes = idxs[r];
+            for (uint i = 0; i < indexes.length && orderAmount != 0; i++) {
+                uint index = indexes[i];
+                Order storage matchedOrder = orders[betId][index];
+
+                require(
+                    matchedOrder.orderType != orderType
+                    && matchedOrder.amount > 0
+                    && orderType == OrderType.BUY
+                        ? numerator * matchedOrder.ratioDenominator >= matchedOrder.ratioNumerator * denominator
+                        : numerator * matchedOrder.ratioDenominator <= matchedOrder.ratioNumerator * denominator
+                    && keccak256(bytes(matchedOrder.result)) == keccak256(bytes(result)),
+                    "Invalid matching order state"
+                );
+
+                uint shareAmount = matchedOrder.amount < orderAmount ? matchedOrder.amount : orderAmount;
+
+                orderAmount -= shareAmount;
+                matchedOrder.amount -= shareAmount;
+
+                address seller = orderType == OrderType.BUY ? matchedOrder.user : sender;
+                address buyer = orderType == OrderType.BUY ? sender : matchedOrder.user;
+
+                userPools[betId][buyer] += shareAmount;
+                userBets[betId][buyer][result] += shareAmount;
+
+                userPools[betId][seller] -= shareAmount;
+                userBets[betId][seller][result] -= shareAmount;
+
+                uint transferAmount = (shareAmount * numerator) / denominator;
+
+                require(
+                    betTokens[betId].transferFrom(buyer, address(this), transferAmount)
+                    && betTokens[betId].transfer(seller, transferAmount),
+                    "Error while transferring tokens for matching order"
+                );
+            }
+            if (orderAmount != 0) {
+                Order memory newOrder = Order({
+                    orderType: orderType,
+                    ratioNumerator: numerator,
+                    ratioDenominator: denominator,
+                    result: result,
+                    amount: orderAmount,
+                    user: sender
+                });
+                addOrder(sender, betId, newOrder);
+            }
+        }
+    }
+
+    struct Order {
+        OrderType orderType;
+        uint ratioNumerator;
+        uint ratioDenominator;
+        string result;
+        uint amount;
+        address user;
     }
 }

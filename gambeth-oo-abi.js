@@ -273,6 +273,49 @@ window.optimisticOracleAbi = [
     {
         "inputs": [
             {
+                "internalType": "uint256[]",
+                "name": "orderAmounts",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "numerators",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "denominators",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "enum GambethState.OrderType",
+                "name": "orderType",
+                "type": "uint8"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "betId",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "string[]",
+                "name": "results",
+                "type": "string[]"
+            },
+            {
+                "internalType": "uint256[][]",
+                "name": "idxs",
+                "type": "uint256[][]"
+            }
+        ],
+        "name": "fillOrder",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "bytes32",
                 "name": "",
                 "type": "bytes32"
@@ -496,4 +539,4 @@ window.optimisticOracleAbi = [
         "stateMutability": "view",
         "type": "function"
     }
-];
+]

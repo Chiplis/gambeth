@@ -7,7 +7,7 @@ import "./GambethState.sol";
 contract GambethOptimisticOracle is OptimisticRequester {
 
     address public contractOwner;
-    GambethState public state = GambethState(address(0x0BF0Df02B720C177C094817978C4455BB8Bf6a11));
+    GambethState public state = GambethState(address(0x5cF2974B18d6cE6bb67a8223318061515d7b6906));
 
     address public constant OO_ADDRESS = 0xA5B9d8a0B0Fa04Ba71BDD68069661ED5C0848884;
     OptimisticOracleV2Interface public oo = OptimisticOracleV2Interface(OO_ADDRESS);
@@ -81,6 +81,10 @@ contract GambethOptimisticOracle is OptimisticRequester {
         betResults[betId] = uint(price) / 1e18;
         finishedBets[betId] = true;
         state.claimBet(betId, betRequester[betId], getResult(betId));
+    }
+
+    function fillOrder(uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, GambethState.OrderType orderType, bytes32 betId, string[] calldata results, uint[][] calldata idxs) public {
+        state.fillOrder(msg.sender, orderAmounts, numerators, denominators, orderType, betId, results, idxs);
     }
 
     function priceProposed(bytes32 identifier, uint256 timestamp, bytes calldata query) public {
