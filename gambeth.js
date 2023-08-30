@@ -185,8 +185,8 @@ async function showBetInfo() {
     betInfo.style.display = 'flex';
 }
 
-const stateContractAddress = "0xA1A0dAA33d43A4d20F94c432583d1DD5Dd2Ba4a1";
-const ooContractAddress = "0x24D9A48c6F2464B9DAa9bC550F17F6520055991b";
+const stateContractAddress = "0xAbe68d1811C2B400545EE052224b6b80739A6E45";
+const ooContractAddress = "0xD0EFfaCdDf13c58349968575Aa3AAcCc7A1c035c";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
@@ -341,6 +341,9 @@ async function renderClaimBet() {
         : resolutionRequested
             ? (finishedBet ? "Claim" : "Settling")
             : "Settle";
+    const disableLink = ["Claimed", "Settling"].includes(claimBet.innerHTML);
+    claimBet.classList.remove(disableLink ? "link" : null);
+    claimBet.classList.add(!disableLink ? "link" : null);
     console.log(claimBet.innerHTML);
     claimBet.disabled = claimBet.innerHTML === "Claimed" || claimBet.innerHTML === "Settling";
     claimBet.style.cursor = claimBet.disabled ? "initial" : "pointer";
@@ -387,11 +390,11 @@ async function renderPlaceBet() {
     placeBetInputs.style.display = lockedPool ? "none" : "flex";
     placeBetInputs.style.opacity = lockedPool ? 0 : "100%";
     placeBetInputs.style.visibility = lockedPool ? "hidden" : "visible";
-    placeBet.innerHTML = lockedPool ? (scheduleReached ? "Bet finished" : "Pool locked") : "Place bet";
-    placeBetAmountContainer.style.display = lockedPool ? "none" : "block";
-    placeBetChoiceContainer.style.display = lockedPool ? "none" : "block";
-    placeSingleBet.style.display = lockedPool ? "none" : "block";
-    placeBet.disabled = lockedPool;
+    placeBet.innerHTML = lockedPool ? (scheduleReached ? "Bet finished" : "Buy shares") : "Place bet";
+    placeBetAmountContainer.style.display = scheduleReached ? "none" : "block";
+    placeBetChoiceContainer.style.display = scheduleReached ? "none" : "block";
+    placeSingleBet.style.display = scheduleReached ? "none" : "block";
+    placeBet.disabled = scheduleReached;
     if (betKind === "oo") {
         placeBetInputs.style.display = "none";
         chooseBetInputs.style.display = "block";
@@ -494,7 +497,7 @@ async function createBet() {
             : parseBetQuery(schema, url, path);
         const schedule = Date.parse(`${scheduleDate.value}`) / 1000;
         const deadline = Date.parse(`${deadlineDate.value}`) / 1000;
-        let commission = Number(createBetCommission.value).toString() || "0";
+        let commission = Number(createBetCommission.value || 0).toString();
         let exponent = commission.includes(".") ? commission.length - commission.indexOf(".") : 0;
         commission = commission.replace(".", "");
         let commissionDenominator = exponent ? Math.pow(10, exponent - 1) : 1;
@@ -515,8 +518,8 @@ async function createBet() {
         } else if (deadline < Date.parse(new Date()) / 1000) {
             triggerError("Bet's deadline to enter needs to be a future date", createBetQuery, () => renderCreationStep(6));
             return;
-        } else if (isNaN(Number.parseFloat(createBetCommission.value)) || createBetCommission.value > 50) {
-            triggerError("Commission should be a number between 0 and 100", createBetQuery, () => renderCreationStep(2));
+        } else if (isNaN(Number.parseFloat(commission)) || commission > 50) {
+            triggerError("Commission should be a number between 0 and 50", createBetQuery, () => renderCreationStep(2));
             return;
         } else if (await stateContract.createdBets(ethers.encodeBytes32String(betId.value))) {
             triggerError("Bet ID already exists", createBetQuery, () => renderCreationStep(0));
@@ -583,16 +586,16 @@ function addSingleBet(result, amount) {
     placeBetResult.value = "";
 }
 
-async function addBet() {
+async function buyBet() {
     if (await activeBetKind() === "oo") {
         console.log(chooseBetInputs.value);
-        await placeContractBet();
+        await fillOrder("BUY");
     } else {
         await addFreeBet();
     }
 }
 
-async function placeContractBet() {
+async function fillOrder(orderType) {
     const results = Object.keys(placedBets).filter(pb => pb);
     const amounts = await Promise.all(results.map(r => placedBets[r]).map(a => a.toString()).map(numberToToken));
     if (!results.length || !amounts.length) {
@@ -603,8 +606,27 @@ async function placeContractBet() {
     triggerProcessing("Placing bet" + (results.length > 1 ? "s" : ""));
     console.log(results, amounts.map(a => a.toString()), sum);
     const finalAmounts = amounts.map(a => a.toString());
-    await activeContract.fillOrder(finalAmounts, finalAmounts.map(() => 1), finalAmounts.map(() => 1), 0, activeBet, results, [[]]);
+    const [numerator, denominator] = [1n, 1n];
+    const orders = (await stateContract.getOrders(activeBet, 0, 100))
+        .map(a => Array.from(a))
+        .map((o, idx) => ({
+            orderType: o[0] ? "SELL" : "BUY",
+            numerator: o[1],
+            denominator: o[2],
+            result: o[3],
+            amount: o[4],
+            user: o[5],
+            idx
+        }));
+    const orderIndexes = orders
+        .filter(o => o.amount)
+        .filter(o => o.orderType !== orderType)
+        .filter(o => orderType === "SELL" ? (o.numerator * denominator >= numerator * o.denominator) : (o.numerator * denominator <= numerator * o.denominator))
+        .map(o => o.idx);
+    console.log(orderIndexes.map(i => orders[i]));
+    await activeContract.fillOrder(finalAmounts, finalAmounts.map(() => 1), finalAmounts.map(() => 1), [orderType === "BUY" ? 0n : 1n], activeBet, results, [orderIndexes]);
     placedBets = {};
+    await renderPlacedBets();
 }
 
 async function addFreeBet() {
@@ -730,7 +752,7 @@ async function renderBetPool() {
 
         allEntries.sort((a, b) => resultsPool[b[0]] < resultsPool[a[0]] ? -1 : 1);
         const entries = allEntries
-            .map(([k, v]) => `<tr><td>${k}</td><td>${(resultsPool[k])}</td></tr>`)
+            .map(([k, v]) => `<tr style="background-color: #fd9243"><td>${k}</td><td>${(resultsPool[k])}</td></tr>`)
             .join("");
 
         poolName.innerHTML = ethers.decodeBytes32String(activeBet) + " Pool";

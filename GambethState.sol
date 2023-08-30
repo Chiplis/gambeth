@@ -7,7 +7,7 @@ contract GambethState {
     constructor() {
         contractCreator = msg.sender;
         approvedTokens[0x07865c6E87B9F70255377e024ace6630C1Eaa37F] = true;
-        approvedContracts[0x24D9A48c6F2464B9DAa9bC550F17F6520055991b] = true;
+        approvedContracts[0xD0EFfaCdDf13c58349968575Aa3AAcCc7A1c035c] = true;
         tokenDecimals[0x07865c6E87B9F70255377e024ace6630C1Eaa37F] = 1e6;
     }
 
@@ -158,6 +158,12 @@ contract GambethState {
 
     function claimBet(bytes32 betId, address sender, string memory result)
     approvedContractOnly public {
+        // Does the user have any pending buys?
+        uint256 pending = pendingBuys[betId][sender];
+        if (pending != 0) {
+            pendingBuys[betId][sender] = 0;
+            betTokens[betId].transfer(sender, pending);
+        }
         // Did the user bet on the correct result?
         uint256 userBet = userBets[betId][sender][result];
 
@@ -197,9 +203,11 @@ contract GambethState {
         return 0;
     }
 
-    enum OrderType { BUY, SELL }
+    enum OrderType {BUY, SELL}
 
     mapping(bytes32 => Order[]) public orders;
+    mapping(bytes32 => mapping(address => uint256)) public pendingBuys;
+    mapping(bytes32 => mapping(address => mapping(string => uint256))) public pendingSells;
 
     function addOrder(address sender, bytes32 betId, Order memory order) internal {
         require(order.amount != 0, "Invalid new order state");
@@ -210,12 +218,67 @@ contract GambethState {
             string[] memory results = new string[](1);
             results[0] = order.result;
             placeBets(betId, sender, results, amounts);
-        } else {
-            orders[betId].push(order);
+            return;
+        }
+
+        if (order.orderType == OrderType.BUY) {
+            uint transferAmount = (order.amount * order.ratioNumerator) / order.ratioDenominator;
+            pendingBuys[betId][sender] += transferAmount;
+            betTokens[betId].transferFrom(sender, address(this), transferAmount);
+        } else if (order.orderType == OrderType.SELL) {
+            pendingSells[betId][sender][order.result] += order.amount;
+            require(pendingSells[betId][sender][order.result] <= userBets[betId][sender][order.result], "Exceeded valid sell amount when adding order");
+        }
+        orders[betId].push(order);
+    }
+
+    function changeOrder(address sender, uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, bytes32 betId, string[] calldata results, uint256[] calldata ids) approvedContractOnly public {
+        require(ids.length == orderAmounts.length && ids.length == numerators.length && ids.length == denominators.length && ids.length == results.length, "Invalid change order");
+        for (uint i = 0; i < ids.length; i++) {
+            Order storage order = orders[betId][i];
+            require(order.user == sender, "User did not create specified order");
+
+            if (order.orderType == OrderType.BUY) {
+                uint256 newAmount = (orderAmounts[i] * numerators[i]) / denominators[i];
+                uint256 previousAmount = (order.amount * order.ratioNumerator) / order.ratioDenominator;
+                bool success = true;
+                pendingBuys[betId][sender] -= previousAmount;
+                pendingBuys[betId][sender] += newAmount;
+                if (newAmount > previousAmount) {
+                    success = betTokens[betId].transferFrom(sender, address(this), newAmount - previousAmount);
+                } else if (newAmount < previousAmount) {
+                    success = betTokens[betId].transfer(sender, previousAmount - newAmount);
+                }
+                require(success, "Failed token transfer after updating amounts");
+            } else if (order.orderType == OrderType.SELL) {
+                pendingSells[betId][sender][order.result] -= order.amount;
+                pendingSells[betId][sender][results[i]] += orderAmounts[i];
+                require(pendingSells[betId][sender][results[i]] <= userBets[betId][sender][results[i]], "Exceeded valid sell amount when changing order");
+            }
+            order.result = results[i];
+            order.amount = orderAmounts[i];
+            order.ratioDenominator = denominators[i];
+            order.ratioNumerator = numerators[i];
         }
     }
 
-    function fillOrder(address sender, uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, OrderType orderType, bytes32 betId, string[] calldata results, uint[][] calldata idxs) approvedContractOnly public {
+    function getOrders(bytes32 betId, uint256 start, uint256 amount) public view returns (Order[] memory) {
+        Order[] memory list;
+        if (start > orders[betId].length) {
+            return list;
+        }
+        if (orders[betId].length - start > amount) {
+            list = new Order[](amount);
+        } else {
+            list = new Order[](orders[betId].length - start);
+        }
+        for (uint i = 0; i < list.length; i++) {
+            list[i] = orders[betId][i + start];
+        }
+        return list;
+    }
+
+    function fillOrder(address sender, uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, OrderType[] calldata orderTypes, bytes32 betId, string[] calldata results, uint[][] calldata idxs) approvedContractOnly public {
 
         for (uint r = 0; r < results.length; r++) {
             string calldata result = results[r];
@@ -223,6 +286,7 @@ contract GambethState {
             uint numerator = numerators[r];
             uint denominator = denominators[r];
             uint[] calldata indexes = idxs[r];
+            OrderType orderType = orderTypes[r];
             for (uint i = 0; i < indexes.length && orderAmount != 0; i++) {
                 uint index = indexes[i];
                 Order storage matchedOrder = orders[betId][index];
@@ -253,9 +317,20 @@ contract GambethState {
 
                 uint transferAmount = (shareAmount * numerator) / denominator;
 
+                if (orderType == OrderType.BUY) {
+                    require(pendingSells[betId][seller][result] >= shareAmount, "Seller does not have enough shares to complete buy order");
+                    require(
+                        betTokens[betId].transferFrom(buyer, address(this), transferAmount),
+                        "Error while transferring tokens from buyer for matching order"
+                    );
+                    pendingSells[betId][seller][result] -= shareAmount;
+                } else if (orderType == OrderType.SELL) {
+                    require(pendingBuys[betId][buyer] >= transferAmount, "Buyer does not have enough tokens to complete sell order");
+                    pendingBuys[betId][seller] -= transferAmount;
+                }
+
                 require(
-                    betTokens[betId].transferFrom(buyer, address(this), transferAmount)
-                    && betTokens[betId].transfer(seller, transferAmount),
+                    betTokens[betId].transfer(seller, transferAmount),
                     "Error while transferring tokens for matching order"
                 );
             }
