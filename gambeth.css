@@ -25,7 +25,7 @@ td {
 }
 
 label {
-    font-weight:bold;
+    font-weight: bold;
     color: white;
     font-size: 0.85rem;
 }
@@ -108,17 +108,14 @@ span {
 }
 
 .info:hover {
-    color:white;
+    color: white;
     background-color: #ff6927;
 }
 
 .link {
-    color: yellow;
-}
-
-.link:hover {
-    color:white;
-    background-color: #ff6927;
+    cursor: pointer;
+    color: black;
+    background-color: #ff8f00;
 }
 
 .details {
@@ -126,7 +123,7 @@ span {
 }
 
 .details:hover {
-    color:white;
+    color: white;
     background-color: #ff6927;
 }
 
@@ -167,7 +164,7 @@ span {
 }
 
 .success:hover {
-    color: white;   
+    color: white;
     background-color: lightseagreen;
 }
 
@@ -237,7 +234,7 @@ span {
     cursor: pointer;
 }
 
-[contenteditable=true]:empty:before{
+[contenteditable=true]:empty:before {
     content: attr(placeholder);
     pointer-events: none;
     display: block; /* For Firefox */

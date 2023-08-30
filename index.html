@@ -131,6 +131,7 @@
                             onchange="console.log(scheduleDate)"
                             onfocus="this.min=new Date().toISOString().split('T')[0];this.max=new Date(new Date().getTime() + 60 * 24 * 3600000).toISOString().split('T')[0]" />
                         <label for="schedule-date">When is the bet able to be settled?</label>
+                        <button class="btn link" onclick="createBet()">Create Bet</button>
                     </div>
                 </div>
                 <div class="btn" style="color:white; background-color: #ed7b64; align-self: flex-start;"
