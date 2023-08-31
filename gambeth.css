@@ -188,18 +188,17 @@ span {
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
 }
 
+#place-bet-entries {
+    background-color: #fd9243;
+}
+
 .styled-table thead tr {
     background-color: #ff6927;
-    color: #ffffff;
     text-align: left;
 }
 
 .styled-table th {
     padding: 0.5rem 0.5em;
-}
-
-.styled-table td {
-    color: black;
 }
 
 .styled-table tbody tr {

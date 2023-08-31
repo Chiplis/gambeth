@@ -302,7 +302,7 @@ async function resetButtons() {
 }
 
 function renderPlaceSingleBet() {
-    const filledBet = (placeBetResult.value && placeBetAmount.value) || (chooseBetInputs.style.display !== "none");
+    const filledBet = (placeBetResult.value || chooseBetInputs.style.display !== "none") && placeBetAmount.value;
     placeSingleBet.onclick = filledBet ? () => {
         addSingleBet(placeBetResult.value || chooseBetInputs.value, placeBetAmount.value);
         renderPlaceSingleBet();
