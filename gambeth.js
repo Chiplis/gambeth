@@ -414,7 +414,7 @@ async function searchBet(betId = activeBet) {
         betContainer.style.opacity = "0";
         betContainer.style.visibility = "hidden";
         console.log(betId, searchBetId.value);
-        activeBet = !betId && !searchBetId.value ? activeBet : betId;
+        activeBet = betId || searchBetId.value || activeBet;
         console.log(activeBet);
         const betExists = await stateContract.createdBets(activeBet);
         if (!betExists) {
