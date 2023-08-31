@@ -725,6 +725,8 @@ async function decideBet() {
     }
 }
 
+let betChart = null;
+
 async function renderBetPool() {
     try {
         const placedBets = await stateContract.queryFilter(stateContract.filters.PlacedBets(null, activeBet));
@@ -741,8 +743,7 @@ async function renderBetPool() {
             labels: Object.keys(betResults),
             datasets: [{
                 data: resultsPool.map(a => a.toString()),
-                backgroundColor: results.map((_, i) => selectColor(i)),
-                hoverOffset: 4
+                backgroundColor: results.map((_, i) => selectColor(i))
             }]
         };
         const config = {
@@ -750,7 +751,10 @@ async function renderBetPool() {
             data,
         };
         aboutBet.innerHTML = `${activeBet}`;
-        new Chart(betPool, config);
+        if (betChart) {
+            betChart.destroy();
+        }
+        betChart = new Chart(betPool, config);
 
         const allEntries = Object.entries(betResults);
 
