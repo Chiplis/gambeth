@@ -30,7 +30,7 @@ const createBetUrl = document.getElementById("create-bet-url");
 const placeBetResult = document.getElementById("place-bet-result");
 const placeBetAmount = document.getElementById("place-bet-amount");
 const createBetSchema = document.getElementById("create-bet-schema");
-const createBetWolfram = document.getElementById("create-bet-wa");
+const createBetOo = document.getElementById("create-bet-oo");
 const createBetPath = document.getElementById("create-bet-path");
 const betEntries = document.getElementById("bet-entries");
 const betPool = document.getElementById("bet-pool");
@@ -65,14 +65,15 @@ const innerMessage = document.getElementById("inner-message");
 const closeMessage = document.getElementById("close-message");
 const newBet = document.getElementById("new-bet");
 
+const sellBet = document.getElementById("sell-bet");
+
 const urlBet = document.getElementById("url-bet");
-const wolframBet = document.getElementById("wolfram-bet");
+const ooBet = document.getElementById("oo-bet");
 const betInnerInitialPool = document.getElementById("bet-initial-pool");
 const betInnerCommission = document.getElementById("bet-commission");
 const betInnerTotalPool = document.getElementById("bet-total-pool");
-const betResult = document.getElementById("bet-result");
 const betQuery = document.getElementById("bet-query");
-const betWolframQuery = document.getElementById("bet-wolfram-query");
+const betOoQuery = document.getElementById("bet-oo-query");
 const betInnerResult = document.getElementById("bet-inner-result");
 
 const betIdChanged = () => betIdLabel.innerHTML = betIdMsg.replace("{BET_ID}", betId.value.trim());
@@ -169,6 +170,7 @@ function triggerError(msg, after = defaultMessageLocation, click) {
 }
 
 function triggerSuccess(msg, callback, after = defaultMessageLocation, delay = 0) {
+    console.log(after);
     triggerMessage(msg, "success", ["info", "error"], after);
     if (callback) {
         setTimeout(callback, delay);
@@ -181,17 +183,15 @@ function triggerProcessing(msg, after = defaultMessageLocation) {
     processing = setInterval(() => (innerMessage.innerHTML = msg + ".".repeat(i++ % 4)), 300);
 }
 
-async function showBetInfo() {
-    betInfo.style.display = 'flex';
-}
-
-const stateContractAddress = "0xAbe68d1811C2B400545EE052224b6b80739A6E45";
-const ooContractAddress = "0xD0EFfaCdDf13c58349968575Aa3AAcCc7A1c035c";
+const stateContractAddress = "0xC9747E408c9806e37aD5e392b93fb589E5E0FF6d";
+const ooContractAddress = "0xa633d7c1a50AD070c41bb4e569c3612adD85e46a";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
 
-async function loadProvider({betId, betType} = {}) {
+['chainChanged', 'accountsChanged'].forEach(e => window.ethereum.on(e, async () => await loadProvider()));
+
+async function loadProvider({betId = activeBet, betType} = {}) {
     try {
         console.log("Loading provider with ", {betId, betType});
         if (window.ethereum) {
@@ -212,8 +212,7 @@ async function loadProvider({betId, betType} = {}) {
             stateContract.on("CreatedBet", async hashedBetId => {
                 if (hashedBetId.hash === ethers.id(newBetId || "")) triggerSuccess(`Bet created!`, () => {
                     searchBet(newBetId);
-                    newBetId = null;
-                }, 2500)
+                }, undefined, 2500)
             });
             stateContract.on("PlacedBets", async (sender) => {
                 if (sender === owner) triggerSuccess(`Bet placed!`, renderBetPool)
@@ -232,7 +231,7 @@ async function loadProvider({betId, betType} = {}) {
         }
 
         if (betId) {
-            const betKind = await stateContract.betKinds(ethers.encodeBytes32String(betId));
+            const betKind = await stateContract.betKinds(betId);
             console.log("Bet kind", betKind, betKind === 0n);
             switch (betKind) {
                 case 0n:
@@ -241,14 +240,6 @@ async function loadProvider({betId, betType} = {}) {
                 case 1n:
                     activeContract = new ethers.Contract(humanContractAddress, [], provider).connect(signer);
                     break;
-                case 2n:
-                    activeContract = new ethers.Contract(provableContractAddress, provableOracleAbi, provider).connect(signer);
-                    activeContract.on("LackingFunds", async (sender, funds) => {
-                        if (sender === owner) triggerError(`Insufficient query funds, requiring ${await tokenToNumber(funds)} USDC`)
-                    });
-                    break;
-                default:
-
             }
         } else if (betType) {
             switch (betType) {
@@ -292,9 +283,13 @@ async function loadProvider({betId, betType} = {}) {
 loadProvider();
 
 window.onload = () => {
-    const betId = new URL(window.location).searchParams.get("id");
+    let betId = new URL(window.location).searchParams.get("id");
     if (betId) {
-        searchBet(betId.toLowerCase().trim());
+        searchBet(betId);
+    } else if (betId) {
+        console.log(betId);
+        betId = betId.toLowerCase().trim();
+        searchBet(betId);
     }
 }
 
@@ -378,30 +373,30 @@ async function renderPlaceBet() {
     const scheduleReached = schedule <= Math.round(new Date().getTime());
     const betKind = await activeBetKind();
 
-    console.log("Bet kind", betKind);
-
     betDecision.style.display = betKind === "human"
         ? ((lockedPool && await stateContract.betOwners(activeBet) === owner) ? "block" : "none")
         : "none";
 
     placeBet.style.visibility = "visible";
     placeBet.style.opacity = "100%";
+    placeBet.innerHTML = lockedPool ? (scheduleReached ? "Finished" : "Buy") : "Place";
+    placeBet.disabled = scheduleReached;
 
     placeBetInputs.style.display = lockedPool ? "none" : "flex";
     placeBetInputs.style.opacity = lockedPool ? 0 : "100%";
     placeBetInputs.style.visibility = lockedPool ? "hidden" : "visible";
-    placeBet.innerHTML = lockedPool ? (scheduleReached ? "Bet finished" : "Buy shares") : "Place bet";
+
     placeBetAmountContainer.style.display = scheduleReached ? "none" : "block";
     placeBetChoiceContainer.style.display = scheduleReached ? "none" : "block";
     placeSingleBet.style.display = scheduleReached ? "none" : "block";
-    placeBet.disabled = scheduleReached;
+    sellBet.style.display = scheduleReached ? "none" : "block";
+
     if (betKind === "oo") {
         placeBetInputs.style.display = "none";
         chooseBetInputs.style.display = "block";
         chooseBetInputs.innerHTML = (await activeBetChoices())
             .map(choice => `<option value="${choice}">${choice}</option>`)
             .join("");
-
     } else {
         placeBetInputs.style.display = "block";
         chooseBetInputs.style.display = "none";
@@ -409,7 +404,7 @@ async function renderPlaceBet() {
 
 }
 
-async function searchBet(betId) {
+async function searchBet(betId = activeBet) {
     try {
         await loadProvider({betId});
         placedBets = {};
@@ -419,7 +414,7 @@ async function searchBet(betId) {
         betContainer.style.opacity = "0";
         betContainer.style.visibility = "hidden";
         console.log(betId, searchBetId.value);
-        activeBet = !betId && !searchBetId.value ? activeBet : ethers.encodeBytes32String(betId || searchBetId.value);
+        activeBet = !betId && !searchBetId.value ? activeBet : betId;
         console.log(activeBet);
         const betExists = await stateContract.createdBets(activeBet);
         if (!betExists) {
@@ -428,7 +423,7 @@ async function searchBet(betId) {
             return;
         }
         const location = new URL(window.location.toString());
-        location.searchParams.set("id", ethers.decodeBytes32String(activeBet));
+        location.searchParams.set("id", activeBet);
         history.pushState({}, "", location.toString());
         betContainer.style.display = "flex";
         const bets = await stateContract.queryFilter(stateContract.filters.CreatedBet(activeBet));
@@ -436,9 +431,9 @@ async function searchBet(betId) {
         const [initialPool, query] = createdFilter.args.slice(1).map(arg => arg.toString());
         const {url, schema, path} = unpackQuery(query);
 
-        wolframBet.style.display = schema ? "none" : "flex";
+        ooBet.style.display = schema ? "none" : "flex";
         urlBet.style.display = schema ? "flex" : "none";
-        (schema ? betQuery : betWolframQuery).innerHTML = query;
+        (schema ? betQuery : betOoQuery).innerHTML = query;
         urlSchema.innerHTML = schema || "Unknown";
         betUrl.innerHTML = url || query;
         schemaPath.innerHTML = path || "Unknown";
@@ -490,11 +485,7 @@ async function createBet() {
         clearTimeout(hideMessage());
 
         const schema = createBetSchema.value;
-        const url = createBetUrl.value;
-        const path = createBetPath.value;
-        let query = ["wa", "bc", "oo"].includes(schema)
-            ? createBetWolfram.value
-            : parseBetQuery(schema, url, path);
+        let query = createBetOo.value;
         const schedule = Date.parse(`${scheduleDate.value}`) / 1000;
         const deadline = Date.parse(`${deadlineDate.value}`) / 1000;
         let commission = Number(createBetCommission.value || 0).toString();
@@ -521,18 +512,18 @@ async function createBet() {
         } else if (isNaN(Number.parseFloat(commission)) || commission > 50) {
             triggerError("Commission should be a number between 0 and 50", createBetQuery, () => renderCreationStep(2));
             return;
-        } else if (await stateContract.createdBets(ethers.encodeBytes32String(betId.value))) {
+        } else if (await stateContract.createdBets(betId.value)) {
             triggerError("Bet ID already exists", createBetQuery, () => renderCreationStep(0));
             return;
         }
         console.log("No exceptions");
-        activeBet = ethers.encodeBytes32String(betId.value.toLowerCase().trim());
+        activeBet = betId.value.toLowerCase().trim();
         newBetId = activeBet;
         const initialPool = await numberToToken(createBetInitialPool.value || "0");
         console.log("Initial pool", initialPool);
         let prices = [];
         try {
-            prices = (await Promise.all(["URL", "WolframAlpha"].map(stateContract.lastQueryPrice))).map(tokenToNumber);
+            prices = (await Promise.all(["URL", "OoAlpha"].map(stateContract.lastQueryPrice))).map(tokenToNumber);
         } catch (error) {
             prices = [];
         }
@@ -561,8 +552,6 @@ async function createBet() {
                 console.log(activeBet, deadline, schedule, commissionDenominator, commission, initialPool, results, query);
                 await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, results, query);
                 break;
-            default:
-                await activeContract.createProvableBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", deadline, schedule, commission, initialPool, createBetSchema.value === "wa" ? "WolframAlpha" : "URL", activeBet, query, {value: value.toString()});
         }
     } catch (error) {
         newBetId = null;
@@ -598,12 +587,19 @@ async function buyBet() {
 async function fillOrder(orderType) {
     const results = Object.keys(placedBets).filter(pb => pb);
     const amounts = await Promise.all(results.map(r => placedBets[r]).map(a => a.toString()).map(numberToToken));
+    const sum = amounts.reduce((acc, b) => acc + b, BigInt(0));
     if (!results.length || !amounts.length) {
         triggerError("No bets have been placed, make sure result and amount fields are not empty.")
         return;
     }
-    const sum = amounts.reduce((acc, b) => acc + b, BigInt(0)).toString();
-    triggerProcessing("Placing bet" + (results.length > 1 ? "s" : ""));
+    for (let i = 0; i < results.length; i++) {
+        if (orderType === "SELL" && await stateContract.pendingSells(activeBet, owner, results[i]) + amounts[i] > await stateContract.userBets(activeBet, owner, results[i])) {
+            triggerError("Sell value exceeded.")
+            return;
+        }
+    }
+
+    triggerProcessing("Placing order" + (results.length > 1 ? "s" : ""));
     console.log(results, amounts.map(a => a.toString()), sum);
     const finalAmounts = amounts.map(a => a.toString());
     const [numerator, denominator] = [1n, 1n];
@@ -663,18 +659,12 @@ async function changeBetType() {
     const betType = createBetSchema.value;
     createBetChoices.style.display = betType === "oo" ? "flex" : "none";
 
-    if (betType === "html") {
-        createBetPath.placeholder = "/html/body/div[1]/div/div/div[2]/main/div[4]/table/tbody/tr[2]/td[3]/text()"
-    } else {
-        createBetPath.placeholder = ".result.0.last"
-    }
-
-    createBetWolfram.style.display = ["wa", "bc", "oo"].includes(betType) ? "block" : "none";
+    createBetOo.style.display = ["bc", "oo"].includes(betType) ? "block" : "none";
 
     [createBetUrl, createBetPath]
-        .forEach(elm => [elm.style.display, document.querySelector(`label[for="${elm.id}"]`).style.display] = Array(2).fill(["wa", "bc", "oo"].includes(betType) ? "none" : "block"));
-    [createBetWolfram.style.display, document.querySelector(`label[for="${createBetWolfram.id}"]`).style.display] = Array(2).fill(["wa", "bc", "oo"].includes(betType) ? "block" : "none");
-    createBetQuery.style.display = ["wa", "bc", "oo"].includes(betType) ? "none" : "flex";
+        .forEach(elm => [elm.style.display, document.querySelector(`label[for="${elm.id}"]`).style.display] = Array(2).fill(["bc", "oo"].includes(betType) ? "none" : "block"));
+    [createBetOo.style.display, document.querySelector(`label[for="${createBetOo.id}"]`).style.display] = Array(2).fill(["bc", "oo"].includes(betType) ? "block" : "none");
+    createBetQuery.style.display = ["bc", "oo"].includes(betType) ? "none" : "flex";
 
     createBetQueryInner.innerHTML = parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value);
     switch (betType) {
@@ -755,7 +745,7 @@ async function renderBetPool() {
             .map(([k, v]) => `<tr style="background-color: #fd9243"><td>${k}</td><td>${(resultsPool[k])}</td></tr>`)
             .join("");
 
-        poolName.innerHTML = ethers.decodeBytes32String(activeBet) + " Pool";
+        poolName.innerHTML = activeBet + " Pool";
         betEntries.innerHTML = entries;
 
         betPool.style.visibility = "visible";

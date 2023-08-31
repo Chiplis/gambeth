@@ -16,14 +16,14 @@ contract GambethState {
         HUMAN
     }
 
-    mapping(bytes32 => BetKind) public betKinds;
+    mapping(string => BetKind) public betKinds;
     address contractCreator;
     mapping(address => bool) public approvedContracts;
     mapping(address => uint256) public tokenDecimals;
     // For each bet, track which users have already claimed their potential reward
-    mapping(bytes32 => mapping(address => bool)) public claimedBets;
+    mapping(string => mapping(address => bool)) public claimedBets;
 
-    mapping(bytes32 => uint256) public betCommissionDenominator;
+    mapping(string => uint256) public betCommissionDenominator;
 
     /* If the oracle service's scheduled callback was not executed after 5 days,
     a user can reclaim his funds after the bet's execution threshold has passed.
@@ -42,40 +42,40 @@ contract GambethState {
     event UnwonBet(address indexed refunded);
 
     mapping(address => bool) public approvedTokens;
-    mapping(bytes32 => IERC20) public betTokens;
+    mapping(string => IERC20) public betTokens;
 
     /* There are two different dates associated with each created bet:
     one for the deadline where a user can no longer place new bets,
     and another one that tells the smart oracle contract when to actually
     run. */
-    mapping(bytes32 => uint64) public betDeadlines;
-    mapping(bytes32 => uint64) public betSchedules;
+    mapping(string => uint64) public betDeadlines;
+    mapping(string => uint64) public betSchedules;
 
     // Keep track of all createdBets to prevent duplicates
-    mapping(bytes32 => bool) public createdBets;
+    mapping(string => bool) public createdBets;
 
     // Keep track of all owners to handle commission fees
-    mapping(bytes32 => address) public betOwners;
-    mapping(bytes32 => uint256) public betCommissions;
+    mapping(string => address) public betOwners;
+    mapping(string => uint256) public betCommissions;
 
     // For each bet, how much each has each user put into that bet's pool?
-    mapping(bytes32 => mapping(address => uint256)) public userPools;
+    mapping(string => mapping(address => uint256)) public userPools;
 
     // What is the total pooled per bet?
-    mapping(bytes32 => uint256) public betPools;
+    mapping(string => uint256) public betPools;
 
     /* Contains all the information that does not need to be saved as a state variable,
     but which can prove useful to people taking a look at the bet in the frontend. */
-    event CreatedBet(bytes32 indexed _id, uint256 initialPool, string description);
+    event CreatedBet(string indexed _id, uint256 initialPool, string description);
 
     // For each bet, how much is the total pooled per result?
-    mapping(bytes32 => mapping(string => uint256)) public resultPools;
+    mapping(string => mapping(string => uint256)) public resultPools;
 
     // For each bet, track how much each user has put into each result
-    mapping(bytes32 => mapping(address => mapping(string => uint256))) public userBets;
+    mapping(string => mapping(address => mapping(string => uint256))) public userBets;
 
     // The table representing each bet's pool is populated according to these events.
-    event PlacedBets(address indexed user, bytes32 indexed _id, bytes32 id, string[] results);
+    event PlacedBets(address indexed user, string indexed _id, string id, string[] results);
 
     modifier ownerOnly() {
         require(msg.sender == contractCreator);
@@ -96,7 +96,7 @@ contract GambethState {
         tokenDecimals[token] = decimals;
     }
 
-    function createBet(BetKind kind, address sender, address token, bytes32 betId, uint256 commissionDenominator, uint256 commission, uint64 deadline, uint64 schedule, uint256 initialPool, string calldata query)
+    function createBet(BetKind kind, address sender, address token, string calldata betId, uint256 commissionDenominator, uint256 commission, uint64 deadline, uint64 schedule, uint256 initialPool, string calldata query)
     approvedContractOnly public {
         require(approvedTokens[token] && !createdBets[betId], "Unapproved token for creating bets");
         require(commissionDenominator > 0, "Invalid commission denominator");
@@ -123,7 +123,7 @@ contract GambethState {
         emit CreatedBet(betId, initialPool, query);
     }
 
-    function placeBets(bytes32 betId, address sender, string[] memory results, uint256[] memory amounts)
+    function placeBets(string calldata betId, address sender, string[] memory results, uint256[] memory amounts)
     approvedContractOnly public {
         require(
             results.length > 0
@@ -156,7 +156,7 @@ contract GambethState {
         emit PlacedBets(sender, betId, betId, results);
     }
 
-    function claimBet(bytes32 betId, address sender, string memory result)
+    function claimBet(string calldata betId, address sender, string memory result)
     approvedContractOnly public {
         // Does the user have any pending buys?
         uint256 pending = pendingBuys[betId][sender];
@@ -205,11 +205,11 @@ contract GambethState {
 
     enum OrderType {BUY, SELL}
 
-    mapping(bytes32 => Order[]) public orders;
-    mapping(bytes32 => mapping(address => uint256)) public pendingBuys;
-    mapping(bytes32 => mapping(address => mapping(string => uint256))) public pendingSells;
+    mapping(string => Order[]) public orders;
+    mapping(string => mapping(address => uint256)) public pendingBuys;
+    mapping(string => mapping(address => mapping(string => uint256))) public pendingSells;
 
-    function addOrder(address sender, bytes32 betId, Order memory order) internal {
+    function addOrder(address sender, string calldata betId, Order memory order) internal {
         require(order.amount != 0, "Invalid new order state");
         // If before pool lockout, should be able to simply place a bet
         if (betDeadlines[betId] >= block.timestamp && order.orderType == OrderType.BUY) {
@@ -232,7 +232,7 @@ contract GambethState {
         orders[betId].push(order);
     }
 
-    function changeOrder(address sender, uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, bytes32 betId, string[] calldata results, uint256[] calldata ids) approvedContractOnly public {
+    function changeOrder(address sender, uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, string calldata betId, string[] calldata results, uint256[] calldata ids) approvedContractOnly public {
         require(ids.length == orderAmounts.length && ids.length == numerators.length && ids.length == denominators.length && ids.length == results.length, "Invalid change order");
         for (uint i = 0; i < ids.length; i++) {
             Order storage order = orders[betId][i];
@@ -262,7 +262,7 @@ contract GambethState {
         }
     }
 
-    function getOrders(bytes32 betId, uint256 start, uint256 amount) public view returns (Order[] memory) {
+    function getOrders(string calldata betId, uint256 start, uint256 amount) public view returns (Order[] memory) {
         Order[] memory list;
         if (start > orders[betId].length) {
             return list;
@@ -278,7 +278,7 @@ contract GambethState {
         return list;
     }
 
-    function fillOrder(address sender, uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, OrderType[] calldata orderTypes, bytes32 betId, string[] calldata results, uint[][] calldata idxs) approvedContractOnly public {
+    function fillOrder(address sender, uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, OrderType[] calldata orderTypes, string calldata betId, string[] calldata results, uint[][] calldata idxs) approvedContractOnly public {
 
         for (uint r = 0; r < results.length; r++) {
             string calldata result = results[r];

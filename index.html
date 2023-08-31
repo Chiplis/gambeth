@@ -60,7 +60,7 @@
                                 name="create-bet-schema" id="create-bet-schema">
                             <option value="oo" selected>Optimistic oracle decision</option>
                             <option value="bc">Bet creator's decision</option>
-                            <option value="wa">WolframAlpha oracle query</option>
+                            <option value="wa">OoAlpha oracle query</option>
                             <option value="xml">XML oracle query</option>
                             <option value="json">JSON oracle query</option>
                             <option value="html">Process HTML data</option>
@@ -71,8 +71,8 @@
                                id="create-bet-url" type="text"
                                placeholder="https://www.therocktrading.com/api/ticker/BTCEUR"
                                style="width: 75%; margin-top: 1em" />
-                        <label for="create-bet-wa">What will the bet determine?</label>
-                        <input id="create-bet-wa" type="text" placeholder="Winner of the 2038 Super Bowl"
+                        <label for="create-bet-oo">What will the bet determine?</label>
+                        <input id="create-bet-oo" type="text" placeholder="Winner of the 2038 Super Bowl"
                                style="width: 75%; margin-top: 1em" />
                         <label style="display: none" for="create-bet-path" id="create-bet-path-label"></label>
                         <input style="display: none"
@@ -149,7 +149,7 @@
                     </div>
                     <button class="btn link" id="claim-bet" onclick="claimReward()"></button>
                     <button class="btn link" id="place-bet" onclick="buyBet()"></button>
-                    <button class="btn link" id="sell-bet" onclick="fillOrder('SELL')">Sell Bet</button>
+                    <button class="btn link" id="sell-bet" onclick="fillOrder('SELL')">Sell</button>
                     <div id="place-bet-inputs" style="display: flex; flex-direction: column">
                         <label for="place-bet-result">Result</label>
                         <input name="place-bet-result" id="place-bet-result" type="text"
@@ -169,16 +169,13 @@
                         style="opacity: 0; color: white; background-color: #ed7b64; padding: 0.5rem 0.75rem; border-radius: 100%">
                         +
                     </button>
-                    <button onclick="showBetInfo()" class="btn link">
-                        Info
-                    </button>
                     <button class="btn close" onclick="betContainer.style.display='none'"
                         style="align-self: flex-start; border-radius: 5rem; padding: 0.25rem;">
                         ✖
                     </button>
                 </div>
                 <div id="bet-info"
-                    style="margin: 1em 0; width: 100%; display: none; justify-content: space-around; align-items: center">
+                    style="margin: 1em 0; width: 100%; display:flex; justify-content: space-around; align-items: center">
                     <div id="url-bet" class="msg details" style="flex-direction: column;">
                         <div style="font-size: 0.9rem">Query</div>
                         <div
@@ -204,11 +201,11 @@
                             <div id="bet-path"></div>
                         </div>
                     </div>
-                    <div class="msg details" id="wolfram-bet" style="display: flex; justify-content: center; flex-direction: column; max-width: 30%;">
+                    <div class="msg details" id="oo-bet" style="display: flex; justify-content: center; flex-direction: column; max-width: 30%;">
                         <div style="font-size: 0.9rem">About</div>
                         <div
                             style="margin-top: 1rem; font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 0; border-radius: 0">
-                            <div id="bet-wolfram-query"></div>
+                            <div id="bet-oo-query"></div>
                         </div>
                     </div>
                     <div class="msg details" style="flex-direction: column;">

@@ -9,9 +9,9 @@ window.gambethStateAbi = [
         "inputs": [
             {
                 "indexed": true,
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "_id",
-                "type": "bytes32"
+                "type": "string"
             },
             {
                 "indexed": false,
@@ -53,15 +53,15 @@ window.gambethStateAbi = [
             },
             {
                 "indexed": true,
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "_id",
-                "type": "bytes32"
+                "type": "string"
             },
             {
                 "indexed": false,
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "id",
-                "type": "bytes32"
+                "type": "string"
             },
             {
                 "indexed": false,
@@ -159,9 +159,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "",
-                "type": "bytes32"
+                "type": "string"
             }
         ],
         "name": "betCommissionDenominator",
@@ -178,9 +178,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "",
-                "type": "bytes32"
+                "type": "string"
             }
         ],
         "name": "betCommissions",
@@ -197,9 +197,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "",
-                "type": "bytes32"
+                "type": "string"
             }
         ],
         "name": "betDeadlines",
@@ -216,9 +216,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "",
-                "type": "bytes32"
+                "type": "string"
             }
         ],
         "name": "betKinds",
@@ -235,9 +235,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "",
-                "type": "bytes32"
+                "type": "string"
             }
         ],
         "name": "betOwners",
@@ -254,9 +254,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "",
-                "type": "bytes32"
+                "type": "string"
             }
         ],
         "name": "betPools",
@@ -273,9 +273,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "",
-                "type": "bytes32"
+                "type": "string"
             }
         ],
         "name": "betSchedules",
@@ -292,9 +292,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "",
-                "type": "bytes32"
+                "type": "string"
             }
         ],
         "name": "betTokens",
@@ -360,9 +360,9 @@ window.gambethStateAbi = [
                 "type": "uint256[]"
             },
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "betId",
-                "type": "bytes32"
+                "type": "string"
             },
             {
                 "internalType": "string[]",
@@ -383,9 +383,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "betId",
-                "type": "bytes32"
+                "type": "string"
             },
             {
                 "internalType": "address",
@@ -406,9 +406,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "",
-                "type": "bytes32"
+                "type": "string"
             },
             {
                 "internalType": "address",
@@ -445,9 +445,9 @@ window.gambethStateAbi = [
                 "type": "address"
             },
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "betId",
-                "type": "bytes32"
+                "type": "string"
             },
             {
                 "internalType": "uint256",
@@ -488,9 +488,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "",
-                "type": "bytes32"
+                "type": "string"
             }
         ],
         "name": "createdBets",
@@ -532,9 +532,9 @@ window.gambethStateAbi = [
                 "type": "uint8[]"
             },
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "betId",
-                "type": "bytes32"
+                "type": "string"
             },
             {
                 "internalType": "string[]",
@@ -555,9 +555,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "betId",
-                "type": "bytes32"
+                "type": "string"
             },
             {
                 "internalType": "uint256",
@@ -657,9 +657,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "",
-                "type": "bytes32"
+                "type": "string"
             },
             {
                 "internalType": "uint256",
@@ -706,9 +706,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "",
-                "type": "bytes32"
+                "type": "string"
             },
             {
                 "internalType": "address",
@@ -730,9 +730,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "",
-                "type": "bytes32"
+                "type": "string"
             },
             {
                 "internalType": "address",
@@ -759,9 +759,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "betId",
-                "type": "bytes32"
+                "type": "string"
             },
             {
                 "internalType": "address",
@@ -787,9 +787,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "",
-                "type": "bytes32"
+                "type": "string"
             },
             {
                 "internalType": "string",
@@ -830,9 +830,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "",
-                "type": "bytes32"
+                "type": "string"
             },
             {
                 "internalType": "address",
@@ -859,9 +859,9 @@ window.gambethStateAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
+                "internalType": "string",
                 "name": "",
-                "type": "bytes32"
+                "type": "string"
             },
             {
                 "internalType": "address",
@@ -880,4 +880,4 @@ window.gambethStateAbi = [
         "stateMutability": "view",
         "type": "function"
     }
-]
+];
