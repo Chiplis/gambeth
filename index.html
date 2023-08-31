@@ -5,6 +5,7 @@
     <script src="gambeth-provable-abi.js"></script>
     <script src="gambeth-state-abi.js"></script>
     <script src="token-abi.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
     <link rel="stylesheet" href="gambeth.css">
@@ -155,6 +156,15 @@
                     </thead>
                     <tbody id="place-bet-entries"></tbody>
                 </table>
+                <div class="msg details" id="oo-bet" style="display: flex; justify-content: center; flex-direction: column;">
+                    <div id="about-bet" style="font-size: 0.9rem">About</div>
+                    <div style="margin-top: 1rem; font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 0; border-radius: 0">
+                        <div id="bet-oo-query"></div>
+                    </div>
+                </div>
+                <div id="bet-pool-container" style="display: flex; margin: 1%">
+                    <canvas id="bet-pool"></canvas>
+                </div>
                 <div id="bet-operations"
                     style="display: flex; flex-direction: row; justify-content: space-around; width: 100%">
                     <div id="bet-decision">
@@ -215,13 +225,6 @@
                             <div id="bet-path"></div>
                         </div>
                     </div>
-                    <div class="msg details" id="oo-bet" style="display: flex; justify-content: center; flex-direction: column; max-width: 30%;">
-                        <div style="font-size: 0.9rem">About</div>
-                        <div
-                            style="margin-top: 1rem; font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 0; border-radius: 0">
-                            <div id="bet-oo-query"></div>
-                        </div>
-                    </div>
                     <div class="msg details" style="flex-direction: column;">
                         <div style="font-size: 0.9rem">Timeline (UTC)</div>
                         <div
@@ -266,20 +269,6 @@
                             <div id="bet-inner-result"></div>
                         </div>
                     </div>
-                </div>
-                <div style="display: flex">
-                    <table class="styled-table" id="bet-pool">
-                        <thead>
-                            <tr>
-                                <th colspan="2" id="pool-name" style="text-align: center;"></th>
-                            </tr>
-                            <tr>
-                                <th>Result</th>
-                                <th>Amount (USDC)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bet-entries"></tbody>
-                    </table>
                 </div>
             </div>
             <div id="intro"

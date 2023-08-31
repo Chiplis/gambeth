@@ -15,6 +15,8 @@ const tokenToNumber = async (n, m) => {
     if (!d) return BigInt(0);
     return BigInt(n) / BigInt(d);
 }
+
+const aboutBet = document.getElementById("about-bet");
 const claimBet = document.getElementById("claim-bet");
 const placeBetInputs = document.getElementById("place-bet-inputs");
 const chooseBetInputs = document.getElementById("choose-bet-inputs");
@@ -733,10 +735,22 @@ async function renderBetPool() {
             })
         });
         const results = await Promise.all(Object.keys(betResults).map((result) => stateContract.resultPools(activeBet, result)));
-        const resultsPool = {};
-        await Promise.all(Object.keys(betResults).map(async (result, idx) => {
-            resultsPool[result] = await tokenToNumber(results[idx]);
-        }))
+        const resultsPool = await Promise.all(results.map(async a => await tokenToNumber(a)))
+        const selectColor = (number) => `hsl(${number * 137.508},50%,75%)`;
+        const data = {
+            labels: Object.keys(betResults),
+            datasets: [{
+                data: resultsPool.map(a => a.toString()),
+                backgroundColor: results.map((_, i) => selectColor(i)),
+                hoverOffset: 4
+            }]
+        };
+        const config = {
+            type: 'doughnut',
+            data,
+        };
+        aboutBet.innerHTML = `${activeBet}`;
+        new Chart(betPool, config);
 
         const allEntries = Object.entries(betResults);
 
@@ -745,8 +759,8 @@ async function renderBetPool() {
             .map(([k, v]) => `<tr style="background-color: #fd9243"><td>${k}</td><td>${(resultsPool[k])}</td></tr>`)
             .join("");
 
-        poolName.innerHTML = activeBet + " Pool";
-        betEntries.innerHTML = entries;
+        // poolName.innerHTML = activeBet + " Pool";
+        // betEntries.innerHTML = entries;
 
         betPool.style.visibility = "visible";
         betPool.style.opacity = "100%";
