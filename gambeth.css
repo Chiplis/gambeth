@@ -76,7 +76,6 @@ span {
     border: 0;
     background-color: transparent;
     border-radius: 0.6rem;
-    display: flex;
     align-self: center;
     font-size: 1em;
     line-height: 1;
@@ -105,11 +104,11 @@ span {
 
 .info {
     color: white;
+    background-color: #b50fc4;
 }
 
 .info:hover {
     color: white;
-    background-color: #ff6927;
 }
 
 .link {
@@ -139,13 +138,12 @@ span {
     color: white;
 }
 
-.close, .error {
-    color: #f45977;
+.error {
+    background-color: #f45977
 }
 
 
 .close:hover, .error:hover {
-    background-color: #f45977;
     color: white;
 }
 

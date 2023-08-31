@@ -142,13 +142,14 @@ let providerLoaded = false;
 
 function hideMessage() {
     clearInterval(processing);
-    message.style.visibility = "hidden";
     message.style.opacity = "0";
+    setTimeout(() => message.style.visibility = "hidden", 1000);
 }
 
 function triggerMessage(msg, add, remove, after = defaultMessageLocation, click, showClose = true) {
     clearInterval(processing);
-    message.remove();
+    message.style.visibility = "visible";
+    // message.remove();
     after.append(message);
     message.onmouseover = undefined;
     message.onclick = undefined;
@@ -158,7 +159,6 @@ function triggerMessage(msg, add, remove, after = defaultMessageLocation, click,
     closeMessage.style.display = showClose ? "block" : "none";
     message.style.cursor = "default";
     message.style.display = "flex";
-    message.style.visibility = "visible";
     message.style.opacity = "100%";
     innerMessage.style.cursor = click ? "pointer" : "default";
     innerMessage.onclick = click;
@@ -416,7 +416,7 @@ async function searchBet(betId = activeBet) {
         betContainer.style.opacity = "0";
         betContainer.style.visibility = "hidden";
         console.log(betId, searchBetId.value);
-        activeBet = betId || searchBetId.value || activeBet;
+        activeBet = searchBetId.value || betId;
         console.log(activeBet);
         const betExists = await stateContract.createdBets(activeBet);
         if (!betExists) {
