@@ -13,20 +13,20 @@ contract GambethOptimisticOracle is OptimisticRequester {
     OptimisticOracleV2Interface public oo = OptimisticOracleV2Interface(OO_ADDRESS);
     bytes32 public PRICE_ID = bytes32("NUMERICAL");
 
-    mapping(bytes32 => uint256) public betRequestTimes;
-    mapping(bytes32 => bool) public finishedBets;
-    mapping(bytes32 => mapping(uint => string)) public betChoices;
-    mapping(bytes32 => uint256) public betResults;
-    mapping(bytes32 => mapping(uint256 => mapping(bytes => bytes32))) public requestBets;
-    mapping(bytes32 => int256) public betProposals;
-    mapping(bytes32 => mapping(bytes32 => bool)) public betQueries;
-    mapping(bytes32 => address) public betRequester;
+    mapping(string => uint256) public betRequestTimes;
+    mapping(string => bool) public finishedBets;
+    mapping(string => mapping(uint => string)) public betChoices;
+    mapping(string => uint256) public betResults;
+    mapping(bytes32 => mapping(uint256 => mapping(bytes => string))) public requestBets;
+    mapping(string => int256) public betProposals;
+    mapping(string => mapping(bytes32 => bool)) public betQueries;
+    mapping(string => address) public betRequester;
 
-    event CreatedOptimisticBet(bytes32 indexed betId, string query);
+    event CreatedOptimisticBet(string indexed betId, string query);
 
-    function createOptimisticBet(address currency, bytes32 betId, uint64 deadline, uint64 schedule, uint256 commissionDenominator, uint256 commission, uint256 initialPool, string[] memory results, string calldata query) public {
+    function createOptimisticBet(address currency, string calldata betId, uint64 deadline, uint64 schedule, uint256 commissionDenominator, uint256 commission, uint256 initialPool, string[] memory results, string calldata query) public {
         require(
-            betId != 0x0
+            bytes(betId).length != 0
             && deadline > block.timestamp // Bet can't be set in the past
             && deadline <= schedule // Users should only be able to place bets before it is actually executed
             && !state.createdBets(betId), // Can't have duplicate bets
@@ -40,7 +40,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         emit CreatedOptimisticBet(betId, query);
     }
 
-    function claimBet(bytes32 betId, string calldata query) public {
+    function claimBet(string calldata betId, string calldata query) public {
         require(betQueries[betId][keccak256(bytes(query))], "Invalid query for bet");
         bool hasPrice = oo.hasPrice(address(this), PRICE_ID, betRequestTimes[betId], bytes(query));
         bool betExpired = state.betSchedules(betId) + state.BET_THRESHOLD() < block.timestamp;
@@ -53,7 +53,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
     }
 
     // Submit a data request to the Optimistic oracle.
-    function requestBetResolution(bytes32 betId, string calldata query) public {
+    function requestBetResolution(string calldata betId, string calldata query) public {
         require(betQueries[betId][keccak256(bytes(query))], "Invalid query for bet");
         require(state.betSchedules(betId) <= block.timestamp, "Bet still not scheduled to run");
         betRequestTimes[betId] = block.timestamp; // Set the request time to the current block time.
@@ -69,7 +69,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         betRequester[betId] = msg.sender;
     }
 
-    function getResult(bytes32 betId) public view returns (string memory) {
+    function getResult(string memory betId) public view returns (string memory) {
         if (!finishedBets[betId]) {
             return "";
         }
@@ -77,17 +77,17 @@ contract GambethOptimisticOracle is OptimisticRequester {
     }
 
     function priceSettled(bytes32 identifier, uint256 timestamp, bytes calldata query, int256 price) public {
-        bytes32 betId = requestBets[identifier][timestamp][query];
+        string memory betId = requestBets[identifier][timestamp][query];
         betResults[betId] = uint(price) / 1e18;
         finishedBets[betId] = true;
         state.claimBet(betId, betRequester[betId], getResult(betId));
     }
 
-    function changeOrder(uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, bytes32 betId, string[] calldata results, uint256[] calldata ids) public {
+    function changeOrder(uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, string calldata betId, string[] calldata results, uint256[] calldata ids) public {
         state.changeOrder(msg.sender, orderAmounts, numerators, denominators, betId, results, ids);
     }
 
-    function fillOrder(uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, GambethState.OrderType[] calldata orderTypes, bytes32 betId, string[] calldata results, uint[][] calldata idxs) public {
+    function fillOrder(uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, GambethState.OrderType[] calldata orderTypes, string calldata betId, string[] calldata results, uint[][] calldata idxs) public {
         state.fillOrder(msg.sender, orderAmounts, numerators, denominators, orderTypes, betId, results, idxs);
     }
 
@@ -97,7 +97,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
     function priceDisputed(bytes32 identifier, uint256 timestamp, bytes calldata data, uint256 refund) public {
     }
 
-    modifier validateClaimedBet(bytes32 betId) {
+    modifier validateClaimedBet(string calldata betId) {
         require(state.createdBets(betId), "Invalid bet state while claiming reward.");
         _;
     }
@@ -115,7 +115,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         _;
     }
 
-    function placeBets(bytes32 betId, string[] calldata results, uint256[] calldata amounts) virtual public {
+    function placeBets(string calldata betId, string[] calldata results, uint256[] calldata amounts) virtual public {
         state.placeBets(betId, msg.sender, results, amounts);
     }
 
