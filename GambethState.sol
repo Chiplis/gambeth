@@ -326,7 +326,7 @@ contract GambethState {
                     pendingSells[betId][seller][result] -= shareAmount;
                 } else if (orderType == OrderType.SELL) {
                     require(pendingBuys[betId][buyer] >= transferAmount, "Buyer does not have enough tokens to complete sell order");
-                    pendingBuys[betId][seller] -= transferAmount;
+                    pendingBuys[betId][buyer] -= transferAmount;
                 }
 
                 require(

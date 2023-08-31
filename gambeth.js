@@ -183,8 +183,8 @@ function triggerProcessing(msg, after = defaultMessageLocation) {
     processing = setInterval(() => (innerMessage.innerHTML = msg + ".".repeat(i++ % 4)), 300);
 }
 
-const stateContractAddress = "0xC9747E408c9806e37aD5e392b93fb589E5E0FF6d";
-const ooContractAddress = "0xa633d7c1a50AD070c41bb4e569c3612adD85e46a";
+const stateContractAddress = "0x6533887174Cf11446F898D3B9baF73E830d1b8CC";
+const ooContractAddress = "0xBD5a2Ba9e1a60A2F8a6E7A83117Ec9892e488235";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
