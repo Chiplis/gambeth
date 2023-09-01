@@ -34,7 +34,7 @@
             style="display: flex; margin-top: 5rem; align-items: center; flex-direction: column; justify-content: center;">
             <div id="default-message-location" style="width: 0; height: 0; display: flex; flex-direction:column; justify-content: center">
                 <button class="btn"
-                    style="transition: linear all 0.75s; border: 2px solid black; position: fixed; width: 100%; border-radius: 0; opacity: 0; margin-top: 50px; flex-direction: column; justify-content: space-around;"
+                    style="transition: linear all 0.75s; border: 2px solid black; position: fixed; width: 100%; border-radius: 0; opacity: 0; top: 0; flex-direction: column; justify-content: space-around;"
                     id="message">
                     <div id="close-message"
                         style="color: white; margin-left: auto; margin-bottom: 0.25em; align-self: flex-start"
@@ -47,7 +47,7 @@
                     onclick="renderPreviousCreationStep()">←</div>
                 <div style="width: 70%">
                     <div class="create-bet-step"
-                        style="visibility: visible; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
+                        style="visibility: visible; opacity: 0; transition: opacity 0.5s cubic-bezier(1, 2, 3, 4); position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
                         <div class="btn info" style="border: 0; margin: 0">Pick a name</div>
                         <input id="create-bet-id" oninput="betIdChanged()"
                             style="margin: 0.5rem;" type="text" />
