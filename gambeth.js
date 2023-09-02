@@ -143,13 +143,12 @@ let providerLoaded = false;
 function hideMessage() {
     clearInterval(processing);
     message.style.opacity = "0";
-    setTimeout(() => message.style.visibility = "hidden", 1000);
+    message.style.visibility = "hidden";
 }
 
 function triggerMessage(msg, add, remove, after = defaultMessageLocation, click, showClose = true) {
     clearInterval(processing);
     message.style.visibility = "visible";
-    // message.remove();
     after.append(message);
     message.onmouseover = undefined;
     message.onclick = undefined;
@@ -191,7 +190,11 @@ const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
 
-['chainChanged', 'accountsChanged'].forEach(e => window.ethereum.on(e, async () => await loadProvider()));
+window.ethereum.request({
+    method: "wallet_switchEthereumChain",
+    params: [{chainId: "0x5"}]
+});
+
 
 async function loadProvider({betId = activeBet, betType} = {}) {
     try {
@@ -204,11 +207,15 @@ async function loadProvider({betId = activeBet, betType} = {}) {
             providerLoaded = false;
             return false;
         }
-
+        const stateEvents = ["CreatedBet", "PlacedBets", "LostBet", "UnwonBet", "WonBet"];
         provider = new ethers.BrowserProvider(window.ethereum);
         signer = await provider.getSigner();
         if (!gambethStateAbi) throw "ABI not loaded";
         stateContract = new ethers.Contract(stateContractAddress, gambethStateAbi, provider);
+        ['chainChanged', 'accountsChanged'].forEach(e => window.ethereum.on(e, () => {
+            stateEvents.map(stateContract.removeAllListeners);
+            loadProvider();
+        }));
         if (stateContract) {
             owner = await signer.getAddress();
             stateContract.on("CreatedBet", async hashedBetId => {
