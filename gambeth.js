@@ -171,7 +171,6 @@ function triggerError(msg, after = defaultMessageLocation, click) {
 }
 
 function triggerSuccess(msg, callback, after = defaultMessageLocation, delay = 0) {
-    console.log(after);
     triggerMessage(msg, "success", ["info", "error"], after);
     if (callback) {
         setTimeout(callback, delay);
@@ -198,7 +197,6 @@ window.ethereum.request({
 
 async function loadProvider({betId = activeBet, betType} = {}) {
     try {
-        console.log("Loading provider with ", {betId, betType});
         if (window.ethereum) {
             await window.ethereum.request({method: "eth_requestAccounts"});
         } else {
@@ -233,7 +231,6 @@ async function loadProvider({betId = activeBet, betType} = {}) {
                 if (sender === owner) triggerSuccess("No one won the bet, you've been refunded")
             });
             stateContract.on("WonBet", async (sender, amount) => {
-                console.log("Won bet with", amount + " reward");
                 if (sender === owner) triggerSuccess(`Bet won! ${await tokenToNumber(amount.toString())} USDC transferred to account`)
             });
             fixedCommission = await tokenToNumber(0);
@@ -241,7 +238,6 @@ async function loadProvider({betId = activeBet, betType} = {}) {
 
         if (betId) {
             const betKind = await stateContract.betKinds(betId);
-            console.log("Bet kind", betKind, betKind === 0n);
             switch (betKind) {
                 case 0n:
                     activeContract = new ethers.Contract(ooContractAddress, optimisticOracleAbi, provider).connect(signer);
@@ -270,7 +266,6 @@ async function loadProvider({betId = activeBet, betType} = {}) {
 
         usdc = new ethers.Contract(usdcAddress, tokenAbi, provider).connect(await provider.getSigner());
         let allowance = await usdc.allowance(owner, stateContractAddress);
-        console.log("Allowance", allowance);
         if (allowance === 0n && !awaitingApproval) {
             try {
                 awaitingApproval = true;
@@ -339,7 +334,6 @@ async function renderClaimBet() {
     const disableLink = ["Claimed", "Settling"].includes(claimBet.innerHTML);
     claimBet.classList.remove(disableLink ? "link" : null);
     claimBet.classList.add(!disableLink ? "link" : null);
-    console.log(claimBet.innerHTML);
     claimBet.disabled = claimBet.innerHTML === "Claimed" || claimBet.innerHTML === "Settling";
     claimBet.style.cursor = claimBet.disabled ? "initial" : "pointer";
 }
@@ -380,6 +374,8 @@ async function renderPlaceBet() {
     placeBet.style.visibility = "visible";
     placeBet.style.opacity = "100%";
     placeBet.innerHTML = lockedPool ? (scheduleReached ? "Finished" : "Buy") : "Place";
+    placeBet.classList.remove(scheduleReached ? "link" : null);
+    placeBet.classList.add(!scheduleReached ? "link" : null);
     placeBet.disabled = scheduleReached;
 
     placeBetInputs.style.display = lockedPool ? "none" : "flex";
@@ -416,9 +412,7 @@ async function searchBet(betId = activeBet) {
         triggerProcessing("Loading bet");
         betContainer.style.opacity = "0";
         betContainer.style.visibility = "hidden";
-        console.log(betId, searchBetId.value);
         activeBet = searchBetId.value || betId;
-        console.log(activeBet);
         const betExists = await stateContract.createdBets(activeBet);
         if (!betExists) {
             betContainer.style.display = "none";
@@ -446,7 +440,6 @@ async function searchBet(betId = activeBet) {
         let schedule = await stateContract.betSchedules(activeBet) * BigInt(1000);
         schedule = new Date(Number(schedule.toString()));
         betSchedule.innerHTML = schedule.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
-        console.log("Active bet", activeBet);
         let result = await activeContract.getResult(activeBet);
         let symbol = await usdc.symbol();
         betInnerInitialPool.innerHTML = (await tokenToNumber(initialPool)).toString() + " " + symbol;
@@ -481,10 +474,7 @@ const parseBetQuery = (schema, url, path) => `${schema}(${url})${schema === "htm
 
 async function createBet() {
     try {
-        // if (!(await loadProvider({betType: createBetSchema.value}))) return;
-        console.log("Provider loaded successfully");
         betContainer.style.display = "none";
-        // await resetButtons();
         clearTimeout(hideMessage());
 
         const schema = createBetSchema.value;
@@ -495,7 +485,6 @@ async function createBet() {
         let exponent = commission.includes(".") ? commission.length - commission.indexOf(".") : 0;
         commission = commission.replace(".", "");
         let commissionDenominator = exponent ? Math.pow(10, exponent - 1) : 1;
-        console.log(commission, exponent, commissionDenominator);
 
         if (!window.ethereum) {
             triggerError("No Ethereum provider detected", createBetQuery, () => window.location.href = "https://metamask.io/");
@@ -519,22 +508,17 @@ async function createBet() {
             triggerError("Bet ID already exists", createBetQuery, () => renderCreationStep(0));
             return;
         }
-        console.log("No exceptions");
         activeBet = betId.value.toLowerCase().trim();
         newBetId = activeBet;
         const initialPool = await numberToToken(createBetInitialPool.value || "0");
-        console.log("Initial pool", initialPool);
         let prices = [];
         try {
             prices = (await Promise.all(["URL", "OoAlpha"].map(stateContract.lastQueryPrice))).map(tokenToNumber);
         } catch (error) {
             prices = [];
         }
-        console.log("Prices", prices);
         const oracleFund = prices[1] > prices[0] ? prices[1] : prices[0];
-        console.log(schedule);
         const value = !oracleFund ? undefined : (await numberToToken(oracleFund) * (await stateContract.oracleMultiplier(schedule)));
-        console.log("Oracle fund: ", value);
         triggerProcessing("Creating bet", createBetQueryResult);
         const results = createBetChoicesList.innerHTML
             .replaceAll("<li>", "\n")
@@ -546,13 +530,11 @@ async function createBet() {
             query = query.slice(0, query.length - 2);
             query += `. Choose ${results.length} if the question can't be answered at the current time or if none of the previous options are correct.`
         }
-        console.log("Bet results/query", results, query);
         switch (schema) {
             case "bc":
                 await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, query);
                 break;
             case "oo":
-                console.log(activeBet, deadline, schedule, commissionDenominator, commission, initialPool, results, query);
                 await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, results, query);
                 break;
         }
@@ -565,7 +547,6 @@ async function createBet() {
 
 async function renderPlacedBets() {
     placeBetInfo.style.display = Object.keys(placedBets).length ? "block" : "none";
-    console.log(placedBets);
     placeBetEntries.innerHTML = `
         ${Object.entries(placedBets).map(([k, v]) => `<tr><td onclick="delete placedBets['${k}']; renderPlacedBets()">✖</td><td>${k}</td><td>${BigInt(v) - fixedCommission}</td></tr>`).join("")}
     `;
@@ -580,7 +561,6 @@ function addSingleBet(result, amount) {
 
 async function buyBet() {
     if (await activeBetKind() === "oo") {
-        console.log(chooseBetInputs.value);
         await fillOrder("BUY");
     } else {
         await addFreeBet();
@@ -603,7 +583,6 @@ async function fillOrder(orderType) {
     }
 
     triggerProcessing("Placing order" + (results.length > 1 ? "s" : ""));
-    console.log(results, amounts.map(a => a.toString()), sum);
     const finalAmounts = amounts.map(a => a.toString());
     const [numerator, denominator] = [1n, 1n];
     const orders = (await stateContract.getOrders(activeBet, 0, 100))
@@ -622,7 +601,6 @@ async function fillOrder(orderType) {
         .filter(o => o.orderType !== orderType)
         .filter(o => orderType === "SELL" ? (o.numerator * denominator >= numerator * o.denominator) : (o.numerator * denominator <= numerator * o.denominator))
         .map(o => o.idx);
-    console.log(orderIndexes.map(i => orders[i]));
     await activeContract.fillOrder(finalAmounts, finalAmounts.map(() => 1), finalAmounts.map(() => 1), [orderType === "BUY" ? 0n : 1n], activeBet, results, [orderIndexes]);
     placedBets = {};
     await renderPlacedBets();
@@ -645,7 +623,6 @@ async function addFreeBet() {
 }
 
 async function addBetChoice() {
-    console.log("Adding bet");
     createBetChoice.value ||= "";
     if (!(createBetChoice.value.trim()) || createBetChoicesList.innerHTML.toLowerCase().includes(createBetChoice.value.toLowerCase())) {
         return;
@@ -657,7 +634,6 @@ async function addBetChoice() {
 changeBetType();
 
 async function changeBetType() {
-    console.log("Changing bet type");
 
     const betType = createBetSchema.value;
     createBetChoices.style.display = betType === "oo" ? "flex" : "none";
