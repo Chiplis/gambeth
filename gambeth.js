@@ -132,7 +132,7 @@ let processing = null;
 
 function searchTriggered(e) {
     if (e.keyCode === 13) {
-        searchBet();
+        searchBet(searchBetId.value);
     }
 }
 
@@ -291,16 +291,7 @@ async function loadProvider({betId = activeBet, betType} = {}) {
 
 loadProvider();
 
-window.onload = () => {
-    let betId = new URL(window.location).searchParams.get("id");
-    if (betId) {
-        searchBet(betId);
-    } else if (betId) {
-        console.log(betId);
-        betId = betId.toLowerCase().trim();
-        searchBet(betId);
-    }
-}
+window.onload = () => searchBet((new URL(window.location).searchParams.get("id") || "").toLowerCase().trim());
 
 async function resetButtons() {
     placeBetInputs.style.display = "none";
@@ -414,12 +405,15 @@ async function renderPlaceBet() {
 }
 
 async function searchBet(betId = activeBet) {
+    if (!betId) {
+        return;
+    }
     try {
         await loadProvider({betId});
         placedBets = {};
         newBet.style.display = "none";
         await resetButtons();
-        triggerProcessing("Fetching bet");
+        triggerProcessing("Loading bet");
         betContainer.style.opacity = "0";
         betContainer.style.visibility = "hidden";
         console.log(betId, searchBetId.value);
