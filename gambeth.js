@@ -444,7 +444,7 @@ async function searchBet(betId = activeBet) {
         if (!(await loadProvider({betId}))) {
             return;
         }
-        fetchOrders(true);
+        await fetchOrders(true);
         placedBets = {};
         newBet.style.display = "none";
         await resetButtons();
@@ -607,12 +607,13 @@ async function buyBet() {
 }
 
 const betOrders = {};
+let orderCounter = 0;
 const fetchOrders = async (refresh) => {
     if (!activeBet || !stateContract) {
         return;
     }
     betOrders[activeBet] = refresh ? [] : (betOrders[activeBet] || []);
-    const contractOrders = await stateContract.getOrders(activeBet, betOrders[activeBet].length, 100);
+    const contractOrders = await stateContract.getOrders(activeBet, orderCounter, 100);
     if (!contractOrders.length) {
         return;
     }
@@ -624,9 +625,10 @@ const fetchOrders = async (refresh) => {
         amount: o[4],
         user: o[5],
         idx
-    })).filter(o => o.amount !== 0n);
+    }));
+    orderCounter += newOrders.length;
     console.log(newOrders);
-    betOrders[activeBet].push(...newOrders);
+    betOrders[activeBet] = betOrders[activeBet].concat(newOrders.filter(o => o.amount !== 0n));
     await renderOrders();
 }
 
@@ -678,7 +680,7 @@ async function fillOrder(orderType) {
     await filledOrder.wait();
     hideMessage();
     placedBets = {};
-    fetchOrders(true);
+    await fetchOrders(true);
     renderPlacedBets();
 }
 
