@@ -1,5 +1,22 @@
+Element.prototype.scrollIntoViewIfNeeded = function () {
+    var rect = this.getBoundingClientRect();
+    var input = document.querySelectorAll('input');
+    for (i = 0; i < input.length; i++) {
+        if (!input[i].placeholder || input[i].id === "search-bet") continue;
+        if (input[i].getAttribute('size') < input[i].getAttribute('placeholder').length)
+            input[i].setAttribute('size', input[i].getAttribute('placeholder').length);
+    }
+    if (!(
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+    )) this.scrollIntoView();
+}
+
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
 let usdc;
+let betChart = null;
 
 const numberToToken = async (n, m) => {
     if (!activeBet && !m) return BigInt(n);
@@ -35,7 +52,13 @@ const createBetSchema = document.getElementById("create-bet-schema");
 const createBetOo = document.getElementById("create-bet-oo");
 const createBetPath = document.getElementById("create-bet-path");
 const betEntries = document.getElementById("bet-entries");
+
 const betPool = document.getElementById("bet-pool");
+const userPool = document.getElementById("user-pool");
+const ordersPool = document.getElementById("orders-pool");
+const userOrders = document.getElementById("user-orders");
+const openOrders = document.getElementById("open-orders");
+
 const searchBetId = document.getElementById("search-bet");
 const poolName = document.getElementById("pool-name");
 const message = document.getElementById("message");
@@ -192,11 +215,15 @@ let awaitingApproval = false;
 window.ethereum.request({
     method: "wallet_switchEthereumChain",
     params: [{chainId: "0x5"}]
+}, () => {
+    const stateEvents = ["CreatedBet", "PlacedBets", "LostBet", "UnwonBet", "WonBet"];
+    stateEvents.map((stateContract || {}).removeAllListeners);
 });
 
 
 async function loadProvider({betId = activeBet, betType} = {}) {
     try {
+        await hideMessage();
         if (window.ethereum) {
             await window.ethereum.request({method: "eth_requestAccounts"});
         } else {
@@ -205,13 +232,11 @@ async function loadProvider({betId = activeBet, betType} = {}) {
             providerLoaded = false;
             return false;
         }
-        const stateEvents = ["CreatedBet", "PlacedBets", "LostBet", "UnwonBet", "WonBet"];
         provider = new ethers.BrowserProvider(window.ethereum);
         signer = await provider.getSigner();
         if (!gambethStateAbi) throw "ABI not loaded";
         stateContract = new ethers.Contract(stateContractAddress, gambethStateAbi, provider);
         ['chainChanged', 'accountsChanged'].forEach(e => window.ethereum.on(e, () => {
-            stateEvents.map(stateContract.removeAllListeners);
             loadProvider();
         }));
         if (stateContract) {
@@ -567,6 +592,31 @@ async function buyBet() {
     }
 }
 
+const betOrders = {};
+const fetchOrders = async (refresh) => {
+    if (!activeBet) {
+        return;
+    }
+    betOrders[activeBet] = refresh ? [] : (betOrders[activeBet] || []);
+    const contractOrders = await stateContract.getOrders(activeBet, betOrders[activeBet].length, 100);
+    if (!contractOrders.length) {
+        return;
+    }
+    const newOrders = contractOrders.map((o, idx) => ({
+        orderType: o[0] ? "SELL" : "BUY",
+        numerator: o[1],
+        denominator: o[2],
+        result: o[3],
+        amount: o[4],
+        user: o[5],
+        idx
+    }));
+    betOrders[activeBet].push(...newOrders);
+    console.log(betOrders[activeBet]);
+}
+
+setInterval(fetchOrders, 1000);
+
 async function fillOrder(orderType) {
     const results = Object.keys(placedBets).filter(pb => pb);
     const amounts = await Promise.all(results.map(r => placedBets[r]).map(a => a.toString()).map(numberToToken));
@@ -585,17 +635,7 @@ async function fillOrder(orderType) {
     triggerProcessing("Placing order" + (results.length > 1 ? "s" : ""));
     const finalAmounts = amounts.map(a => a.toString());
     const [numerator, denominator] = [1n, 1n];
-    const orders = (await stateContract.getOrders(activeBet, 0, 100))
-        .map(a => Array.from(a))
-        .map((o, idx) => ({
-            orderType: o[0] ? "SELL" : "BUY",
-            numerator: o[1],
-            denominator: o[2],
-            result: o[3],
-            amount: o[4],
-            user: o[5],
-            idx
-        }));
+    const orders = [];
     const orderIndexes = orders
         .filter(o => o.amount)
         .filter(o => o.orderType !== orderType)
@@ -702,8 +742,6 @@ async function decideBet() {
     }
 }
 
-let betChart = null;
-
 async function renderBetPool() {
     try {
         const placedBets = await stateContract.queryFilter(stateContract.filters.PlacedBets(null, activeBet));
@@ -749,20 +787,4 @@ async function renderBetPool() {
         console.error(error);
         triggerError(providerErrorMsg(error));
     }
-}
-
-Element.prototype.scrollIntoViewIfNeeded = function () {
-    var rect = this.getBoundingClientRect();
-    var input = document.querySelectorAll('input');
-    for (i = 0; i < input.length; i++) {
-        if (!input[i].placeholder || input[i].id === "search-bet") continue;
-        if (input[i].getAttribute('size') < input[i].getAttribute('placeholder').length)
-            input[i].setAttribute('size', input[i].getAttribute('placeholder').length);
-    }
-    if (!(
-        rect.top >= 0 &&
-        rect.left >= 0 &&
-        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-    )) this.scrollIntoView();
 }
