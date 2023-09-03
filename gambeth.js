@@ -725,7 +725,7 @@ async function changeBetType() {
     switch (betType) {
         case "json":
             createBetUrl.placeholder = "https://www.therocktrading.com/api/ticker/BTCEUR"
-            createBetPath.placeholder = ".outcome.0.last";
+            createBetPath.placeholder = ".result.0.last";
             createBetPathLabel.innerHTML = `Extract outcome from JSON node using <a href='https://github.com/FlowCommunications/JSONPath#expression-syntax' style='text-decoration: underline'>JSONPath</a>`;
             break;
         case "xml":
