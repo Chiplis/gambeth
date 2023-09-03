@@ -787,7 +787,7 @@ async function renderBetPool() {
                 betOutcomes[outcome] = (betOutcomes[outcome] || 0) + 1;
             })
         });
-        const outcomes = await Promise.all(Object.keys(betOutcomes).map((outcome) => stateContract.outcomePools(activeBet, outcome)));
+        const outcomes = await Promise.all(Object.keys(betOutcomes).map((outcome) => stateContract.resultPools(activeBet, outcome)));
         const outcomesPool = await Promise.all(outcomes.map(async a => await tokenToNumber(a)))
         const selectColor = (number) => `hsl(${number * 137.508},50%,75%)`;
         const data = {
