@@ -37,6 +37,7 @@ const aboutBet = document.getElementById("about-bet");
 const claimBet = document.getElementById("claim-bet");
 const placeBetInputs = document.getElementById("place-bet-inputs");
 const chooseBetInputs = document.getElementById("choose-bet-inputs");
+const chooseBetPosition = document.getElementById("choose-bet-position");
 const placeBet = document.getElementById("place-bet");
 const scheduleDate = document.getElementById("schedule-date");
 const deadlineDate = document.getElementById("deadline-date");
@@ -334,7 +335,7 @@ async function resetButtons() {
 function renderPlaceSingleBet() {
     const filledBet = (placeBetOutcome.value || chooseBetInputs.style.display !== "none") && placeBetAmount.value;
     queueBuyOrder.onclick = filledBet ? () => {
-        addSingleBet({amount: placeBetAmount.value, outcome: placeBetOutcome.value || chooseBetInputs.value, orderType: placeBetPositionContainer.value.toUpperCase()});
+        addSingleBet({amount: placeBetAmount.value, outcome: placeBetOutcome.value || chooseBetInputs.value, orderType: chooseBetPosition.value.toUpperCase()});
         renderPlaceSingleBet();
     } : "";
     queueBuyOrder.style.cursor = filledBet ? "pointer" : "default";
