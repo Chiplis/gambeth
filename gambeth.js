@@ -347,7 +347,7 @@ renderPlaceSingleBet();
 async function renderClaimBet() {
     const addr = await signer.getAddress();
     const finishedBet = await activeContract.finishedBets(activeBet);
-    const outcome = await activeContract.getOutcome(activeBet);
+    const outcome = await activeContract.getResult(activeBet);
     const resolutionRequested = BigInt(await activeContract.betRequester(activeBet)) !== 0n;
     const scheduleReached = await stateContract.betSchedules(activeBet) * BigInt(1000) < BigInt(new Date().getTime());
     let showClaim = finishedBet || (!resolutionRequested && scheduleReached) || (resolutionRequested && !finishedBet);
@@ -479,7 +479,7 @@ async function searchBet(betId = activeBet) {
         let schedule = await stateContract.betSchedules(activeBet) * BigInt(1000);
         schedule = new Date(Number(schedule.toString()));
         betSchedule.innerHTML = schedule.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
-        let outcome = await activeContract.getOutcome(activeBet);
+        let outcome = await activeContract.getResult(activeBet);
         let symbol = await usdc.symbol();
         betInnerInitialPool.innerHTML = (await tokenToNumber(initialPool)).toString() + " " + symbol;
         betInnerTotalPool.innerHTML = (await tokenToNumber((await stateContract.betPools(activeBet)))).toString() + " " + symbol;
