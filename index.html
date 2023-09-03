@@ -60,7 +60,7 @@
                 <div class="create-bet-step"
                      style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
                     <div class="btn info" style="border: 0; margin: 0">Query</div>
-                    <label for="create-bet-schema" style="margin-top: 1em">How should the contract determine the result
+                    <label for="create-bet-schema" style="margin-top: 1em">How should the contract determine the outcome
                         of your bet?</label>
                     <select onchange="changeBetType()" style="color: white; margin: 1rem; text-align: center"
                             name="create-bet-schema" id="create-bet-schema">
@@ -71,7 +71,7 @@
                         <option value="json">JSON oracle query</option>
                         <option value="html">Process HTML data</option>
                     </select>
-                    <label style="display: none" for="create-bet-url">Determine bet result by choosing the website which
+                    <label style="display: none" for="create-bet-url">Determine bet outcome by choosing the website which
                         contains it</label>
                     <input style="display: none"
                            oninput="createBetQueryInner.innerHTML=parseBetQuery(createBetSchema.value, this.value, createBetPath.value)"
@@ -84,14 +84,14 @@
                     <label style="display: none" for="create-bet-path" id="create-bet-path-label"></label>
                     <input style="display: none"
                            oninput="createBetQueryInner.innerHTML=parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value)"
-                           id="create-bet-path" type="text" placeholder=".result.0.last"
+                           id="create-bet-path" type="text" placeholder=".outcome.0.last"
                            style="width: 75%; margin-top: 1em"/>
 
                     <div id="create-bet-query"
                          style="display: flex; margin-top: 1em; flex-direction: column; align-items: center">
                         <div id="create-bet-query-inner"></div>
                     </div>
-                    <div id="create-bet-query-result"></div>
+                    <div id="create-bet-query-outcome"></div>
                 </div>
                 <div class="create-bet-step" id="create-bet-choices"
                      style="display: none; flex-direction: column; justify-content: center; visibility: hidden">
@@ -161,7 +161,7 @@
                 </tr>
                 <tr>
                     <th></th>
-                    <th>Result</th>
+                    <th>Outcome</th>
                     <th>Amount</th>
                 </tr>
                 </thead>
@@ -177,18 +177,18 @@
             <div id="bet-operations"
                  style="display: flex; flex-direction: row; justify-content: space-around; width: 100%">
                 <div id="bet-decision">
-                    <label for="decide-bet-result">
+                    <label for="decide-bet-outcome">
                         <button class="btn link" id="decide-bet" onclick="decideBet()">Bet Decision</button>
                     </label>
-                    <input name="decide-bet-result" id="decide-bet-result"/>
+                    <input name="decide-bet-outcome" id="decide-bet-outcome"/>
                 </div>
                 <button class="btn link" id="claim-bet" onclick="claimReward()"></button>
                 <button class="btn link" id="place-bet" onclick="buyBet()"></button>
                 <button class="btn link" id="sell-bet" onclick="fillOrder('SELL')">Sell</button>
                 <div id="place-bet-inputs" style="display: flex; flex-direction: column">
-                    <label for="place-bet-result">Result</label>
-                    <input name="place-bet-result" id="place-bet-result" type="text"
-                           oninput="renderPlaceSingleBet()" placeholder="Expected result"/>
+                    <label for="place-bet-outcome">Outcome</label>
+                    <input name="place-bet-outcome" id="place-bet-outcome" type="text"
+                           oninput="renderPlaceSingleBet()" placeholder="Expected outcome"/>
                 </div>
                 <div style="display: flex; flex-direction: column; align-items: center">
                     <div id="place-bet-amount-container">
@@ -197,7 +197,7 @@
                                type="number" step="0.0001" placeholder="Amount (USDC)"/>
                     </div>
                     <div id="place-bet-choice-container">
-                        <label for="choose-bet-inputs">Choose a result</label>
+                        <label for="choose-bet-inputs">Choose a outcome</label>
                         <select id="choose-bet-inputs" style="color: white" onchange="renderPlaceSingleBet()">
                         </select>
                     </div>
@@ -218,7 +218,7 @@
                             <th colspan="3" style="text-align: center;">Sells</th>
                         </tr>
                         <tr>
-                            <th>Result</th>
+                            <th>Outcome</th>
                             <th>Amount</th>
                             <th>Price</th>
                         </tr>
@@ -231,7 +231,7 @@
                             <th colspan="3" style="text-align: center;">Buys</th>
                         </tr>
                         <tr>
-                            <th>Result</th>
+                            <th>Outcome</th>
                             <th>Amount</th>
                             <th>Price</th>
                         </tr>
@@ -248,7 +248,7 @@
                             <th colspan="3" style="text-align: center;">Sells</th>
                         </tr>
                         <tr>
-                            <th>Result</th>
+                            <th>Outcome</th>
                             <th>Amount</th>
                             <th>Price</th>
                         </tr>
@@ -261,7 +261,7 @@
                             <th colspan="3" style="text-align: center;">Buys</th>
                         </tr>
                         <tr>
-                            <th>Result</th>
+                            <th>Outcome</th>
                             <th>Amount</th>
                             <th>Price</th>
                         </tr>
@@ -342,12 +342,12 @@
                     </div>
                 </div>
                 <div class="msg details" style="flex-direction: column;">
-                    <div id="bet-result"
+                    <div id="bet-outcome"
                          style="margin-top: 1rem; font-size: 0.7rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
                         <div style="font-size: 0.8rem; margin-bottom: 0.25rem;">
-                            Result
+                            Outcome
                         </div>
-                        <div id="bet-inner-result"></div>
+                        <div id="bet-inner-outcome"></div>
                     </div>
                 </div>
             </div>
@@ -380,7 +380,7 @@
                 </p>
             </div>
             <div>
-                <h3>Who determines the result of a bet?</h3>
+                <h3>Who determines the outcome of a bet?</h3>
                 <p>
                     Gambeth uses UMA's decentralized oracle service under the hood to determine the resolution for each
                     market.
@@ -391,16 +391,16 @@
                 <h3>How do I place a bet?</h3>
                 <p>
                     Simply search for the ID of the bet you want to participate in (check the bet's info to make
-                    sure everything looks good), write down your result and the amount you're betting, and click the
+                    sure everything looks good), write down your outcome and the amount you're betting, and click the
                     "Bet" button.
-                    If you want to bet on more than one result, you can click on the "+" button to pack your
+                    If you want to bet on more than one outcome, you can click on the "+" button to pack your
                     bets into a single transaction, saving you time and money.
                 </p>
             </div>
             <div id="what-happens-if-i-win">
                 <h3>What happens if I win?</h3>
                 <p>
-                    First of all, congratulations! After the bet has been executed and the result uploaded to the
+                    First of all, congratulations! After the bet has been executed and the outcome uploaded to the
                     blockchain, all you need to do is lookup the bet's ID in Gambeth and click on the "Claim Bet"
                     button.
                     Your earnings will be dependent on two factors: your share of the winner's pool, and the bet's
