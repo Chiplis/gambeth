@@ -73,6 +73,7 @@ const queueSellOrder = document.getElementById("queue-sell-order");
 
 const placeBetAmountContainer = document.getElementById("place-bet-amount-container");
 const placeBetChoiceContainer = document.getElementById("place-bet-choice-container");
+const placeBetPositionContainer = document.getElementById("choose-bet-position");
 
 const createBetInitialPool = document.getElementById("create-bet-initial-pool");
 const createBetCommission = document.getElementById("create-bet-commission");
@@ -333,7 +334,7 @@ async function resetButtons() {
 function renderPlaceSingleBet() {
     const filledBet = (placeBetOutcome.value || chooseBetInputs.style.display !== "none") && placeBetAmount.value;
     queueBuyOrder.onclick = filledBet ? () => {
-        addSingleBet({amount: placeBetAmount.value, outcome: placeBetOutcome.value || chooseBetInputs.value, orderType: document.getElementById("choose-bet-position").value.toUpperCase()});
+        addSingleBet({amount: placeBetAmount.value, outcome: placeBetOutcome.value || chooseBetInputs.value, orderType: placeBetPositionContainer.value.toUpperCase()});
         renderPlaceSingleBet();
     } : "";
     queueBuyOrder.style.cursor = filledBet ? "pointer" : "default";
@@ -418,6 +419,7 @@ async function renderPlaceBet() {
 
     placeBetAmountContainer.style.display = scheduleReached ? "none" : "block";
     placeBetChoiceContainer.style.display = scheduleReached ? "none" : "flex";
+    placeBetPositionContainer.style.display = scheduleReached ? "none" : "flex";
     queueBuyOrder.style.display = scheduleReached ? "none" : "block";
 
     if (betKind === "oo") {
