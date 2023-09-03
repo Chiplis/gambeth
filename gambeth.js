@@ -676,9 +676,7 @@ async function fillOrder(orderType) {
         .map(o => o.idx);
     const filledOrder = await activeContract.fillOrder(finalAmounts, finalAmounts.map(() => 1), finalAmounts.map(() => 1), [orderType === "BUY" ? 0n : 1n], activeBet, results, [orderIndexes]);
     await filledOrder.wait();
-    if (!message.classList.contains("error")) {
-        hideMessage();
-    }
+    hideMessage();
     placedBets = {};
     fetchOrders(true);
     renderPlacedBets();
