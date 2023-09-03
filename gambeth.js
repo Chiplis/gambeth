@@ -71,7 +71,7 @@ const createBetChoicesList = document.getElementById("create-bet-choices-list");
 const queueBuyOrder = document.getElementById("queue-buy-order");
 const queueSellOrder = document.getElementById("queue-sell-order");
 
-const placeBetDataContainer = document.getElementById("place-bet-amount-container");
+const placeBetDataContainer = document.getElementById("place-bet-data-container");
 const placeBetChoiceContainer = document.getElementById("place-bet-choice-container");
 const placeBetPositionContainer = document.getElementById("place-bet-position-container");
 
