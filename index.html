@@ -157,10 +157,11 @@
                    id="place-bet-info">
                 <thead>
                 <tr>
-                    <th colspan="3" style="text-align: center;">Placed Bets</th>
+                    <th colspan="4" style="text-align: center;">Placed Orders</th>
                 </tr>
                 <tr>
                     <th></th>
+                    <th>Position</th>
                     <th>Outcome</th>
                     <th>Amount</th>
                 </tr>
@@ -184,7 +185,6 @@
                 </div>
                 <button class="btn link" id="claim-bet" onclick="claimReward()"></button>
                 <button class="btn link" id="place-bet" onclick="buyBet()"></button>
-                <button class="btn link" id="sell-bet" onclick="fillOrder('SELL')">Sell</button>
                 <div id="place-bet-inputs" style="display: flex; flex-direction: column">
                     <label for="place-bet-outcome">Outcome</label>
                     <input name="place-bet-outcome" id="place-bet-outcome" type="text"
@@ -196,17 +196,23 @@
                         <input name="place-bet-amount" id="place-bet-amount" oninput="renderPlaceSingleBet()"
                                type="number" step="0.0001" placeholder="Amount (USDC)"/>
                     </div>
-                    <div id="place-bet-choice-container">
-                        <label for="choose-bet-inputs">Choose a outcome</label>
-                        <select id="choose-bet-inputs" style="color: white" onchange="renderPlaceSingleBet()">
-                        </select>
+                    <div style="display: flex; justify-content: space-around; width: 100%">
+                        <div id="place-bet-choice-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center">
+                            <label for="choose-bet-inputs">Outcome</label>
+                            <select id="choose-bet-inputs" style="color: white" onchange="renderPlaceSingleBet()">
+                            </select>
+                        </div>
+                        <div id="place-bet-position-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center">
+                            <label for="choose-bet-position">Position</label>
+                            <select id="choose-bet-position" style="color: white" onchange="renderPlaceSingleBet()">
+                                <option value="buy">Buy</option>
+                                <option value="sell">Sell</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <button class="btn link" id="queue-buy-order" style="opacity: 0">
                     +
-                </button>
-                <button class="btn link" id="queue-sell-order" style="opacity: 0">
-                    Sell
                 </button>
             </div>
             <div id="bet-pool-container" style="justify-content: space-around; width: 100%; display: flex; margin: 1%">

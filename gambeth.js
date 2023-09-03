@@ -96,8 +96,6 @@ const innerMessage = document.getElementById("inner-message");
 const closeMessage = document.getElementById("close-message");
 const newBet = document.getElementById("new-bet");
 
-const sellBet = document.getElementById("sell-bet");
-
 const urlBet = document.getElementById("url-bet");
 const ooBet = document.getElementById("oo-bet");
 const betInnerInitialPool = document.getElementById("bet-initial-pool");
@@ -155,7 +153,7 @@ const renderNextCreationStep = () => {
 
 searchBetId.onkeydown = searchTriggered;
 let activeBet = null;
-let placedBets = {};
+let placedBets = [];
 let newBetId = null;
 let processing = null;
 
@@ -335,7 +333,7 @@ async function resetButtons() {
 function renderPlaceSingleBet() {
     const filledBet = (placeBetOutcome.value || chooseBetInputs.style.display !== "none") && placeBetAmount.value;
     queueBuyOrder.onclick = filledBet ? () => {
-        addSingleBet(placeBetOutcome.value || chooseBetInputs.value, placeBetAmount.value);
+        addSingleBet({amount: placeBetAmount.value, outcome: placeBetOutcome.value || chooseBetInputs.value, orderType: document.getElementById("choose-bet-position").value.toUpperCase()});
         renderPlaceSingleBet();
     } : "";
     queueBuyOrder.style.cursor = filledBet ? "pointer" : "default";
@@ -419,9 +417,8 @@ async function renderPlaceBet() {
     placeBetInputs.style.visibility = lockedPool ? "hidden" : "visible";
 
     placeBetAmountContainer.style.display = scheduleReached ? "none" : "block";
-    placeBetChoiceContainer.style.display = scheduleReached ? "none" : "block";
+    placeBetChoiceContainer.style.display = scheduleReached ? "none" : "flex";
     queueBuyOrder.style.display = scheduleReached ? "none" : "block";
-    sellBet.style.display = scheduleReached ? "none" : "block";
 
     if (betKind === "oo") {
         placeBetInputs.style.display = "none";
@@ -445,7 +442,7 @@ async function searchBet(betId = activeBet) {
             return;
         }
         await fetchOrders(true);
-        placedBets = {};
+        placedBets = [];
         newBet.style.display = "none";
         await resetButtons();
         triggerProcessing("Loading bet");
@@ -585,14 +582,12 @@ async function createBet() {
 }
 
 async function renderPlacedBets() {
-    placeBetInfo.style.display = Object.keys(placedBets).length ? "block" : "none";
-    placeBetEntries.innerHTML = `
-        ${Object.entries(placedBets).map(([k, v]) => `<tr><td onclick="delete placedBets['${k}']; renderPlacedBets()">✖</td><td>${k}</td><td>${BigInt(v) - fixedCommission}</td></tr>`).join("")}
-    `;
+    placeBetInfo.style.display = placedBets.length ? "block" : "none";
+    placeBetEntries.innerHTML = placedBets.map((order, i) => `<tr><td onclick="placedBets = placedBets.splice(i, 1); renderPlacedBets()">✖</td><td>${order.orderType}</td><td>${order.outcome}</td><td>${order.amount}</td></tr>`).join("");
 }
 
-function addSingleBet(outcome, amount) {
-    placedBets[outcome] = parseFloat(amount) + (placedBets[outcome] || 0);
+function addSingleBet(order) {
+    placedBets.push(order);
     renderPlacedBets();
     placeBetAmount.value = "";
     placeBetOutcome.value = "";
@@ -613,6 +608,7 @@ const fetchOrders = async (refresh) => {
         return;
     }
     betOrders[activeBet] = refresh ? [] : (betOrders[activeBet] || []);
+    orderCounter = refresh ? 0 : orderCounter;
     const contractOrders = await stateContract.getOrders(activeBet, orderCounter, 100);
     if (!contractOrders.length) {
         return;
@@ -652,16 +648,15 @@ async function renderOrders() {
 
 setInterval(fetchOrders, 1000);
 
-async function fillOrder(orderType) {
-    const outcomes = Object.keys(placedBets).filter(pb => pb);
-    const amounts = await Promise.all(outcomes.map(r => placedBets[r]).map(a => a.toString()).map(numberToToken));
-    const sum = amounts.reduce((acc, b) => acc + b, BigInt(0));
+async function fillOrder() {
+    const outcomes = placedBets.filter(order => order.amount > 0n);
+    const amounts = await Promise.all(outcomes.map(o => o.amount).map(numberToToken));
     if (!outcomes.length || !amounts.length) {
         triggerError("No bets have been placed, make sure outcome and amount fields are not empty.")
         return;
     }
-    for (let i = 0; i < outcomes.length; i++) {
-        if (orderType === "SELL" && await stateContract.pendingSells(activeBet, owner, outcomes[i]) + amounts[i] > await stateContract.userBets(activeBet, owner, outcomes[i])) {
+    for (let order of placedBets) {
+        if (order.orderType === "SELL" && await stateContract.pendingSells(activeBet, owner, order.outcome) + order.amount > await stateContract.userBets(activeBet, owner, order.outcome)) {
             triggerError("Sell value exceeded.")
             return;
         }
@@ -671,15 +666,17 @@ async function fillOrder(orderType) {
     const finalAmounts = amounts.map(a => a.toString());
     const [numerator, denominator] = [1n, 1n];
     const orders = betOrders[activeBet];
-    const orderIndexes = orders
+    const orderIndexes = placedBets.map(({orderType}) => orders
         .filter(o => o.amount)
         .filter(o => o.orderType !== orderType)
         .filter(o => orderType === "SELL" ? (o.numerator * denominator >= numerator * o.denominator) : (o.numerator * denominator <= numerator * o.denominator))
-        .map(o => o.idx);
-    const filledOrder = await activeContract.fillOrder(finalAmounts, finalAmounts.map(() => 1), finalAmounts.map(() => 1), [orderType === "BUY" ? 0n : 1n], activeBet, outcomes, [orderIndexes]);
+        .map(o => o.idx));
+    console.log(orderIndexes);
+    console.log(finalAmounts);
+    const filledOrder = await activeContract.fillOrder(finalAmounts, finalAmounts.map(() => 1), finalAmounts.map(() => 1), placedBets.map(o => o.orderType === "BUY" ? 0n : 1n), activeBet, outcomes.map(o => o.outcome), orderIndexes);
     await filledOrder.wait();
     hideMessage();
-    placedBets = {};
+    placedBets = [];
     await fetchOrders(true);
     renderPlacedBets();
 }
@@ -687,7 +684,7 @@ async function fillOrder(orderType) {
 async function addFreeBet() {
     try {
         if (placeBetAmount.value && placeBetOutcome.value) {
-            addSingleBet(placeBetOutcome.value, placeBetAmount.value);
+            addSingleBet({amount: placeBetAmount.value, outcome: placeBetOutcome.value || chooseBetInputs.value, orderType: document.getElementById("choose-bet-position").value.toUpperCase()});
         }
         await placeContractBet();
         queueBuyOrder.style.opacity = 0;
