@@ -215,10 +215,10 @@ let awaitingApproval = false;
 window.ethereum.request({
     method: "wallet_switchEthereumChain",
     params: [{chainId: "0x5"}]
-}, () => {
-    const stateEvents = ["CreatedBet", "PlacedBets", "LostBet", "UnwonBet", "WonBet"];
-    stateEvents.map((stateContract || {}).removeAllListeners);
 });
+['chainChanged', 'accountsChanged'].forEach(e => window.ethereum.on(e, () => {
+    loadProvider();
+}));
 
 
 async function loadProvider({betId = activeBet, betType} = {}) {
@@ -233,12 +233,17 @@ async function loadProvider({betId = activeBet, betType} = {}) {
             return false;
         }
         provider = new ethers.BrowserProvider(window.ethereum);
+        const { chainId } = await provider.getNetwork();
+        if (chainId != 5) {
+            hideMessage();
+            clearTimeout();
+            triggerError("Please switch to Goerli tesnet", undefined, () => window.location.href = "https://metamask.io/");
+            providerLoaded = false;
+            return false;
+        }
         signer = await provider.getSigner();
         if (!gambethStateAbi) throw "ABI not loaded";
         stateContract = new ethers.Contract(stateContractAddress, gambethStateAbi, provider);
-        ['chainChanged', 'accountsChanged'].forEach(e => window.ethereum.on(e, () => {
-            loadProvider();
-        }));
         if (stateContract) {
             owner = await signer.getAddress();
             stateContract.on("CreatedBet", async hashedBetId => {
@@ -430,7 +435,9 @@ async function searchBet(betId = activeBet) {
         return;
     }
     try {
-        await loadProvider({betId});
+        if (!(await loadProvider({betId}))) {
+            return
+        };
         placedBets = {};
         newBet.style.display = "none";
         await resetButtons();
@@ -594,7 +601,7 @@ async function buyBet() {
 
 const betOrders = {};
 const fetchOrders = async (refresh) => {
-    if (!activeBet) {
+    if (!activeBet || !stateContract) {
         return;
     }
     betOrders[activeBet] = refresh ? [] : (betOrders[activeBet] || []);
