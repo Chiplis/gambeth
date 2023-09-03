@@ -72,6 +72,7 @@ const queueBuyOrder = document.getElementById("queue-buy-order");
 const queueSellOrder = document.getElementById("queue-sell-order");
 
 const placeBetDataContainer = document.getElementById("place-bet-amount-container");
+const placeBetChoiceContainer = document.getElementById("place-bet-choice-container");
 const placeBetPositionContainer = document.getElementById("place-bet-position-container");
 
 const createBetInitialPool = document.getElementById("create-bet-initial-pool");
@@ -417,6 +418,7 @@ async function renderPlaceBet() {
     placeBetInputs.style.visibility = lockedPool ? "hidden" : "visible";
 
     placeBetDataContainer.style.display = scheduleReached ? "none" : "block";
+    placeBetChoiceContainer.style.display = scheduleReached ? "none" : "flex";
     placeBetPositionContainer.style.display = scheduleReached ? "none" : "flex";
     queueBuyOrder.style.display = scheduleReached ? "none" : "block";
 
