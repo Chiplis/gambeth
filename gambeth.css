@@ -157,12 +157,8 @@ span {
 }
 
 .success {
-    color: lightseagreen;
-}
-
-.success:hover {
-    color: white;
     background-color: lightseagreen;
+    color: white;
 }
 
 .styled-table {

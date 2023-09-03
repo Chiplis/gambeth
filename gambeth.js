@@ -56,15 +56,21 @@ const betEntries = document.getElementById("bet-entries");
 const betPool = document.getElementById("bet-pool");
 const userPool = document.getElementById("user-pool");
 const ordersPool = document.getElementById("orders-pool");
-const userOrders = document.getElementById("user-orders");
 const openOrders = document.getElementById("open-orders");
+
+const userBuyOrdersEntries = document.getElementById("user-buy-orders-entries");
+const userSellOrdersEntries = document.getElementById("user-sell-orders-entries");
+const poolBuyOrdersEntries = document.getElementById("pool-buy-orders-entries");
+const poolSellOrdersEntries = document.getElementById("pool-sell-orders-entries");
 
 const searchBetId = document.getElementById("search-bet");
 const poolName = document.getElementById("pool-name");
 const message = document.getElementById("message");
 const betContainer = document.getElementById("bet-container");
 const createBetChoicesList = document.getElementById("create-bet-choices-list");
-const placeSingleBet = document.getElementById("place-single-bet");
+const queueBuyOrder = document.getElementById("queue-buy-order");
+const queueSellOrder = document.getElementById("queue-sell-order");
+
 const placeBetAmountContainer = document.getElementById("place-bet-amount-container");
 const placeBetChoiceContainer = document.getElementById("place-bet-choice-container");
 
@@ -233,11 +239,11 @@ async function loadProvider({betId = activeBet, betType} = {}) {
             return false;
         }
         provider = new ethers.BrowserProvider(window.ethereum);
-        const { chainId } = await provider.getNetwork();
+        const {chainId} = await provider.getNetwork();
         if (chainId != 5) {
             hideMessage();
             clearTimeout();
-            triggerError("Please switch to Goerli tesnet", undefined, () => window.location.href = "https://metamask.io/");
+            triggerError("Please switch to Goerli tesnet", undefined);
             providerLoaded = false;
             return false;
         }
@@ -328,12 +334,12 @@ async function resetButtons() {
 
 function renderPlaceSingleBet() {
     const filledBet = (placeBetResult.value || chooseBetInputs.style.display !== "none") && placeBetAmount.value;
-    placeSingleBet.onclick = filledBet ? () => {
+    queueBuyOrder.onclick = filledBet ? () => {
         addSingleBet(placeBetResult.value || chooseBetInputs.value, placeBetAmount.value);
         renderPlaceSingleBet();
     } : "";
-    placeSingleBet.style.cursor = filledBet ? "pointer" : "default";
-    placeSingleBet.style.opacity = filledBet ? "1" : "0";
+    queueBuyOrder.style.cursor = filledBet ? "pointer" : "default";
+    queueBuyOrder.style.opacity = filledBet ? "1" : "0";
 }
 
 renderPlaceSingleBet();
@@ -414,7 +420,7 @@ async function renderPlaceBet() {
 
     placeBetAmountContainer.style.display = scheduleReached ? "none" : "block";
     placeBetChoiceContainer.style.display = scheduleReached ? "none" : "block";
-    placeSingleBet.style.display = scheduleReached ? "none" : "block";
+    queueBuyOrder.style.display = scheduleReached ? "none" : "block";
     sellBet.style.display = scheduleReached ? "none" : "block";
 
     if (betKind === "oo") {
@@ -436,8 +442,9 @@ async function searchBet(betId = activeBet) {
     }
     try {
         if (!(await loadProvider({betId}))) {
-            return
-        };
+            return;
+        }
+        fetchOrders(true);
         placedBets = {};
         newBet.style.display = "none";
         await resetButtons();
@@ -617,9 +624,28 @@ const fetchOrders = async (refresh) => {
         amount: o[4],
         user: o[5],
         idx
-    }));
+    })).filter(o => o.amount !== 0n);
+    console.log(newOrders);
     betOrders[activeBet].push(...newOrders);
-    console.log(betOrders[activeBet]);
+    await renderOrders();
+}
+
+async function renderOrders() {
+    console.log(betOrders);
+    const toRow = async ({orderType, result, amount, numerator, denominator}) => {
+        const shares = await tokenToNumber(amount);
+        return (`<tr></tr><td>${result}</td><td>${shares}</td><td>${(shares * numerator) / denominator}</td></tr>`)
+    };
+
+    const userBuys = betOrders[activeBet].filter(b => b.user === owner).filter(o => o.orderType === "BUY");
+    const userSells = betOrders[activeBet].filter(b => b.user === owner).filter(o => o.orderType === "SELL");
+    const poolBuys = betOrders[activeBet].filter(b => b.user !== owner).filter(o => o.orderType === "BUY");
+    const poolSells = betOrders[activeBet].filter(b => b.user !== owner).filter(o => o.orderType === "SELL");
+
+    userBuyOrdersEntries.innerHTML = `${(await Promise.all(userBuys.map(toRow))).join("")}`;
+    userSellOrdersEntries.innerHTML = `${(await Promise.all(userSells.map(toRow))).join("")}`;
+    poolBuyOrdersEntries.innerHTML = `${(await Promise.all(poolBuys.map(toRow))).join("")}`;
+    poolSellOrdersEntries.innerHTML = `${(await Promise.all(poolSells.map(toRow))).join("")}`;
 }
 
 setInterval(fetchOrders, 1000);
@@ -642,15 +668,20 @@ async function fillOrder(orderType) {
     triggerProcessing("Placing order" + (results.length > 1 ? "s" : ""));
     const finalAmounts = amounts.map(a => a.toString());
     const [numerator, denominator] = [1n, 1n];
-    const orders = [];
+    const orders = betOrders[activeBet];
     const orderIndexes = orders
         .filter(o => o.amount)
         .filter(o => o.orderType !== orderType)
         .filter(o => orderType === "SELL" ? (o.numerator * denominator >= numerator * o.denominator) : (o.numerator * denominator <= numerator * o.denominator))
         .map(o => o.idx);
-    await activeContract.fillOrder(finalAmounts, finalAmounts.map(() => 1), finalAmounts.map(() => 1), [orderType === "BUY" ? 0n : 1n], activeBet, results, [orderIndexes]);
+    const filledOrder = await activeContract.fillOrder(finalAmounts, finalAmounts.map(() => 1), finalAmounts.map(() => 1), [orderType === "BUY" ? 0n : 1n], activeBet, results, [orderIndexes]);
+    await filledOrder.wait();
+    if (!message.classList.contains("error")) {
+        hideMessage();
+    }
     placedBets = {};
-    await renderPlacedBets();
+    fetchOrders(true);
+    renderPlacedBets();
 }
 
 async function addFreeBet() {
@@ -659,7 +690,7 @@ async function addFreeBet() {
             addSingleBet(placeBetResult.value, placeBetAmount.value);
         }
         await placeContractBet();
-        placeSingleBet.style.opacity = 0;
+        queueBuyOrder.style.opacity = 0;
         placeBetInfo.style.display = "none";
         placeBetEntries.innerHTML = "";
     } catch (error) {
@@ -777,17 +808,6 @@ async function renderBetPool() {
             betChart.destroy();
         }
         betChart = new Chart(betPool, config);
-
-        const allEntries = Object.entries(betResults);
-
-        allEntries.sort((a, b) => resultsPool[b[0]] < resultsPool[a[0]] ? -1 : 1);
-        const entries = allEntries
-            .map(([k, v]) => `<tr style="background-color: #fd9243"><td>${k}</td><td>${(resultsPool[k])}</td></tr>`)
-            .join("");
-
-        // poolName.innerHTML = activeBet + " Pool";
-        // betEntries.innerHTML = entries;
-
         betPool.style.visibility = "visible";
         betPool.style.opacity = "100%";
     } catch (error) {
