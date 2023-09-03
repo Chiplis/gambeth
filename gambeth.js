@@ -71,9 +71,7 @@ const createBetChoicesList = document.getElementById("create-bet-choices-list");
 const queueBuyOrder = document.getElementById("queue-buy-order");
 const queueSellOrder = document.getElementById("queue-sell-order");
 
-const placeBetAmountContainer = document.getElementById("place-bet-amount-container");
-const placeBetChoiceContainer = document.getElementById("place-bet-choice-container");
-const placeBetPositionContainer = document.getElementById("place-bet-position-container");
+const placeBetDataContainer = document.getElementById("place-bet-amount-container");
 
 const createBetInitialPool = document.getElementById("create-bet-initial-pool");
 const createBetCommission = document.getElementById("create-bet-commission");
@@ -417,9 +415,7 @@ async function renderPlaceBet() {
     placeBetInputs.style.opacity = lockedPool ? 0 : "100%";
     placeBetInputs.style.visibility = lockedPool ? "hidden" : "visible";
 
-    placeBetAmountContainer.style.display = scheduleReached ? "none" : "block";
-    placeBetChoiceContainer.style.display = scheduleReached ? "none" : "flex";
-    placeBetPositionContainer.style.display = scheduleReached ? "none" : "flex";
+    placeBetDataContainer.style.display = scheduleReached ? "none" : "block";
     queueBuyOrder.style.display = scheduleReached ? "none" : "block";
 
     if (betKind === "oo") {
