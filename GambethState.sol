@@ -1,13 +1,120 @@
 pragma solidity 0.8.20;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "https://github.com/UMAprotocol/protocol/blob/master/packages/core/contracts/optimistic-oracle-v2/implementation/OptimisticOracleV2.sol";
 import "https://github.com/UMAprotocol/protocol/blob/master/packages/core/contracts/optimistic-oracle-v2/interfaces/OptimisticOracleV2Interface.sol";
 
-contract GambethState {
+
+contract GambethOptimisticOracle is OptimisticRequester {
+
+    address public contractOwner;
+
+    address public constant OO_ADDRESS = 0xA5B9d8a0B0Fa04Ba71BDD68069661ED5C0848884;
+    OptimisticOracleV2Interface public oo = OptimisticOracleV2Interface(OO_ADDRESS);
+    bytes32 public PRICE_ID = bytes32("NUMERICAL");
+
+    mapping(string => uint256) public betRequestTimes;
+    mapping(string => bool) public finishedBets;
+    mapping(string => uint256) public betChoices;
+    mapping(bytes32 => mapping(uint256 => mapping(bytes => string))) public requestBets;
+    mapping(string => int256) public betProposals;
+    mapping(string => mapping(bytes32 => bool)) public betQueries;
+    mapping(string => address) public betRequester;
+
+    event CreatedOptimisticBet(string indexed betId, string query);
+
+    function createOptimisticBet(address currency, string calldata betId, uint64 deadline, uint64 schedule, uint256 commissionDenominator, uint256 commission, uint256 initialPool, string[] calldata results, string calldata query) public {
+        require(
+            bytes(betId).length != 0
+            && deadline > block.timestamp // Bet can't be set in the past
+            && deadline <= schedule // Users should only be able to place bets before it is actually executed
+            && !createdBets[betId], // Can't have duplicate bets
+            "Unable to create bet, check arguments."
+        );
+        betQueries[betId][keccak256(bytes(query))] = true;
+        createBet(BetKind.OPTIMISTIC_ORACLE, msg.sender, currency, betId, commissionDenominator, commission, deadline, schedule, initialPool, query, results);
+        emit CreatedOptimisticBet(betId, query);
+    }
+
+    function claimBet(string calldata betId, string calldata query) public {
+        require(betQueries[betId][keccak256(bytes(query))], "Invalid query for bet");
+        bool hasPrice = oo.hasPrice(address(this), PRICE_ID, betRequestTimes[betId], bytes(query));
+        bool betExpired = betSchedules[betId] + BET_THRESHOLD < block.timestamp;
+
+        if (!hasPrice) {
+            require(betExpired, "Bet result not yet settled");
+        }
+
+        _claimBet(betId, msg.sender, getResult(betId));
+    }
+
+    // Submit a data request to the Optimistic oracle.
+    function requestBetResolution(string calldata betId, string calldata query) public {
+        require(betQueries[betId][keccak256(bytes(query))], "Invalid query for bet");
+        require(betSchedules[betId] <= block.timestamp, "Bet still not scheduled to run");
+        betRequestTimes[betId] = block.timestamp; // Set the request time to the current block time.
+        IERC20 bondCurrency = betTokens[betId];
+        uint256 reward = 0; // Set the reward to 0 (so we dont have to fund it from this contract).
+
+        // Now, make the price request to the Optimistic oracle and set the liveness to 30 so it will settle quickly.
+        oo.requestPrice(PRICE_ID, betRequestTimes[betId], bytes(query), bondCurrency, reward);
+        oo.setBond(PRICE_ID, betRequestTimes[betId], bytes(query), 1750 * 1e6);
+        // oo.setEventBased(PRICE_ID, betRequestTimes[betId], bytes(query));
+        oo.setCustomLiveness(PRICE_ID, betRequestTimes[betId], bytes(query), 1);
+        oo.setCallbacks(PRICE_ID, betRequestTimes[betId], bytes(query), false, false, true);
+        requestBets[PRICE_ID][betRequestTimes[betId]][bytes(query)] = betId;
+        betRequester[betId] = msg.sender;
+    }
+
+    function getResult(string memory betId) public view returns (string memory) {
+        if (!finishedBets[betId]) {
+            return "";
+        }
+        return betResults[betId][betChoices[betId]];
+    }
+
+    function priceSettled(bytes32 identifier, uint256 timestamp, bytes calldata query, int256 price) public {
+        string memory betId = requestBets[identifier][timestamp][query];
+        betChoices[betId] = uint(price) / 1e18;
+        finishedBets[betId] = true;
+        _claimBet(betId, betRequester[betId], getResult(betId));
+    }
+
+    function changeOrder(uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, string calldata betId, string[] calldata results, uint256[] calldata ids) public {
+        changeOrder(msg.sender, orderAmounts, numerators, denominators, betId, results, ids);
+    }
+
+    function fillOrder(uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, OrderType[] calldata orderTypes, string calldata betId, string[] calldata results, uint[][] calldata idxs) public {
+        fillOrder(msg.sender, orderAmounts, numerators, denominators, orderTypes, betId, results, idxs);
+    }
+
+    function priceProposed(bytes32 identifier, uint256 timestamp, bytes calldata query) public {
+    }
+
+    function priceDisputed(bytes32 identifier, uint256 timestamp, bytes calldata data, uint256 refund) public {
+    }
+
+    modifier validateClaimedBet(string calldata betId) {
+        require(createdBets[betId], "Invalid bet state while claiming reward.");
+        _;
+    }
+
+    function approveToken(address token) ownerOnly public {
+        IERC20(token).approve(OO_ADDRESS, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+    }
+
+    modifier ownerOnly() {
+        require(msg.sender == contractOwner);
+        _;
+    }
+
+    function placeBets(string calldata betId, string[] calldata results, uint256[] calldata amounts) virtual public {
+        _placeBets(betId, msg.sender, results, amounts);
+    }
 
     constructor() {
         contractCreator = msg.sender;
         approvedTokens[0x07865c6E87B9F70255377e024ace6630C1Eaa37F] = true;
-        approvedContracts[0xD0EFfaCdDf13c58349968575Aa3AAcCc7A1c035c] = true;
         tokenDecimals[0x07865c6E87B9F70255377e024ace6630C1Eaa37F] = 1e6;
     }
 
@@ -18,7 +125,6 @@ contract GambethState {
 
     mapping(string => BetKind) public betKinds;
     address contractCreator;
-    mapping(address => bool) public approvedContracts;
     mapping(address => uint256) public tokenDecimals;
     // For each bet, track which users have already claimed their potential reward
     mapping(string => mapping(address => bool)) public claimedBets;
@@ -73,31 +179,19 @@ contract GambethState {
 
     // For each bet, track how much each user has put into each result
     mapping(string => mapping(address => mapping(string => uint256))) public userBets;
+    mapping(string => mapping(address => mapping(string => uint256))) public userTransfers;
+
+    mapping(string => string[]) public betResults;
 
     // The table representing each bet's pool is populated according to these events.
     event PlacedBets(address indexed user, string indexed _id, string id, string[] results);
-
-    modifier ownerOnly() {
-        require(msg.sender == contractCreator);
-        _;
-    }
-
-    modifier approvedContractOnly {
-        require(approvedContracts[msg.sender], "Contract not approved to call function");
-        _;
-    }
-
-    function manageContract(address c, bool approved) public ownerOnly {
-        approvedContracts[c] = approved;
-    }
 
     function manageToken(address token, uint256 decimals, bool approved) ownerOnly public {
         approvedTokens[token] = approved;
         tokenDecimals[token] = decimals;
     }
 
-    function createBet(BetKind kind, address sender, address token, string calldata betId, uint256 commissionDenominator, uint256 commission, uint64 deadline, uint64 schedule, uint256 initialPool, string calldata query)
-    approvedContractOnly public {
+    function createBet(BetKind kind, address sender, address token, string calldata betId, uint256 commissionDenominator, uint256 commission, uint64 deadline, uint64 schedule, uint256 initialPool, string calldata query, string[] calldata results) public {
         require(approvedTokens[token] && !createdBets[betId], "Unapproved token for creating bets");
         require(commissionDenominator > 0, "Invalid commission denominator");
         bool success = IERC20(token).transferFrom(sender, address(this), initialPool);
@@ -111,11 +205,16 @@ contract GambethState {
         betCommissionDenominator[betId] = commissionDenominator;
         betDeadlines[betId] = deadline;
         betSchedules[betId] = schedule;
+        betResults[betId] = results;
 
         /* By adding the initial pool to the bet creator's, but not associating it with any results,
         we allow the creator to incentivize people to participate. */
         userPools[betId][sender] += initialPool;
         betPools[betId] = initialPool;
+
+        for (uint i = 0; i < results.length; i++) {
+            resultPools[betId][results[i]] += initialPool / results.length;
+        }
 
         // Bet creation should succeed from this point onward
         createdBets[betId] = true;
@@ -123,8 +222,32 @@ contract GambethState {
         emit CreatedBet(betId, initialPool, query);
     }
 
-    function placeBets(string calldata betId, address sender, string[] memory results, uint256[] memory amounts)
-    approvedContractOnly public {
+    function sqrt(uint y) internal pure returns (uint z) {
+        if (y > 3) {
+            z = y;
+            uint x = y / 2 + 1;
+            while (x < z) {
+                z = x;
+                x = (y / x + x) / 2;
+            }
+        } else if (y != 0) {
+            z = 1;
+        }
+    }
+
+    function calculateCost(string memory betId) public view returns (uint256) {
+        uint cost = 0;
+        for (uint i = 0; i < betResults[betId].length; i++) {
+            cost += resultPools[betId][betResults[betId][i]] ** 2;
+        }
+        return sqrt(cost);
+    }
+
+    function calculatePrice(string calldata betId, string calldata result) public view returns (uint256 nominator, uint256 denominator) {
+        return (resultPools[betId][result], calculateCost(betId));
+    }
+
+    function _placeBets(string calldata betId, address sender, string[] memory results, uint256[] memory amounts) private {
         require(
             results.length > 0
             && results.length == amounts.length
@@ -133,11 +256,12 @@ contract GambethState {
             "Unable to place bets, check arguments."
         );
 
+
+        uint total = 0;
         IERC20 token = betTokens[betId];
-        uint256 total = 0;
         for (uint i = 0; i < results.length; i++) {
+            uint previousCost = calculateCost(betId);
             // By not allowing anyone to bet on an empty string bets can be refunded if an error happens.
-            total += amounts[i];
             require(bytes(results[i]).length > 0 && amounts[i] > 0,
                 "Attempted to place invalid bet, check amounts and results"
             );
@@ -147,6 +271,9 @@ contract GambethState {
             userPools[betId][sender] += amounts[i];
             betPools[betId] += amounts[i];
             userBets[betId][sender][results[i]] += amounts[i];
+            uint transfer = calculateCost(betId) - previousCost;
+            userTransfers[betId][sender][results[i]] += transfer;
+            total += transfer;
         }
 
         bool success = token.transferFrom(sender, address(this), total);
@@ -156,8 +283,7 @@ contract GambethState {
         emit PlacedBets(sender, betId, betId, results);
     }
 
-    function claimBet(string calldata betId, address sender, string memory result)
-    approvedContractOnly public {
+    function _claimBet(string memory betId, address sender, string memory result) private {
         // Does the user have any pending buys?
         uint256 pending = pendingBuys[betId][sender];
         if (pending != 0) {
@@ -176,22 +302,16 @@ contract GambethState {
 
         claimedBets[betId][sender] = true;
 
-        uint256 reward = 0;
-        if (userBet == 0) {
-            emit UnwonBet(sender);
+        uint256 reward = (calculateCost(betId) * userBet) / winnerPool;
+        if (reward == 0) {
+            emit LostBet(sender);
         } else {
-            // User won the bet and receives their corresponding share of the loser's pool
-            uint256 loserPool = betPools[betId] - winnerPool;
-            // User gets their corresponding fraction of the loser's pool, along with their original bet
-            reward = loserPool / (winnerPool / userBet);
-            emit WonBet(sender, reward + userBet);
+            emit WonBet(sender, reward);
         }
 
         // Bet owner gets their commission
         uint256 ownerFee = (reward / betCommissionDenominator[betId]) * betCommissions[betId];
         reward -= ownerFee;
-        // Guarantee owner's take never makes the winner lose money
-        reward += userBet;
         IERC20 token = betTokens[betId];
         bool success = token.transfer(sender, reward);
         require(success, "Failed to transfer reward to user.");
@@ -217,7 +337,7 @@ contract GambethState {
             amounts[0] = order.amount;
             string[] memory results = new string[](1);
             results[0] = order.result;
-            placeBets(betId, sender, results, amounts);
+            _placeBets(betId, sender, results, amounts);
             return;
         }
 
@@ -232,7 +352,7 @@ contract GambethState {
         orders[betId].push(order);
     }
 
-    function changeOrder(address sender, uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, string calldata betId, string[] calldata results, uint256[] calldata ids) approvedContractOnly public {
+    function changeOrder(address sender, uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, string calldata betId, string[] calldata results, uint256[] calldata ids) public {
         require(ids.length == orderAmounts.length && ids.length == numerators.length && ids.length == denominators.length && ids.length == results.length, "Invalid change order");
         for (uint i = 0; i < ids.length; i++) {
             Order storage order = orders[betId][i];
@@ -278,7 +398,7 @@ contract GambethState {
         return list;
     }
 
-    function fillOrder(address sender, uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, OrderType[] calldata orderTypes, string calldata betId, string[] calldata results, uint[][] calldata idxs) approvedContractOnly public {
+    function fillOrder(address sender, uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, OrderType[] calldata orderTypes, string calldata betId, string[] calldata results, uint[][] calldata idxs) public {
 
         for (uint r = 0; r < results.length; r++) {
             string calldata result = results[r];
@@ -309,13 +429,17 @@ contract GambethState {
                 address seller = orderType == OrderType.BUY ? matchedOrder.user : sender;
                 address buyer = orderType == OrderType.BUY ? sender : matchedOrder.user;
 
+                uint transferAmount = (shareAmount * numerator) / denominator;
+
                 userPools[betId][buyer] += shareAmount;
                 userBets[betId][buyer][result] += shareAmount;
 
                 userPools[betId][seller] -= shareAmount;
                 userBets[betId][seller][result] -= shareAmount;
 
-                uint transferAmount = (shareAmount * numerator) / denominator;
+                uint sellerTransfer = userTransfers[betId][seller][result];
+                userTransfers[betId][seller][result] -= transferAmount > sellerTransfer ? sellerTransfer : transferAmount;
+                userTransfers[betId][buyer][result] += transferAmount;
 
                 if (orderType == OrderType.BUY) {
                     require(pendingSells[betId][seller][result] >= shareAmount, "Seller does not have enough shares to complete buy order");

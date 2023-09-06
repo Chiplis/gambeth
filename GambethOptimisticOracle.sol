@@ -7,7 +7,7 @@ import "./GambethState.sol";
 contract GambethOptimisticOracle is OptimisticRequester {
 
     address public contractOwner;
-    GambethState public state = GambethState(address(0x0147305f99EA30EC67b498c65Ff4A9af7181C30b));
+    GambethState public state = GambethState(address(0x8CCe38280d00CF2b82Fe6023eA438973050fAbEc));
 
     address public constant OO_ADDRESS = 0xA5B9d8a0B0Fa04Ba71BDD68069661ED5C0848884;
     OptimisticOracleV2Interface public oo = OptimisticOracleV2Interface(OO_ADDRESS);
@@ -15,8 +15,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
     mapping(string => uint256) public betRequestTimes;
     mapping(string => bool) public finishedBets;
-    mapping(string => mapping(uint => string)) public betChoices;
-    mapping(string => uint256) public betResults;
+    mapping(string => uint256) public betChoices;
     mapping(bytes32 => mapping(uint256 => mapping(bytes => string))) public requestBets;
     mapping(string => int256) public betProposals;
     mapping(string => mapping(bytes32 => bool)) public betQueries;
@@ -32,11 +31,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
             && !state.createdBets(betId), // Can't have duplicate bets
             "Unable to create bet, check arguments."
         );
-        for (uint i = 0; i < results.length; i++) {
-            betChoices[betId][i] = results[i];
-        }
         betQueries[betId][keccak256(bytes(query))] = true;
-        state.createBet(GambethState.BetKind.OPTIMISTIC_ORACLE, msg.sender, currency, betId, commissionDenominator, commission, deadline, schedule, initialPool, query);
+        state.createBet(GambethState.BetKind.OPTIMISTIC_ORACLE, msg.sender, currency, betId, commissionDenominator, commission, deadline, schedule, initialPool, query, results);
         emit CreatedOptimisticBet(betId, query);
     }
 
@@ -62,8 +58,9 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
         // Now, make the price request to the Optimistic oracle and set the liveness to 30 so it will settle quickly.
         oo.requestPrice(PRICE_ID, betRequestTimes[betId], bytes(query), bondCurrency, reward);
-        oo.setEventBased(PRICE_ID, betRequestTimes[betId], bytes(query));
-        oo.setCustomLiveness(PRICE_ID, betRequestTimes[betId], bytes(query), 30);
+        oo.setBond(PRICE_ID, betRequestTimes[betId], bytes(query), 1750 * 1e6);
+        // oo.setEventBased(PRICE_ID, betRequestTimes[betId], bytes(query));
+        oo.setCustomLiveness(PRICE_ID, betRequestTimes[betId], bytes(query), 1);
         oo.setCallbacks(PRICE_ID, betRequestTimes[betId], bytes(query), false, false, true);
         requestBets[PRICE_ID][betRequestTimes[betId]][bytes(query)] = betId;
         betRequester[betId] = msg.sender;
@@ -73,12 +70,12 @@ contract GambethOptimisticOracle is OptimisticRequester {
         if (!finishedBets[betId]) {
             return "";
         }
-        return betChoices[betId][betResults[betId]];
+        return state.betResults(betId, betChoices[betId]);
     }
 
     function priceSettled(bytes32 identifier, uint256 timestamp, bytes calldata query, int256 price) public {
         string memory betId = requestBets[identifier][timestamp][query];
-        betResults[betId] = uint(price) / 1e18;
+        betChoices[betId] = uint(price) / 1e18;
         finishedBets[betId] = true;
         state.claimBet(betId, betRequester[betId], getResult(betId));
     }
