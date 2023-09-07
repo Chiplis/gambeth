@@ -1252,34 +1252,6 @@ window.optimisticOracleAbi = [
     {
         "inputs": [
             {
-                "internalType": "bytes32",
-                "name": "identifier",
-                "type": "bytes32"
-            },
-            {
-                "internalType": "uint256",
-                "name": "timestamp",
-                "type": "uint256"
-            },
-            {
-                "internalType": "string",
-                "name": "query",
-                "type": "string"
-            },
-            {
-                "internalType": "int256",
-                "name": "price",
-                "type": "int256"
-            }
-        ],
-        "name": "priceSettledString",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
                 "internalType": "string",
                 "name": "betId",
                 "type": "string"
@@ -1338,6 +1310,30 @@ window.optimisticOracleAbi = [
             }
         ],
         "name": "resultPools",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "name": "resultTransfers",
         "outputs": [
             {
                 "internalType": "uint256",

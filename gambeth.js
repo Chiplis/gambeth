@@ -213,7 +213,7 @@ function triggerProcessing(msg, after = defaultMessageLocation) {
     processing = setInterval(() => (innerMessage.innerHTML = msg + ".".repeat(i++ % 4)), 300);
 }
 
-const ooContractAddress = "0x2555E2e65B6eD42616662B0D6cb4AaCe218BaD73";
+const ooContractAddress = "0x7E4EC0DB739546922C6C5AcEBC78a2e5B27Db93e";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
@@ -514,7 +514,13 @@ async function searchBet(betId = activeBet) {
         let outcome = await activeContract.getResult(activeBet);
         let symbol = await usdc.symbol();
         betInnerInitialPool.innerHTML = (await tokenToNumber(initialPool)).toString() + " " + symbol;
-        betInnerTotalPool.innerHTML = (await tokenToNumber((await activeContract.calculateCost(activeBet)))).toString() + " " + symbol;
+        const totalPool = async () => {
+            const outcomes = await activeBetChoices();
+            const pools = await Promise.all(outcomes.map(o => activeContract.resultTransfers(activeBet, o)));
+            console.log(pools);
+            return pools.reduce((a, b) => a + b, 0n);
+        }
+        betInnerTotalPool.innerHTML = (await tokenToNumber(await totalPool())).toString() + " " + symbol;
         const innerCommission = Number(await activeContract.betCommissions(activeBet)) / Number(await activeContract.betCommissionDenominator(activeBet));
         betInnerCommission.innerHTML = Number.parseFloat(innerCommission) + "%";
         betInnerOutcome.innerHTML = outcome || "Unresolved";
@@ -829,10 +835,10 @@ async function renderBetPool() {
         marketPrices.innerHTML = ``;
         if (contractPrices) {
             const betChoices = await activeBetChoices();
-            const payoff = async outcome => Number(await activeContract.calculateCost(activeBet)) / Number(await activeContract.resultPools(activeBet, outcome));
+            const payoff = async outcome => (Number(await activeContract.calculateCost(activeBet)) / Number(await activeContract.resultPools(activeBet, outcome)));
             console.log("Payoff", await payoff("A"));
             const prices = (await Promise.all((await Promise.all(betChoices.map(a => calculatePrice(a))))
-                .map(async (p, i) => `<tr><td>${betChoices[i]}</td><td>${Math.round(p * 100) / 100}</td><td>${(Math.pow(p, 2) * 100).toFixed(2)}%</td><td>${(await payoff(betChoices[i])).toFixed(2)}x</td></tr>`)))
+                .map(async (p, i) => `<tr><td>${betChoices[i]}</td><td>${Math.round(p * 100) / 100}</td><td>${(Math.pow(p, 2) * 100).toFixed(2)}%</td><td>${(((await payoff(betChoices[i]))) / (Math.round(p * 100) / 100)).toFixed(2)}x</td></tr>`)))
                 .join("");
             marketPrices.innerHTML = prices;
         }
