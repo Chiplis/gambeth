@@ -521,7 +521,7 @@ async function searchBet(betId = activeBet) {
             return pools.reduce((a, b) => a + b, 0n);
         }
         betInnerTotalPool.innerHTML = (await tokenToNumber(await totalPool())).toString() + " " + symbol;
-        const innerCommission = Number(await activeContract.betCommissions(activeBet)) / Number(await activeContract.betCommissionDenominator(activeBet));
+        const innerCommission = Number(await activeContract.betCommissions(activeBet)) / Number(await activeContract.betCommissionDenominator(activeBet)) * 100;
         betInnerCommission.innerHTML = Number.parseFloat(innerCommission) + "%";
         betInnerOutcome.innerHTML = outcome || "Unresolved";
         Promise.all([renderPlaceBet(), renderClaimBet(), renderBetPool()]).then(() => {
