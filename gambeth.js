@@ -841,11 +841,12 @@ async function renderBetPool() {
             const calcPrices = await Promise.all(betChoices.map(calculatePrice));
             const prices = calcPrices.map(async (p, i) => {
                 const outcome = betChoices[i];
-                const mktPrice = Math.round(p * 100) / 100;
+                console.log(p);
+                const mktPrice = Math.round(p * 1000) / 1000;
                 const odds = (Math.pow(p, 2) * 100).toFixed(2);
-                const pay = (await payout(betChoices[i])).toFixed(2);
+                const pay = (await payout(betChoices[i])).toFixed(3);
                 const owned = await activeContract.userBets(activeBet, owner, outcome).then(tokenToNumber).then(Math.round);
-                const avgPrice = await activeContract.userTransfers(activeBet, owner, outcome).then(tokenToNumber).then(a => Math.round(Number(a) / owned * 100) / 100);
+                const avgPrice = await activeContract.userTransfers(activeBet, owner, outcome).then(tokenToNumber).then(a => Math.round(Number(a) / owned * 1000) / 1000);
                 return `<tr><td>${outcome}</td><td>${owned || "-"}</td><td>${odds}%</td><td>$${mktPrice}</td><td>${Number.isNaN(avgPrice) ? "-" : ("$" + avgPrice)}</td><td>$${pay}</td></tr>`
             });
             marketPrices.innerHTML = (await Promise.all(prices)).join("");
