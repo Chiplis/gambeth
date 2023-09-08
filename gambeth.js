@@ -455,8 +455,17 @@ async function calculateCost(newBets) {
     }
     const outcomes = await activeBetChoices();
     const pools = await Promise.all(outcomes.map(o => activeContract.resultPools(activeBet, o).then(tokenToNumber).then(Number)));
-    const newCost = Math.sqrt(outcomes.map((o, i) => Math.pow((newBets[o] || 0) + pools[i], 2)).reduce((a, b) => a + b, 0));
-    return newCost - await activeContract.calculateCost(activeBet).then(tokenToNumber).then(Number);
+    console.log(pools);
+    console.log(newBets);
+    outcomes.forEach((outcome, i) => newBets[outcome] = (newBets[outcome] || 0) + pools[i]);
+    console.log(newBets);
+    console.log(Object.values(newBets));
+    const newCost = Math.sqrt(Object.values(newBets).map(v => Math.pow(v, 2)).reduce((a, b) => a + b));
+    const payouts = outcomes.map((o, i) => ({[o]: newCost / newBets[o]}));
+    return {
+        payout: Object.assign({}, ...payouts),
+        cost: newCost - await activeContract.calculateCost(activeBet).then(tokenToNumber).then(Number)
+    };
 }
 
 async function calculatePrice(result) {
@@ -610,11 +619,12 @@ async function createBet() {
 async function renderPlacedBets() {
     console.log(placedBets);
     placeBetInfo.style.display = placedBets.length ? "block" : "none";
-    placeBetEntries.innerHTML = placedBets.map((order, i) => `<tr><td onclick="placedBets.splice(${i}, 1); renderPlacedBets()">✖</td><td>${order.orderType}</td><td>${order.outcome}</td><td>${order.amount}</td><td></td></tr>`).join("");
     const newBets = {};
     placedBets.filter(p => p.orderType === "BUY").forEach(b => newBets[b.outcome] = (newBets[b.outcome] || 0) + Number(b.amount));
-    const totalCost = await calculateCost(newBets);
-    placeBetEntries.innerHTML += totalCost ? `<tr><td></td><td></td><td></td><td><td>${totalCost.toFixed(2)}</td></tr>` : "";
+    const totalCost = (await calculateCost(newBets));
+    placeBetEntries.innerHTML = placedBets.map((order, i) => `<tr><td onclick="placedBets.splice(${i}, 1); renderPlacedBets()">✖</td><td>${order.orderType}</td><td>${order.outcome}</td><td>${order.amount}</td><td>$${totalCost.payout[order.outcome].toFixed(3)}</td><td></td></tr>`).join("");
+    console.log(totalCost);
+    placeBetEntries.innerHTML += totalCost ? `<tr><td></td><td></td><td></td><td><td></td><td>${totalCost.cost.toFixed(3)}</td></tr>` : "";
 }
 
 async function addSingleBet(order) {
