@@ -215,13 +215,16 @@ const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
 
-window.ethereum.request({
-    method: "wallet_switchEthereumChain",
-    params: [{chainId: "0x5"}]
-});
-['chainChanged', 'accountsChanged'].forEach(e => window.ethereum.on(e, () => {
-    loadProvider();
-}));
+(() => {
+    let eth = (window.ethereum || {request: () => null, on: () => null});
+    eth.request({
+        method: "wallet_switchEthereumChain",
+        params: [{chainId: "0x5"}]
+    });
+    ['chainChanged', 'accountsChanged'].forEach(e => eth.on(e, () => {
+        loadProvider();
+    }));
+})()
 
 
 async function loadProvider({betId = activeBet, betType} = {}) {
@@ -703,7 +706,7 @@ async function fillOrder() {
         .filter(o => o.orderType !== orderType)
         .filter(o => orderType === "SELL" ? (o.numerator * denominator >= numerator * o.denominator) : (o.numerator * denominator <= numerator * o.denominator))
         .map(o => o.idx));
-    
+
     const filledOrder = await activeContract.fillOrder(finalAmounts, finalAmounts.map(() => 1), finalAmounts.map(() => 1), placedBets.map(o => o.orderType === "BUY" ? 0n : 1n), activeBet, outcomes.map(o => o.outcome), orderIndexes);
     await filledOrder.wait();
     hideMessage();
