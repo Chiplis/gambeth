@@ -158,7 +158,6 @@ searchBetId.onkeydown = searchTriggered;
 let activeBet = null;
 let placedBets = [];
 let newBetId = null;
-let processing = null;
 
 function searchTriggered(e) {
     if (e.keyCode === 13) {
@@ -171,13 +170,11 @@ let providerLoaded = false;
 
 
 function hideMessage() {
-    clearInterval(processing);
     message.style.opacity = "0";
     message.style.visibility = "hidden";
 }
 
 function triggerMessage(msg, add, remove, after = defaultMessageLocation, click, showClose = true) {
-    clearInterval(processing);
     message.style.visibility = "visible";
     after.append(message);
     message.onmouseover = undefined;
@@ -210,7 +207,7 @@ function triggerSuccess(msg, callback, after = defaultMessageLocation, delay = 0
 function triggerProcessing(msg, after = defaultMessageLocation) {
     triggerMessage(msg, "info", ["error", "success"], after, null, false);
     let i = 0;
-    processing = setInterval(() => (innerMessage.innerHTML = msg + ".".repeat(i++ % 4)), 300);
+    innerMessage.innerHTML = msg + "<div style='transform: scale(0.5)' class='lds-dual-ring'></div>";
 }
 
 const ooContractAddress = "0x88277396b908bc907dD6C2b2582898491d3FD13B";
@@ -441,11 +438,8 @@ async function calculateShares({outcome, cost}) {
     const pool = await activeContract.resultPools(activeBet, outcome);
     let restPools = await Promise.all(outcomes.filter(r => r !== outcome).map(r => activeContract.resultPools(activeBet, r)));
     restPools = restPools.map(a => a * a).reduce((a, b) => a + b, 0n);
-    console.log(restPools);
     const prices = (cost + currentCost) * (cost + currentCost);
-    console.log(prices - restPools);
     const shares = Math.sqrt(Number(prices - restPools)) - Number(pool);
-    console.log(shares);
     return shares;
 }
 
@@ -455,11 +449,7 @@ async function calculateCost(newBets) {
     }
     const outcomes = await activeBetChoices();
     const pools = await Promise.all(outcomes.map(o => activeContract.resultPools(activeBet, o).then(tokenToNumber).then(Number)));
-    console.log(pools);
-    console.log(newBets);
     outcomes.forEach((outcome, i) => newBets[outcome] = (newBets[outcome] || 0) + pools[i]);
-    console.log(newBets);
-    console.log(Object.values(newBets));
     const newCost = Math.sqrt(Object.values(newBets).map(v => Math.pow(v, 2)).reduce((a, b) => a + b));
     const payouts = outcomes.map((o, i) => ({[o]: newCost / newBets[o]}));
     return {
@@ -617,13 +607,11 @@ async function createBet() {
 }
 
 async function renderPlacedBets() {
-    console.log(placedBets);
     placeBetInfo.style.display = placedBets.length ? "block" : "none";
     const newBets = {};
     placedBets.filter(p => p.orderType === "BUY").forEach(b => newBets[b.outcome] = (newBets[b.outcome] || 0) + Number(b.amount));
     const totalCost = (await calculateCost(newBets));
     placeBetEntries.innerHTML = placedBets.map((order, i) => `<tr><td onclick="placedBets.splice(${i}, 1); renderPlacedBets()">✖</td><td>${order.orderType}</td><td>${order.outcome}</td><td>${order.amount}</td><td>$${totalCost.payout[order.outcome].toFixed(3)}</td><td></td></tr>`).join("");
-    console.log(totalCost);
     placeBetEntries.innerHTML += totalCost ? `<tr><td></td><td></td><td></td><td><td></td><td>${totalCost.cost.toFixed(3)}</td></tr>` : "";
 }
 
@@ -669,16 +657,13 @@ const fetchOrders = async (refresh) => {
         idx
     }));
     orderCounter += newOrders.length;
-    console.log(newOrders);
     betOrders[activeBet] = betOrders[activeBet].concat(newOrders.filter(o => o.amount !== 0n));
     await renderOrders();
 }
 
 async function renderOrders() {
-    console.log(betOrders);
     const toRow = async ({orderType, outcome, amount, numerator, denominator}) => {
         const shares = await tokenToNumber(amount);
-        console.log(shares);
         return (`<tr></tr><td>${outcome}</td><td>${shares}</td><td>${(shares * Number(numerator)) / Number(denominator)}</td></tr>`)
     };
 
@@ -696,8 +681,6 @@ setInterval(fetchOrders, 10000);
 
 async function fillOrder() {
     const outcomes = placedBets.filter(order => order.amount > 0n);
-    console.log(outcomes);
-
     const amounts = await Promise.all(outcomes.map(o => o.amount).map(a => numberToToken(a)));
     if (!outcomes.length || !amounts.length) {
         triggerError("No bets have been placed, make sure outcome and amount fields are not empty.")
@@ -720,9 +703,7 @@ async function fillOrder() {
         .filter(o => o.orderType !== orderType)
         .filter(o => orderType === "SELL" ? (o.numerator * denominator >= numerator * o.denominator) : (o.numerator * denominator <= numerator * o.denominator))
         .map(o => o.idx));
-    console.log(orderIndexes);
-    console.log(finalAmounts);
-
+    
     const filledOrder = await activeContract.fillOrder(finalAmounts, finalAmounts.map(() => 1), finalAmounts.map(() => 1), placedBets.map(o => o.orderType === "BUY" ? 0n : 1n), activeBet, outcomes.map(o => o.outcome), orderIndexes);
     await filledOrder.wait();
     hideMessage();
