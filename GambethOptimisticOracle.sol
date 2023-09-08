@@ -182,7 +182,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
     mapping(string => mapping(address => mapping(string => uint256))) public userBets;
 
     // Track token transfers
-    mapping(string => mapping(address => mapping(string => uint256))) public userTransfers;
+    mapping(string => mapping(address => mapping(string => int256))) public userTransfers;
     mapping(string => mapping(string => uint256)) public resultTransfers;
 
     mapping(string => string[]) public betResults;
@@ -277,7 +277,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             betPools[betId] += amounts[i];
             userBets[betId][sender][results[i]] += amounts[i];
             uint transfer = calculateCost(betId) - previousCost;
-            userTransfers[betId][sender][results[i]] += transfer;
+            userTransfers[betId][sender][results[i]] += int(transfer);
             resultTransfers[betId][results[i]] += transfer;
             total += transfer;
         }
@@ -311,7 +311,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
         uint256 reward = (calculateCost(betId) * userBet) / winnerPool;
 
         // Bet owner gets their commission
-        uint256 ownerFee = ((reward - userTransfers[betId][sender][result]) / betCommissionDenominator[betId]) * betCommissions[betId];
+        int256 totalTransfers = userTransfers[betId][sender][result];
+        uint256 ownerFee = ((reward - uint(totalTransfers <= 0 ? int(0) : totalTransfers)) / betCommissionDenominator[betId]) * betCommissions[betId];
         reward -= ownerFee;
         emit WonBet(sender, reward);
 
@@ -440,9 +441,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
                 userPools[betId][seller] -= shareAmount;
                 userBets[betId][seller][result] -= shareAmount;
 
-                uint sellerTransfer = userTransfers[betId][seller][result];
-                userTransfers[betId][seller][result] -= transferAmount > sellerTransfer ? sellerTransfer : transferAmount;
-                userTransfers[betId][buyer][result] += transferAmount;
+                userTransfers[betId][seller][result] -= int(transferAmount);
+                userTransfers[betId][buyer][result] += int(transferAmount);
 
                 if (orderType == OrderType.BUY) {
                     require(pendingSells[betId][seller][result] >= shareAmount, "Seller does not have enough shares to complete buy order");

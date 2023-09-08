@@ -71,7 +71,8 @@
                         <option value="json">JSON oracle query</option>
                         <option value="html">Process HTML data</option>
                     </select>
-                    <label style="display: none" for="create-bet-url">Determine bet outcome by choosing the website which
+                    <label style="display: none" for="create-bet-url">Determine bet outcome by choosing the website
+                        which
                         contains it</label>
                     <input style="display: none"
                            oninput="createBetQueryInner.innerHTML=parseBetQuery(createBetSchema.value, this.value, createBetPath.value)"
@@ -198,12 +199,14 @@
                                type="number" step="0.0001" placeholder="# of Shares"/>
                     </div>
                     <div style="display: flex; justify-content: space-around; width: 100%">
-                        <div id="place-bet-choice-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center">
+                        <div id="place-bet-choice-container"
+                             style="display: flex; flex-direction: column; justify-content: center; align-items: center">
                             <label for="choose-bet-inputs">Outcome</label>
                             <select id="choose-bet-inputs" style="color: white" onchange="renderPlaceSingleBet()">
                             </select>
                         </div>
-                        <div id="place-bet-position-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center">
+                        <div id="place-bet-position-container"
+                             style="display: flex; flex-direction: column; justify-content: center; align-items: center">
                             <label for="choose-bet-position">Position</label>
                             <select id="choose-bet-position" style="color: white" onchange="renderPlaceSingleBet()">
                                 <option value="buy">Buy</option>
@@ -221,71 +224,79 @@
                     <thead>
                     <tr>
                         <th>Outcome</th>
-                        <th>Price</th>
+                        <th>Owned</th>
                         <th>Odds</th>
+                        <th>Mkt. Price</th>
+                        <th>Avg. Price</th>
                         <th>Payoff</th>
                     </tr>
                     </thead>
                     <tbody id="market-prices"></tbody>
                 </table>
                 <canvas style="max-width: 33%; max-height: 100%" id="bet-pool"></canvas>
+            </div>
+            <div style="display: flex; justify-content: space-around; width: 100%">
                 <div id="user-orders">
                     <div style="display: flex; justify-content: center">Your orders</div>
-                    <table style="background-color: red" id="user-sell-orders">
-                        <thead>
-                        <tr>
-                            <th colspan="3" style="text-align: center;">Sells</th>
-                        </tr>
-                        <tr>
-                            <th>Outcome</th>
-                            <th>Amount</th>
-                            <th>Price</th>
-                        </tr>
-                        </thead>
-                        <tbody id="user-sell-orders-entries"></tbody>
-                    </table>
-                    <table style="background-color: green" id="user-buy-orders">
-                        <thead>
-                        <tr>
-                            <th colspan="3" style="text-align: center;">Buys</th>
-                        </tr>
-                        <tr>
-                            <th>Outcome</th>
-                            <th>Amount</th>
-                            <th>Price</th>
-                        </tr>
-                        </thead>
-                        <tbody id="user-buy-orders-entries"></tbody>
-                    </table>
+                    <div style="display: flex">
+                        <table style="background-color: red" id="user-sell-orders">
+                            <thead>
+                            <tr>
+                                <th colspan="3" style="text-align: center;">Sells</th>
+                            </tr>
+                            <tr>
+                                <th>Outcome</th>
+                                <th>Amount</th>
+                                <th>Price</th>
+                            </tr>
+                            </thead>
+                            <tbody id="user-sell-orders-entries"></tbody>
+                        </table>
+                        <table style="background-color: green" id="user-buy-orders">
+                            <thead>
+                            <tr>
+                                <th colspan="3" style="text-align: center;">Buys</th>
+                            </tr>
+                            <tr>
+                                <th>Outcome</th>
+                                <th>Amount</th>
+                                <th>Price</th>
+                            </tr>
+                            </thead>
+                            <tbody id="user-buy-orders-entries"></tbody>
+                        </table>
+                    </div>
                 </div>
                 <div>
                     <div style="display: flex; justify-content: center">Pool orders</div>
-                    <table style="background-color: red" id="pool-sell-orders">
-                        <thead>
-                        <tr>
-                            <th colspan="3" style="text-align: center;">Sells</th>
-                        </tr>
-                        <tr>
-                            <th>Outcome</th>
-                            <th>Amount</th>
-                            <th>Price</th>
-                        </tr>
-                        </thead>
-                        <tbody id="pool-sell-orders-entries"></tbody>
-                    </table>
-                    <table style="background-color: green" id="pool-buy-orders">
-                        <thead>
-                        <tr>
-                            <th colspan="3" style="text-align: center;">Buys</th>
-                        </tr>
-                        <tr>
-                            <th>Outcome</th>
-                            <th>Amount</th>
-                            <th>Price</th>
-                        </tr>
-                        </thead>
-                        <tbody id="pool-buy-orders-entries"></tbody>
-                    </table>
+                    <div style="display: flex">
+                        <table style="background-color: red" id="pool-sell-orders">
+                            <thead>
+                            <tr>
+                                <th colspan="3" style="text-align: center;">Sells</th>
+                            </tr>
+                            <tr>
+                                <th>Outcome</th>
+                                <th>Amount</th>
+                                <th>Price</th>
+                            </tr>
+                            </thead>
+                            <tbody id="pool-sell-orders-entries"></tbody>
+                        </table>
+                        <table style="background-color: green" id="pool-buy-orders">
+                            <thead>
+                            <tr>
+                                <th colspan="3" style="text-align: center;">Buys</th>
+                            </tr>
+                            <tr>
+                                <th>Outcome</th>
+                                <th>Amount</th>
+                                <th>Price</th>
+                            </tr>
+                            </thead>
+                            <tbody id="pool-buy-orders-entries"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             <div id="bet-info"
