@@ -410,7 +410,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         return list;
     }
 
-    function fillOrder(address sender, uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, OrderType[] calldata orderTypes, string calldata betId, string[] calldata results, uint[][] calldata idxs) public {
+    function fillOrder(address sender, uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, OrderType[] calldata orderTypes, string calldata betId, string[] calldata results, uint[][] calldata idxs) private {
 
         for (uint r = 0; r < results.length; r++) {
             string calldata result = results[r];

@@ -215,16 +215,17 @@ const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
 
-(() => {
+const loadChain = async () => {
     let eth = (window.ethereum || {request: () => null, on: () => null});
-    eth.request({
-        method: "wallet_switchEthereumChain",
-        params: [{chainId: "0x5"}]
-    });
     ['chainChanged', 'accountsChanged'].forEach(e => eth.on(e, () => {
         loadProvider();
     }));
-})()
+    await eth.request({
+        method: "wallet_switchEthereumChain",
+        params: [{chainId: "0x5"}]
+    });
+}
+loadChain();
 
 
 async function loadProvider({betId = activeBet, betType} = {}) {
@@ -238,18 +239,18 @@ async function loadProvider({betId = activeBet, betType} = {}) {
             providerLoaded = false;
             return false;
         }
+
         provider = new ethers.BrowserProvider(window.ethereum);
         const {chainId} = await provider.getNetwork();
         if (chainId != 5) {
             hideMessage();
             clearTimeout();
-            triggerError("Please switch to Goerli tesnet", undefined);
+            triggerError("Please switch to Goerli tesnet", undefined, loadChain);
             providerLoaded = false;
             return false;
         }
         signer = await provider.getSigner();
         if (!gambethStateAbi) throw "ABI not loaded";
-
 
         if (betId) {
             const betKind = await activeContract.betKinds(betId);
@@ -315,7 +316,7 @@ async function loadProvider({betId = activeBet, betType} = {}) {
         return true;
     } catch (error) {
         console.error(error);
-        triggerError("Error while loading Ethereum provider: " + (error.code || error) + (error.code === "CALL_EXCEPTION" ? ". Switch to Sepolia testnet" : ""));
+        triggerError("Error while loading Ethereum provider: " + (error.code || error) + (error.code === "CALL_EXCEPTION" ? ". Switch to Goerli testnet" : ""));
         providerLoaded = false;
         return false;
     }
