@@ -195,6 +195,14 @@ contract GambethOptimisticOracle is OptimisticRequester {
         tokenDecimals[token] = decimals;
     }
 
+    function getOutcomes(string calldata betId) {
+        string[] memory results = new string[](betResults[betId].length);
+        for (uint i = 0; i < results.length; i++) {
+            results[i] = betResults[i];
+        }
+        return results;
+    }
+
     function createBet(BetKind kind, address sender, address token, string calldata betId, uint256 commissionDenominator, uint256 commission, uint64 deadline, uint64 schedule, uint256 initialPool, string calldata query, string[] calldata results) public {
         require(approvedTokens[token] && !createdBets[betId], "Unapproved token for creating bets");
         require(commissionDenominator > 0, "Invalid commission denominator");

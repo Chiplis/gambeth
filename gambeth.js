@@ -213,7 +213,7 @@ function triggerProcessing(msg, after = defaultMessageLocation) {
     processing = setInterval(() => (innerMessage.innerHTML = msg + ".".repeat(i++ % 4)), 300);
 }
 
-const ooContractAddress = "0xbF5A8DD31f9457480202854169A500CBE8fEc2f7";
+const ooContractAddress = "0x88277396b908bc907dD6C2b2582898491d3FD13B";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
@@ -387,17 +387,7 @@ async function activeBetKind() {
 }
 
 async function activeBetChoices() {
-    const outcomes = [];
-    let i = 0;
-    while (true) {
-        try {
-            let outcome = await activeContract.betResults(activeBet, BigInt(i++));
-            if (!outcome) return outcomes;
-            outcomes.push(outcome);
-        } catch {
-            return outcomes;
-        }
-    }
+    return await activeContract.getOutcomes(activeBet);
 }
 
 async function renderPlaceBet() {
@@ -518,7 +508,6 @@ async function searchBet(betId = activeBet) {
         const totalPool = async () => {
             const outcomes = await activeBetChoices();
             const pools = await Promise.all(outcomes.map(o => activeContract.resultTransfers(activeBet, o)));
-            console.log(pools);
             return pools.reduce((a, b) => a + b, 0n);
         }
         betInnerTotalPool.innerHTML = (await tokenToNumber(await totalPool())).toString() + " " + symbol;
@@ -841,7 +830,6 @@ async function renderBetPool() {
             const calcPrices = await Promise.all(betChoices.map(calculatePrice));
             const prices = calcPrices.map(async (p, i) => {
                 const outcome = betChoices[i];
-                console.log(p);
                 const mktPrice = Math.round(p * 1000) / 1000;
                 const odds = (Math.pow(p, 2) * 100).toFixed(2);
                 const pay = (await payout(betChoices[i])).toFixed(3);

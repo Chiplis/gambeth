@@ -998,6 +998,25 @@ window.optimisticOracleAbi = [
                 "type": "string"
             }
         ],
+        "name": "getOutcomes",
+        "outputs": [
+            {
+                "internalType": "string[]",
+                "name": "",
+                "type": "string[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "betId",
+                "type": "string"
+            }
+        ],
         "name": "getResult",
         "outputs": [
             {
@@ -1437,9 +1456,9 @@ window.optimisticOracleAbi = [
         "name": "userTransfers",
         "outputs": [
             {
-                "internalType": "uint256",
+                "internalType": "int256",
                 "name": "",
-                "type": "uint256"
+                "type": "int256"
             }
         ],
         "stateMutability": "view",
