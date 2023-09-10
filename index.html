@@ -153,7 +153,7 @@
                 ✖
             </button>
         </div>
-        <div id="bet-container" style="display: none">
+        <div id="bet-container" style="margin-top: 3%; display: none">
             <table class="styled-table" style="box-shadow: none; width: auto; display: none"
                    id="place-bet-info">
                 <thead>
@@ -173,6 +173,9 @@
             </table>
             <div id="bet-operations"
                  style="display: flex; flex-direction: row; justify-content: space-around; width: 100%">
+                <div style="max-width: 10vw; max-height: 10vw">
+                    <canvas id="bet-pool"></canvas>
+                </div>
                 <div id="bet-decision">
                     <label for="decide-bet-outcome">
                         <button class="btn link" id="decide-bet" onclick="decideBet()">Bet Decision</button>
@@ -186,7 +189,7 @@
                     <input name="place-bet-outcome" id="place-bet-outcome" type="text"
                            oninput="renderPlaceSingleBet()" placeholder="Expected outcome"/>
                 </div>
-                <div id="place-bet-data-container" style="display: flex; flex-direction: column; align-items: center">
+                <div id="place-bet-data-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center">
                     <div id="place-bet-amount-container">
                         <label for="place-bet-amount"></label>
                         <input name="place-bet-amount" id="place-bet-amount" oninput="renderPlaceSingleBet()"
@@ -239,7 +242,8 @@
                             Outcome
                         </div>
                         <div id="bet-inner-outcome"></div>
-                    </div>                </div>
+                    </div>
+                </div>
                 <div class="msg details" style="flex-direction: column;">
                     <div style="font-size: 0.9rem">Timeline (UTC)</div>
                     <div
@@ -282,7 +286,6 @@
                     </div>
                 </div>
             </div>
-            <canvas style="max-height: 33%" id="bet-pool"></canvas>
             <div style="display: flex; justify-content: space-around; width: 100%">
                 <div id="user-orders" style="width: 100%">
                     <div style="display: flex; justify-content: center">Open orders</div>

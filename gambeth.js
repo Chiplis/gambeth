@@ -418,7 +418,7 @@ async function renderPlaceBet() {
     placeBetInputs.style.opacity = lockedPool ? 0 : "100%";
     placeBetInputs.style.visibility = lockedPool ? "hidden" : "visible";
 
-    placeBetDataContainer.style.display = scheduleReached ? "none" : "block";
+    placeBetDataContainer.style.display = scheduleReached ? "none" : "flex";
     placeBetChoiceContainer.style.display = scheduleReached ? "none" : "flex";
     placeBetPositionContainer.style.display = scheduleReached ? "none" : "flex";
     queueBuyOrder.style.display = scheduleReached ? "none" : "block";
