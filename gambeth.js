@@ -579,7 +579,7 @@ async function createBet() {
             triggerError("Commission should be a number between 0 and 50", createBetQuery, () => renderCreationStep(2));
             return;
         } else if (await activeContract.createdBets(betId.value)) {
-            triggerError("Bet ID already exists", createBetQuery, () => renderCreationStep(0));
+            triggerError("Bet ID already exists", undefined, () => renderCreationStep(0));
             return;
         }
         activeBet = betId.value.toLowerCase().trim();
