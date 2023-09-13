@@ -228,7 +228,7 @@ const loadChain = async () => {
 loadChain();
 
 
-async function loadProvider({betId = activeBet || new URL(window.location).searchParams.get("id"), betType} = {}) {
+async function loadProvider({betId = activeBet || new URL(window.location).searchParams.get("id"), betType = "oo"} = {}) {
     try {
         await hideMessage();
         if (window.ethereum) {
@@ -252,7 +252,7 @@ async function loadProvider({betId = activeBet || new URL(window.location).searc
         signer = await provider.getSigner();
         if (!gambethStateAbi) throw "ABI not loaded";
 
-        if (betId) {
+        if (betId && activeContract) {
             const betKind = await activeContract.betKinds(betId);
             switch (betKind) {
                 case 0n:
