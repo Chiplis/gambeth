@@ -588,14 +588,14 @@ async function createBet() {
         activeBet = betId.value.toLowerCase().trim();
         newBetId = activeBet;
         const initialPool = await numberToToken(createBetInitialPool.value || "0");
-        triggerProcessing("Creating bet", createBetQueryOutcome);
+        triggerProcessing("Creating market", createBetQueryOutcome);
         const outcomes = createdBetChoices;
         if (outcomes.length) {
             query += " Choose " + outcomes.map((choice, idx) => `${idx} for ${choice}, `).join("");
             query = query.slice(0, query.length - 2);
             query += `. Choose ${outcomes.length} if the question can't be answered at the current time or if none of the previous options are correct.`
         }
-        triggerProcessing("Creating bet");
+        triggerProcessing("Creating market");
         switch (schema) {
             case "bc":
                 await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, query);
