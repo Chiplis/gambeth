@@ -481,7 +481,7 @@ async function searchBet(betId = activeBet) {
         placedBets = [];
         newBet.style.display = "none";
         await resetButtons();
-        triggerProcessing("Loading bet");
+        triggerProcessing("Loading market");
         betContainer.style.opacity = "0";
         betContainer.style.visibility = "hidden";
         activeBet = searchBetId.value || betId;
@@ -856,7 +856,7 @@ async function renderBetPool() {
             labels: Object.keys(betOutcomes),
             datasets: [{
                 data: outcomesPool.map(a => a.toString()),
-                backgroundColor: outcomes.map((_, i) => selectColor(i))
+                backgroundColor: outcomes.length < 7 ? undefined : outcomes.map((_, i) => selectColor(i)),
             }]
         };
         const config = {
@@ -867,6 +867,7 @@ async function renderBetPool() {
         if (betChart) {
             betChart.destroy();
         }
+        Chart.defaults.color = "#FFF";
         betChart = new Chart(betPool, config);
         betPool.style.visibility = "visible";
         betPool.style.opacity = "100%";

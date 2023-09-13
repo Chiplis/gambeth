@@ -29,7 +29,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             && deadline > block.timestamp // Bet can't be set in the past
             && deadline <= schedule // Users should only be able to place bets before it is actually executed
             && !createdBets[betId], // Can't have duplicate bets
-            "Unable to create bet, check arguments."
+            "Unable to Create market, check arguments."
         );
         betQueries[betId][keccak256(bytes(query))] = true;
         createBet(BetKind.OPTIMISTIC_ORACLE, msg.sender, currency, betId, commissionDenominator, commission, deadline, schedule, initialPool, query, results);

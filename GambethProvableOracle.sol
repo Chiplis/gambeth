@@ -65,7 +65,7 @@ contract GambethProvableOracle is GambethOracle, usingProvable {
             betId != 0x0
             && deadline > block.timestamp // Bet can't be set in the past
             && deadline <= schedule, // Users should only be able to place bets before it is actually executed
-            "Unable to create bet, check arguments."
+            "Unable to Create market, check arguments."
         );
 
         lastQueryPrice[betType] = provable_getPrice(string(abi.encodePacked(betType)));
