@@ -412,7 +412,7 @@ async function renderPlaceBet() {
 
     placeBet.style.visibility = "visible";
     placeBet.style.opacity = "100%";
-    placeBet.innerHTML = lockedPool ? (scheduleReached ? "Finished" : "Buy") : "Place";
+    placeBet.innerHTML = lockedPool ? (scheduleReached ? "Finished" : "Limit order") : "Fill Order";
     placeBet.classList.remove(scheduleReached ? "link" : null);
     placeBet.classList.add(!scheduleReached ? "link" : null);
     placeBet.disabled = scheduleReached;
