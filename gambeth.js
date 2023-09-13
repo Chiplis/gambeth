@@ -707,8 +707,9 @@ async function fillOrder() {
     const finalAmounts = amounts.map(a => a.toString());
     const [numerator, denominator] = [1n, 1n];
     const orders = betOrders[activeBet];
-    const orderIndexes = placedBets.map(({orderType}) => orders
+    const orderIndexes = placedBets.map(({orderType, outcome}) => orders
         .filter(o => o.amount)
+        .filter(o => o.outcome === outcome)
         .filter(o => o.orderType !== orderType)
         .filter(o => orderType === "SELL" ? (o.numerator * denominator >= numerator * o.denominator) : (o.numerator * denominator <= numerator * o.denominator))
         .map(o => o.idx));
