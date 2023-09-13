@@ -869,6 +869,8 @@ async function renderBetPool() {
         }
         Chart.defaults.color = "#FFF";
         betChart = new Chart(betPool, config);
+        betChart.options.plugins.legend.position = 'right';
+        betChart.update();
         betPool.style.visibility = "visible";
         betPool.style.opacity = "100%";
     } catch (error) {
