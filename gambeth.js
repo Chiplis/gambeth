@@ -228,7 +228,7 @@ const loadChain = async () => {
 loadChain();
 
 
-async function loadProvider({betId = activeBet, betType} = {}) {
+async function loadProvider({betId = activeBet || new URL(window.location).searchParams.get("id"), betType} = {}) {
     try {
         await hideMessage();
         if (window.ethereum) {
