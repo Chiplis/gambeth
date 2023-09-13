@@ -207,7 +207,7 @@ function triggerSuccess(msg, callback, after = defaultMessageLocation, delay = 0
 function triggerProcessing(msg, after = defaultMessageLocation) {
     triggerMessage(msg, "info", ["error", "success"], after, null, false);
     let i = 0;
-    innerMessage.innerHTML = msg + "<div style='transform: scale(0.5)' class='lds-dual-ring'></div>";
+    innerMessage.innerHTML = msg + `<div style='transform: scale(0.5)' class='lds-dual-ring'></div>`;
 }
 
 const ooContractAddress = "0x88277396b908bc907dD6C2b2582898491d3FD13B";
@@ -275,6 +275,9 @@ async function loadProvider({betId = activeBet || new URL(window.location).searc
                 default:
                     activeContract = new ethers.Contract(provableContractAddress, provableOracleAbi, provider).connect(signer);
                     break;
+            }
+            if (betId) {
+                loadProvider();
             }
         }
 
