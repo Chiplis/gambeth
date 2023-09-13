@@ -617,8 +617,8 @@ async function renderPlacedBets() {
     placeBetInfo.style.display = placedBets.length ? "block" : "none";
     const newBets = {};
     placedBets.filter(p => p.orderType === "BUY").forEach(b => newBets[b.outcome] = (newBets[b.outcome] || 0) + Number(b.amount));
-    const totalCost = (await calculateCost(newBets));
-    placeBetEntries.innerHTML = placedBets.map((order, i) => `<tr><td onclick="placedBets.splice(${i}, 1); renderPlacedBets()">✖</td><td>${order.orderType}</td><td>${order.outcome}</td><td>${order.amount}</td><td>$${totalCost.payout[order.outcome].toFixed(3)}</td><td></td></tr>`).join("");
+    const totalCost = await calculateCost(newBets);
+    placeBetEntries.innerHTML = placedBets.map((order, i) => `<tr><td onclick="placedBets.splice(${i}, 1); renderPlacedBets()">✖</td><td>${order.orderType}</td><td>${order.outcome}</td><td>${order.amount}</td><td>$${totalCost ? totalCost.payout[order.outcome].toFixed(3) : ''}</td><td></td></tr>`).join("");
     placeBetEntries.innerHTML += totalCost ? `<tr><td></td><td></td><td></td><td><td></td><td>${totalCost.cost.toFixed(3)}</td></tr>` : "";
 }
 
