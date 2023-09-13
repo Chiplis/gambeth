@@ -157,23 +157,25 @@
             </button>
         </div>
         <div id="bet-container" style="margin-top: 3%; display: none">
-            <table class="styled-table" style="box-shadow: none; width: auto; display: none"
-                   id="place-bet-info">
-                <thead>
-                <tr>
-                    <th colspan="6" style="text-align: center;">Placed Orders</th>
-                </tr>
-                <tr>
-                    <th></th>
-                    <th>Position</th>
-                    <th>Outcome</th>
-                    <th>Amount</th>
-                    <th>Payout</th>
-                    <th>Total cost</th>
-                </tr>
-                </thead>
-                <tbody id="place-bet-entries"></tbody>
-            </table>
+            <div id="place-bet-info" style="display: none; flex-direction: row; width: 100%; justify-content: flex-end">
+                <table class="styled-table" style="width: auto">
+                    <thead>
+                    <tr>
+                        <th colspan="6" style="text-align: center;">Placed Orders</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th>Position</th>
+                        <th>Outcome</th>
+                        <th>Amount</th>
+                        <th>Payout</th>
+                        <th>Total cost</th>
+                    </tr>
+                    </thead>
+                    <tbody id="place-bet-entries"></tbody>
+                </table>
+                <button class="btn link" id="place-bet" onclick="buyBet()"></button>
+            </div>
             <div>
                 <div id="about-bet" style="font-size: 150%">About</div>
             </div>
@@ -203,41 +205,42 @@
                             </label>
                             <input name="decide-bet-outcome" id="decide-bet-outcome"/>
                         </div>
-                        <button class="btn link" id="claim-bet" onclick="claimReward()"></button>
-                        <button class="btn link" id="place-bet" onclick="buyBet()"></button>
-                    </div>
-                </div>
-                <div id="place-bet-inputs" style="display: flex; flex-direction: column">
-                    <label for="place-bet-outcome">Outcome</label>
-                    <input name="place-bet-outcome" id="place-bet-outcome" type="text"
-                           oninput="renderPlaceSingleBet()" placeholder="Expected outcome"/>
-                </div>
-                <div id="place-bet-data-container" style="display: flex; flex-direction: row; justify-content: center; align-items: center">
-                    <div id="place-bet-amount-container">
-                        <label for="place-bet-amount"></label>
-                        <input name="place-bet-amount" id="place-bet-amount" oninput="renderPlaceSingleBet()"
-                               type="number" step="0.0001" placeholder="# of Shares"/>
-                    </div>
-                    <div style="display: flex; flex-direction: column; align-items: center; height: 33%; margin: 10%; justify-content: space-around; width: 100%">
-                        <div id="place-bet-choice-container"
-                             style="display: flex; flex-direction: column; justify-content: center; align-items: center">
-                            <label style="font-size: 0.7rem" for="choose-bet-inputs">Outcome</label>
-                            <select id="choose-bet-inputs" style="color: white" onchange="renderPlaceSingleBet()">
-                            </select>
+                        <div id="place-bet-data-container" style="display: flex; flex-direction: row; justify-content: center; align-items: center">
+                            <div id="place-bet-amount-container">
+                                <label for="place-bet-amount"></label>
+                                <input name="place-bet-amount" id="place-bet-amount" oninput="renderPlaceSingleBet()"
+                                       type="number" step="0.0001" placeholder="# of Shares"/>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; height: 33%; margin: 10%; justify-content: space-around; width: 100%">
+                                <div id="place-bet-choice-container"
+                                     style="display: flex; flex-direction: column; justify-content: center; align-items: center">
+                                    <label style="font-size: 0.7rem" for="choose-bet-inputs">Outcome</label>
+                                    <select id="choose-bet-inputs" style="color: white" onchange="renderPlaceSingleBet()">
+                                    </select>
+                                </div>
+                                <div id="place-bet-position-container"
+                                     style="display: flex; flex-direction: column; justify-content: center; align-items: center">
+                                    <label style="font-size: 0.7rem" for="choose-bet-position">Position</label>
+                                    <select id="choose-bet-position" style="color: white" onchange="renderPlaceSingleBet()">
+                                        <option value="buy">Buy</option>
+                                        <option value="sell">Sell</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-                        <div id="place-bet-position-container"
-                             style="display: flex; flex-direction: column; justify-content: center; align-items: center">
-                            <label style="font-size: 0.7rem" for="choose-bet-position">Position</label>
-                            <select id="choose-bet-position" style="color: white" onchange="renderPlaceSingleBet()">
-                                <option value="buy">Buy</option>
-                                <option value="sell">Sell</option>
-                            </select>
+                        <div style="display: flex">
+                            <div id="place-bet-inputs" style="display: flex; flex-direction: column">
+                                <label for="place-bet-outcome">Outcome</label>
+                                <input name="place-bet-outcome" id="place-bet-outcome" type="text"
+                                       oninput="renderPlaceSingleBet()" placeholder="Expected outcome"/>
+                            </div>
+                            <button class="btn link" id="claim-bet" onclick="claimReward()"></button>
+                            <button class="btn link" id="queue-buy-order" style="opacity: 0">
+                                +
+                            </button>
                         </div>
                     </div>
                 </div>
-                <button class="btn link" id="queue-buy-order" style="opacity: 0">
-                    +
-                </button>
             </div>
             <div id="bet-pool-container" style="justify-content: space-around; width: 100%; display: flex; margin: 1%">
                 <div class="msg details" id="oo-bet"

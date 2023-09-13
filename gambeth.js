@@ -284,7 +284,7 @@ async function loadProvider({betId = activeBet || new URL(window.location).searc
         if (activeContract) {
             owner = await signer.getAddress();
             activeContract.on("CreatedBet", async hashedBetId => {
-                if (hashedBetId.hash === ethers.id(newBetId || "")) triggerSuccess(`Bet created!`, () => {
+                if (hashedBetId.hash === ethers.id(newBetId || "")) triggerSuccess(`Market created!`, () => {
                     searchBet(newBetId);
                 }, undefined, 2500)
             });
@@ -301,6 +301,8 @@ async function loadProvider({betId = activeBet || new URL(window.location).searc
                 if (sender === owner) triggerSuccess(`Bet won! ${await tokenToNumber(amount.toString())} USDC transferred to account`)
             });
             fixedCommission = await tokenToNumber(0);
+            activeBet = betId;
+            fetchOrders(true);
         }
 
         providerLoaded = true;
@@ -412,7 +414,7 @@ async function renderPlaceBet() {
 
     placeBet.style.visibility = "visible";
     placeBet.style.opacity = "100%";
-    placeBet.innerHTML = lockedPool ? (scheduleReached ? "Finished" : "Limit order") : "Fill Order";
+    placeBet.innerHTML = lockedPool ? (scheduleReached ? "" : "Limit order") : "Fill Order";
     placeBet.classList.remove(scheduleReached ? "link" : null);
     placeBet.classList.add(!scheduleReached ? "link" : null);
     placeBet.disabled = scheduleReached;
@@ -614,7 +616,7 @@ async function createBet() {
 }
 
 async function renderPlacedBets() {
-    placeBetInfo.style.display = placedBets.length ? "block" : "none";
+    placeBetInfo.style.display = placedBets.length ? "flex" : "none";
     const newBets = {};
     placedBets.filter(p => p.orderType === "BUY").forEach(b => newBets[b.outcome] = (newBets[b.outcome] || 0) + Number(b.amount));
     const totalCost = await calculateCost(newBets);
