@@ -19,10 +19,13 @@
 <body style="margin: 0; font-size: 25px">
 <div
         style="border: 0; min-height:50px; background-color: #5d67ce; width: 100%; position: fixed; left: 0; display: flex; flex-direction: row; justify-content: space-around; align-items: center;">
-    <img src="gambeth.png" alt="Gambeth" style="width: 25%"/>
+    <div style="display: flex; flex-direction: row; justify-content: center; align-items: center">
+        <img src="gambeth.svg" alt="Gambeth" style="width: 4vw"/>
+        <div>Gambeth</div>
+    </div>
     <div style="display: flex">
         <div class="btn link create-bet" style="color:white; border: 0" onclick="createBetBtn()">
-            New Bet
+            Create Market
         </div>
     </div>
     <input style="max-width: 20vw; outline: 0; margin: 0" class="msg search" type="search" placeholder="Search"
@@ -52,14 +55,14 @@
             <div style="width: 70%">
                 <div class="create-bet-step"
                      style="visibility: visible; opacity: 0; transition: opacity 0.5s cubic-bezier(1, 2, 3, 4); position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
-                    <div class="btn info" style="border: 0; margin: 0">Pick a name</div>
+                    <div class="" style="border: 0; margin: 0">Pick a name</div>
                     <input id="create-bet-id" oninput="betIdChanged()"
                            style="margin: 0.5rem;" type="text"/>
                     <label id="create-bet-id-label" for="create-bet-id"></label>
                 </div>
                 <div class="create-bet-step"
                      style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
-                    <div class="btn info" style="border: 0; margin: 0">Query</div>
+                    <div class="" style="border: 0; margin: 0">Query</div>
                     <label for="create-bet-schema" style="margin-top: 1em">How should the contract determine the outcome
                         of your bet?</label>
                     <select onchange="changeBetType()" style="color: white; margin: 1rem; text-align: center"
@@ -96,10 +99,10 @@
                 </div>
                 <div class="create-bet-step" id="create-bet-choices"
                      style="display: none; flex-direction: column; justify-content: center; visibility: hidden">
-                    <div class="btn info" style="border: 0; margin: 0">Choices</div>
+                    <div class="" style="border: 0; margin: 0">Outcomes</div>
                     <label id="create-bet-choice-label" for="create-bet-choice"
                            style="display: flex; justify-content: center">
-                        Add the possible choices for the bet you're creating
+                        Add the possible outcomes for the market you're creating
                     </label>
                     <div style="display: flex; justify-content: center; align-items: center">
                         <input id="create-bet-choice" style="margin: 0.5rem;"/>
@@ -110,7 +113,7 @@
                 </div>
                 <div class="create-bet-step"
                      style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
-                    <div class="btn info" style="border: 0; margin: 0">Commission</div>
+                    <div class="" style="border: 0; margin: 0">Commission</div>
                     <div style="display: flex; align-items: center">
                         <input id="create-bet-commission" style="font-size: 1em; margin: 0.5rem;" inputmode="decimal"/>
                         <div class="info" style="color: white; background-color: transparent">%</div>
@@ -121,7 +124,7 @@
                 </div>
                 <div class="create-bet-step"
                      style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
-                    <div class="btn info" style="border: 0; margin: 0">Initial pool</div>
+                    <div class="" style="border: 0; margin: 0">Initial pool</div>
                     <div style="display: flex; align-items: center">
                         <input id="create-bet-initial-pool" inputmode="decimal" style="margin: 0.5rem;"/>
                         <div class="info" style="color: white; background-color: transparent">USDC</div>
@@ -132,7 +135,7 @@
                 </div>
                 <div class="create-bet-step"
                      style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex; flex-direction: column; justify-content: center; align-items: center">
-                    <div class="btn info" style="border: 0; margin: 0">Dates</div>
+                    <div class="" style="border: 0; margin: 0">Dates</div>
                     <input id="deadline-date" type="datetime-local" style="margin: 0.5rem;"
                            onchange="console.log(deadlineDate)"
                            onfocus="this.min=new Date().toISOString();this.max=new Date(new Date().getTime() + 60 * 24 * 3600000).toISOString()"/>
@@ -444,9 +447,9 @@
             <div id="create-bet-info">
                 <h3>How do I create a bet?</h3>
                 <p>
-                    Click the "New Bet" button and you'll be presented with all the information you need to fill
-                    when creating a bet.
-                    If you'd like to get people interested in your bet, a great way to do so is setting up an initial
+                    Click the "Create Market" button and you'll be presented with all the information you need to complete
+                    when creating a market.
+                    If you'd like to get people interested in your market, a great way to do so is setting up an initial
                     pool!
                 </p>
             </div>
