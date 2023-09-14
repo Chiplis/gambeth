@@ -210,7 +210,7 @@ function triggerProcessing(msg, after = defaultMessageLocation) {
     innerMessage.innerHTML = msg + `<div style='transform: scale(0.5)' class='lds-dual-ring'></div>`;
 }
 
-const ooContractAddress = "0x88277396b908bc907dD6C2b2582898491d3FD13B";
+const ooContractAddress = "0x06E36BA3edc067F57b50EA765D61c01A70A845ba";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
@@ -345,7 +345,7 @@ function renderPlaceSingleBet() {
         addSingleBet({
             amount: Number(placeBetAmount.value),
             outcome: placeBetOutcome.value || chooseBetInputs.value,
-            orderType: chooseBetPosition.value.toUpperCase()
+            orderPosition: chooseBetPosition.value.toUpperCase()
         });
         renderPlaceSingleBet();
     } : "";
@@ -457,18 +457,19 @@ async function calculateCost(newBets) {
         return "";
     }
     const outcomes = await activeBetChoices();
-    const pools = await Promise.all(outcomes.map(o => activeContract.resultPools(activeBet, o).then(tokenToNumber).then(Number)));
+    const pools = await Promise.all(outcomes.map(o => activeContract.resultPools(activeBet, o).then(Number)));
     outcomes.forEach((outcome, i) => newBets[outcome] = (newBets[outcome] || 0) + pools[i]);
+    console.log(newBets);
     const newCost = Math.sqrt(Object.values(newBets).map(v => Math.pow(v, 2)).reduce((a, b) => a + b));
     const payouts = outcomes.map((o, i) => ({[o]: newCost / newBets[o]}));
     return {
         payout: Object.assign({}, ...payouts),
-        cost: newCost - await activeContract.calculateCost(activeBet).then(tokenToNumber).then(Number)
+        cost: newCost - await activeContract.calculateCost(activeBet).then(a => Number(a) / 1e6)
     };
 }
 
 async function calculatePrice(result) {
-    return Number(await activeContract.resultPools(activeBet, result)) / Number(await activeContract.calculateCost(activeBet));
+    return Number(await activeContract.resultPools(activeBet, result)) / Number(await activeContract.calculateCost(activeBet).then(a => Number(a) / 1e6));
 }
 
 async function searchBet(betId = activeBet) {
@@ -618,16 +619,16 @@ async function createBet() {
 async function renderPlacedBets() {
     placeBetInfo.style.display = placedBets.length ? "flex" : "none";
     const newBets = {};
-    placedBets.filter(p => p.orderType === "BUY").forEach(b => newBets[b.outcome] = (newBets[b.outcome] || 0) + Number(b.amount));
+    placedBets.filter(p => p.orderPosition === "BUY").forEach(b => newBets[b.outcome] = (newBets[b.outcome] || 0) + Number(b.amount));
     const totalCost = await calculateCost(newBets);
-    placeBetEntries.innerHTML = placedBets.map((order, i) => `<tr><td onclick="placedBets.splice(${i}, 1); renderPlacedBets()">✖</td><td>${order.orderType}</td><td>${order.outcome}</td><td>${order.amount}</td><td>${order.orderType === 'BUY' ? ('$' + totalCost.payout[order.outcome].toFixed(3)) : ''}</td><td></td></tr>`).join("");
+    placeBetEntries.innerHTML = placedBets.map((order, i) => `<tr><td onclick="placedBets.splice(${i}, 1); renderPlacedBets()">✖</td><td>${order.orderPosition}</td><td>${order.outcome}</td><td>${order.amount}</td><td>${order.orderPosition === 'BUY' ? ('$' + totalCost.payout[order.outcome].toFixed(3)) : ''}</td><td></td></tr>`).join("");
     placeBetEntries.innerHTML += totalCost ? `<tr><td></td><td></td><td></td><td><td></td><td>${totalCost.cost.toFixed(3)}</td></tr>` : "";
 }
 
 async function addSingleBet(order) {
-    const foundOrder = placedBets.filter(o => o.orderType === order.orderType && o.outcome === order.outcome)[0];
+    const foundOrder = placedBets.filter(o => o.orderPosition === order.orderPosition && o.outcome === order.outcome)[0];
     if (!foundOrder) {
-        placedBets.push(order);
+        placedBets.push({...order, pricePerShare: 1e6});
     } else {
         foundOrder.amount += order.amount;
     }
@@ -657,12 +658,11 @@ const fetchOrders = async (refresh) => {
         return;
     }
     const newOrders = contractOrders.map((o, idx) => ({
-        orderType: o[0] ? "SELL" : "BUY",
-        numerator: o[1],
-        denominator: o[2],
-        outcome: o[3],
-        amount: o[4],
-        user: o[5],
+        orderPosition: o[0] ? "SELL" : "BUY",
+        pricePerShare: o[1],
+        outcome: o[2],
+        amount: o[3],
+        user: o[4],
         idx
     }));
     orderCounter += newOrders.length;
@@ -671,15 +671,15 @@ const fetchOrders = async (refresh) => {
 }
 
 async function renderOrders() {
-    const toRow = async ({orderType, outcome, amount, numerator, denominator}) => {
-        const shares = await tokenToNumber(amount);
-        return (`<tr></tr><td>${outcome}</td><td>${shares}</td><td>${(shares * Number(numerator)) / Number(denominator)}</td></tr>`)
+    const toRow = async ({orderPosition, outcome, amount, pricePerShare}) => {
+        return (`<tr></tr><td>${outcome}</td><td>${amount}</td><td>${(Number(pricePerShare) / 1e6).toFixed(3)}</td></tr>`)
     };
 
-    const userBuys = betOrders[activeBet].filter(b => b.user === owner).filter(o => o.orderType === "BUY");
-    const userSells = betOrders[activeBet].filter(b => b.user === owner).filter(o => o.orderType === "SELL");
-    const poolBuys = betOrders[activeBet].filter(b => b.user !== owner).filter(o => o.orderType === "BUY");
-    const poolSells = betOrders[activeBet].filter(b => b.user !== owner).filter(o => o.orderType === "SELL");
+
+    const userBuys = betOrders[activeBet].filter(b => b.user === owner).filter(o => o.orderPosition === "BUY");
+    const userSells = betOrders[activeBet].filter(b => b.user === owner).filter(o => o.orderPosition === "SELL");
+    const poolBuys = betOrders[activeBet].filter(b => b.user !== owner).filter(o => o.orderPosition === "BUY");
+    const poolSells = betOrders[activeBet].filter(b => b.user !== owner).filter(o => o.orderPosition === "SELL");
 
     [[userBuyOrdersEntries, userBuys], [userSellOrdersEntries, userSells], [poolBuyOrdersEntries, poolBuys], [poolSellOrdersEntries, poolSells]].map(async ([elm, orders]) => {
         elm.innerHTML = `${(await Promise.all(orders.map(toRow))).join("")}`;
@@ -697,7 +697,10 @@ async function fillOrder() {
     }
 
     for (let order of placedBets) {
-        if (order.orderType === "SELL" && await activeContract.pendingSells(activeBet, owner, order.outcome) + BigInt(order.amount) > await activeContract.userBets(activeBet, owner, order.outcome)) {
+        const pendingSells = await activeContract.pendingSells(activeBet, owner, order.outcome);
+        const userBet = await activeContract.userBets(activeBet, owner, order.outcome);
+        const orderAmount = BigInt(order.amount);
+        if (order.orderPosition === "SELL" && pendingSells + orderAmount > userBet) {
             triggerError("Insufficient owned shares to perform sell order.")
             return;
         }
@@ -705,16 +708,14 @@ async function fillOrder() {
 
     triggerProcessing(`Placing order${outcomes.length > 1 ? "s" : ""}`);
     const finalAmounts = amounts.map(a => a.toString());
-    const [numerator, denominator] = [1n, 1n];
     const orders = betOrders[activeBet];
-    const orderIndexes = placedBets.map(({orderType, outcome}) => orders
+    const orderIndexes = placedBets.map(({orderPosition, outcome, pricePerShare}) => orders
         .filter(o => o.amount)
         .filter(o => o.outcome === outcome)
-        .filter(o => o.orderType !== orderType)
-        .filter(o => orderType === "SELL" ? (o.numerator * denominator >= numerator * o.denominator) : (o.numerator * denominator <= numerator * o.denominator))
+        .filter(o => o.orderPosition !== orderPosition)
+        .filter(o => orderPosition === "BUY" ? (pricePerShare >= o.pricePerShare) : (pricePerShare <= o.pricePerShare))
         .map(o => o.idx));
-
-    const filledOrder = await activeContract.fillOrder(finalAmounts, finalAmounts.map(() => 1), finalAmounts.map(() => 1), placedBets.map(o => o.orderType === "BUY" ? 0n : 1n), activeBet, outcomes.map(o => o.outcome), orderIndexes);
+    const filledOrder = await activeContract.fillOrder(finalAmounts.map(a => a / 1e6), finalAmounts.map(() => 1e6), placedBets.map(o => o.orderPosition === "BUY" ? 0n : 1n), activeBet, outcomes.map(o => o.outcome), orderIndexes);
     await filledOrder.wait();
     hideMessage();
     placedBets = [];
@@ -728,7 +729,7 @@ async function addFreeBet() {
             addSingleBet({
                 amount: Number(placeBetAmount.value),
                 outcome: placeBetOutcome.value || chooseBetInputs.value,
-                orderType: document.getElementById("choose-bet-position").value.toUpperCase()
+                orderPosition: document.getElementById("choose-bet-position").value.toUpperCase()
             });
         }
         await placeContractBet();
@@ -834,15 +835,15 @@ async function renderBetPool() {
         marketPrices.innerHTML = ``;
         if (contractPrices) {
             const betChoices = await activeBetChoices();
-            const payout = async outcome => (Number(await activeContract.calculateCost(activeBet)) / Number(await activeContract.resultPools(activeBet, outcome)));
+            const payout = async outcome => (Number(await activeContract.calculateCost(activeBet).then(a => Number(a) / 1e6)) / Number(await activeContract.resultPools(activeBet, outcome)));
             const calcPrices = await Promise.all(betChoices.map(calculatePrice));
             const prices = calcPrices.map(async (p, i) => {
                 const outcome = betChoices[i];
                 const mktPrice = Math.round(p * 1000) / 1000;
                 const odds = (Math.pow(p, 2) * 100).toFixed(2);
                 const pay = (await payout(betChoices[i])).toFixed(3);
-                const owned = await activeContract.userBets(activeBet, owner, outcome).then(tokenToNumber).then(Math.round);
-                const avgPrice = await activeContract.userTransfers(activeBet, owner, outcome).then(tokenToNumber).then(a => Math.round(Number(a) / owned * 1000) / 1000);
+                const owned = await activeContract.userBets(activeBet, owner, outcome);
+                const avgPrice = await activeContract.userTransfers(activeBet, owner, outcome).then(a => Math.round((Number(a) / 1e6) / Number(owned) * 1000) / 1000);
                 return `<tr><td>${outcome}</td><td>${owned || "-"}</td><td>${odds}%</td><td>$${mktPrice}</td><td>${Number.isNaN(avgPrice) ? "-" : ("$" + avgPrice)}</td><td>$${pay}</td></tr>`
             });
             marketPrices.innerHTML = (await Promise.all(prices)).join("");
@@ -853,7 +854,7 @@ async function renderBetPool() {
         const outcomes = await Promise.all(
             await activeBetChoices().then(outcomes => outcomes.map(o => activeContract.resultPools(activeBet, o)))
         );
-        const outcomesPool = await Promise.all(outcomes.map(async a => await tokenToNumber(a)))
+        const outcomesPool = outcomes;
         const selectColor = (number) => `hsl(${number * 137.508},50%,75%)`;
         const data = {
             labels: Object.keys(betOutcomes),

@@ -137,12 +137,10 @@
                      style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: flex; flex-direction: column; justify-content: center; align-items: center">
                     <div class="" style="border: 0; margin: 0">Dates</div>
                     <input id="deadline-date" type="datetime-local" style="margin: 0.5rem;"
-                           onchange="console.log(deadlineDate)"
                            onfocus="this.min=new Date().toISOString();this.max=new Date(new Date().getTime() + 60 * 24 * 3600000).toISOString()"/>
                     <label for="deadline-date">When will the pool be locked?</label>
 
                     <input id="schedule-date" type="datetime-local" style="margin: 0.5rem;"
-                           onchange="console.log(scheduleDate)"
                            onfocus="this.min=new Date().toISOString().split('T')[0];this.max=new Date(new Date().getTime() + 60 * 24 * 3600000).toISOString().split('T')[0]"/>
                     <label for="schedule-date">When is the bet able to be settled?</label>
                     <button class="btn link" onclick="createBet()">Create Market</button>

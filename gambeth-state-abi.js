@@ -252,8 +252,8 @@ window.gambethStateAbi = [
                 "type": "uint256[]"
             },
             {
-                "internalType": "enum GambethState.OrderType[]",
-                "name": "orderTypes",
+                "internalType": "enum GambethState.OrderPosition[]",
+                "name": "orderPositions",
                 "type": "uint8[]"
             },
             {
@@ -721,8 +721,8 @@ window.gambethStateAbi = [
             {
                 "components": [
                     {
-                        "internalType": "enum GambethState.OrderType",
-                        "name": "orderType",
+                        "internalType": "enum GambethState.OrderPosition",
+                        "name": "orderPosition",
                         "type": "uint8"
                     },
                     {
@@ -775,8 +775,8 @@ window.gambethStateAbi = [
         "name": "orders",
         "outputs": [
             {
-                "internalType": "enum GambethState.OrderType",
-                "name": "orderType",
+                "internalType": "enum GambethState.OrderPosition",
+                "name": "orderPosition",
                 "type": "uint8"
             },
             {
