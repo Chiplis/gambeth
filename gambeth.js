@@ -228,7 +228,10 @@ const loadChain = async () => {
 loadChain();
 
 
-async function loadProvider({betId = activeBet || new URL(window.location).searchParams.get("id"), betType = "oo"} = {}) {
+async function loadProvider({
+                                betId = activeBet || new URL(window.location).searchParams.get("id"),
+                                betType = "oo"
+                            } = {}) {
     try {
         await hideMessage();
         if (window.ethereum) {
@@ -685,8 +688,23 @@ async function renderOrders() {
     const poolBuys = betOrders[activeBet].filter(b => b.user !== owner).filter(o => o.orderPosition === "BUY");
     const poolSells = betOrders[activeBet].filter(b => b.user !== owner).filter(o => o.orderPosition === "SELL");
 
+    const groupedOrders = (orders) => {
+        const grouped = [];
+        console.log(orders);
+        orders.forEach(o => {
+            const {outcome, orderPosition, amount, pricePerShare} = o;
+            const update = grouped.filter(g => g.orderPosition === orderPosition && g.pricePerShare === pricePerShare && g.outcome === outcome)[0];
+            if (update) {
+                update.amount += amount;
+            } else {
+                grouped.push(o);
+            }
+        });
+        return grouped;
+    }
+
     [[userBuyOrdersEntries, userBuys], [userSellOrdersEntries, userSells], [poolBuyOrdersEntries, poolBuys], [poolSellOrdersEntries, poolSells]].map(async ([elm, orders]) => {
-        elm.innerHTML = `${(await Promise.all(orders.map(toRow))).join("")}`;
+        elm.innerHTML = `${(await Promise.all(groupedOrders(orders).map(toRow))).join("")}`;
     })
 }
 
