@@ -4,7 +4,7 @@ html {
 }
 
 * {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Merriweather Sans', sans-serif;
 }
 
 a, a:hover, a:link, a:visited {
@@ -70,9 +70,15 @@ span {
     outline: 0;
 }
 
+@font-face {
+    font-family: Telegraf;
+    src: url("PPTelegraf-Regular.otf") format("opentype");
+}
+
 .btn {
     appearance: none;
     border: 0;
+    font-family: Saira, sans-serif;
     background-color: transparent;
     border-radius: 0.6rem;
     align-self: center;
