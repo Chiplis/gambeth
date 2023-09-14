@@ -414,7 +414,7 @@ async function renderPlaceBet() {
 
     placeBet.style.visibility = "visible";
     placeBet.style.opacity = "100%";
-    placeBet.innerHTML = lockedPool ? (scheduleReached ? "" : "Limit order") : "Fill Order";
+    placeBet.innerHTML = lockedPool ? (scheduleReached ? "" : "Limit order") : "Place Orders";
     placeBet.classList.remove(scheduleReached ? "link" : null);
     placeBet.classList.add(!scheduleReached ? "link" : null);
     placeBet.disabled = scheduleReached;
@@ -621,8 +621,8 @@ async function renderPlacedBets() {
     const newBets = {};
     placedBets.filter(p => p.orderPosition === "BUY").forEach(b => newBets[b.outcome] = (newBets[b.outcome] || 0) + Number(b.amount));
     const totalCost = await calculateCost(newBets);
-    placeBetEntries.innerHTML = placedBets.map((order, i) => `<tr style="background-color: ${order.orderType === "BUY" ? "#069b69" : "#ff4747"}"><td onclick="placedBets.splice(${i}, 1); renderPlacedBets()">✖</td><td>${order.orderPosition}</td><td>${order.outcome}</td><td>${order.amount}</td><td>${order.orderPosition === 'BUY' ? ('$' + totalCost.payout[order.outcome].toFixed(3)) : ''}</td><td></td></tr>`).join("");
-    placeBetEntries.innerHTML += totalCost ? `<tr><td></td><td></td><td></td><td><td></td><td>${totalCost.cost.toFixed(3)}</td></tr>` : "";
+    placeBetEntries.innerHTML = placedBets.map((order, i) => `<tr style="background-color: ${order.orderPosition === "BUY" ? "#069b69" : "#ff4747"}"><td onclick="placedBets.splice(${i}, 1); renderPlacedBets()">✖</td><td>${order.orderPosition}</td><td>${order.outcome}</td><td>${order.amount}</td><td>${order.orderPosition === 'BUY' ? ('$' + totalCost.payout[order.outcome].toFixed(3)) : ''}</td><td></td></tr>`).join("");
+    placeBetEntries.innerHTML += totalCost ? `<tr style="background-color: #0882ee"><td></td><td></td><td></td><td><td></td><td>${totalCost.cost.toFixed(3)}</td></tr>` : "";
 }
 
 async function activeDecimals() {

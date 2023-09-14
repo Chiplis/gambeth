@@ -185,7 +185,7 @@ span {
 }
 
 .styled-table thead tr {
-    background-color: #ff6927;
+    background-color: #0882ee;
     text-align: left;
 }
 
@@ -198,7 +198,7 @@ span {
 }
 
 .styled-table tbody tr:last-of-type {
-    border-bottom: 2px solid #ff6927;
+    border-bottom: 2px solid #0882ee;
 }
 
 #bet-container {
