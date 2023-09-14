@@ -475,6 +475,12 @@ async function calculatePrice(result) {
     return Number(await activeContract.resultPools(activeBet, result)) / Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals()));
 }
 
+const totalPool = async () => {
+    const outcomes = await activeBetChoices();
+    const pools = await Promise.all(outcomes.map(o => activeContract.resultTransfers(activeBet, o)));
+    return pools.reduce((a, b) => a + b, 0n);
+}
+
 async function searchBet(betId = activeBet) {
     if (!betId) {
         return;
@@ -485,12 +491,12 @@ async function searchBet(betId = activeBet) {
         }
         await fetchOrders(true);
         placedBets = [];
-        newBet.style.display = "none";
         await resetButtons();
         triggerProcessing("Loading market");
+        activeBet = searchBetId.value || betId;
+        newBet.style.display = "none";
         betContainer.style.opacity = "0";
         betContainer.style.visibility = "hidden";
-        activeBet = searchBetId.value || betId;
         const betExists = await activeContract.createdBets(activeBet);
         if (!betExists) {
             betContainer.style.display = "none";
@@ -521,12 +527,6 @@ async function searchBet(betId = activeBet) {
         let outcome = await activeContract.getResult(activeBet);
         let symbol = await usdc.symbol();
         betInnerInitialPool.innerHTML = (await tokenToNumber(initialPool)).toString() + " " + symbol;
-        const totalPool = async () => {
-            const outcomes = await activeBetChoices();
-            const pools = await Promise.all(outcomes.map(o => activeContract.resultTransfers(activeBet, o)));
-            return pools.reduce((a, b) => a + b, 0n);
-        }
-        betInnerTotalPool.innerHTML = (await tokenToNumber(await totalPool())).toString() + " " + symbol;
         const innerCommission = Number(await activeContract.betCommissions(activeBet)) / Number(await activeContract.betCommissionDenominator(activeBet)) * 100;
         betInnerCommission.innerHTML = Number.parseFloat(innerCommission) + "%";
         betInnerOutcome.innerHTML = outcome || "Unresolved";
@@ -681,7 +681,6 @@ async function renderOrders() {
     const toRow = async ({orderPosition, outcome, amount, pricePerShare}) => {
         return (`<tr></tr><td>${outcome}</td><td>${amount}</td><td>${(Number(pricePerShare) / await activeDecimals()).toFixed(3)}</td></tr>`)
     };
-
 
     const userBuys = betOrders[activeBet].filter(b => b.user === owner).filter(o => o.orderPosition === "BUY");
     const userSells = betOrders[activeBet].filter(b => b.user === owner).filter(o => o.orderPosition === "SELL");
@@ -852,6 +851,7 @@ async function decideBet() {
 
 async function renderBetPool() {
     try {
+        betInnerTotalPool.innerHTML = (await tokenToNumber(await totalPool())).toString() + " " + await usdc.symbol();
         const placedBets = await activeContract.queryFilter(activeContract.filters.PlacedBets(null, activeBet));
         const contractPrices = await activeContract.betPools(activeBet);
         marketPrices.innerHTML = ``;
