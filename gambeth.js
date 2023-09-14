@@ -464,12 +464,12 @@ async function calculateCost(newBets) {
     const payouts = outcomes.map((o, i) => ({[o]: newCost / newBets[o]}));
     return {
         payout: Object.assign({}, ...payouts),
-        cost: newCost - await activeContract.calculateCost(activeBet).then(async a => Number(a) / Number(await activeDecimals()))
+        cost: newCost - await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals())
     };
 }
 
 async function calculatePrice(result) {
-    return Number(await activeContract.resultPools(activeBet, result)) / Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / Number(await activeDecimals())));
+    return Number(await activeContract.resultPools(activeBet, result)) / Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals()));
 }
 
 async function searchBet(betId = activeBet) {
@@ -626,7 +626,7 @@ async function renderPlacedBets() {
 }
 
 async function activeDecimals() {
-    return await activeContract.tokenDecimals(await activeContract.betTokens(activeBet));
+    return await activeContract.tokenDecimals(await activeContract.betTokens(activeBet)).then(Number);
 }
 
 async function addSingleBet(order) {
@@ -719,7 +719,7 @@ async function fillOrder() {
         .filter(o => o.orderPosition !== orderPosition)
         .filter(o => orderPosition === "BUY" ? (pricePerShare >= o.pricePerShare) : (pricePerShare <= o.pricePerShare))
         .map(o => o.idx));
-    const filledOrder = await activeContract.fillOrder(await Promise.all(finalAmounts.map(async a => a / Number(await activeDecimals()))), finalAmounts.map(() => 1e6), placedBets.map(o => o.orderPosition === "BUY" ? 0n : 1n), activeBet, outcomes.map(o => o.outcome), orderIndexes);
+    const filledOrder = await activeContract.fillOrder(await Promise.all(finalAmounts.map(async a => a / await activeDecimals())), finalAmounts.map(() => 1e6), placedBets.map(o => o.orderPosition === "BUY" ? 0n : 1n), activeBet, outcomes.map(o => o.outcome), orderIndexes);
     await filledOrder.wait();
     hideMessage();
     placedBets = [];
@@ -839,7 +839,7 @@ async function renderBetPool() {
         marketPrices.innerHTML = ``;
         if (contractPrices) {
             const betChoices = await activeBetChoices();
-            const payout = async outcome => (Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / Number(await activeDecimals()))) / Number(await activeContract.resultPools(activeBet, outcome)));
+            const payout = async outcome => (Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals())) / Number(await activeContract.resultPools(activeBet, outcome)));
             const calcPrices = await Promise.all(betChoices.map(calculatePrice));
             const prices = calcPrices.map(async (p, i) => {
                 const outcome = betChoices[i];
@@ -847,7 +847,7 @@ async function renderBetPool() {
                 const odds = (Math.pow(p, 2) * 100).toFixed(2);
                 const pay = (await payout(betChoices[i])).toFixed(3);
                 const owned = await activeContract.userBets(activeBet, owner, outcome);
-                const avgPrice = await activeContract.userTransfers(activeBet, owner, outcome).then(async a => Math.round((Number(a) / Number(await activeDecimals())) / Number(owned) * 1000) / 1000);
+                const avgPrice = await activeContract.userTransfers(activeBet, owner, outcome).then(async a => Math.round((Number(a) / await activeDecimals()) / Number(owned) * 1000) / 1000);
                 return `<tr><td>${outcome}</td><td>${owned || "-"}</td><td>${odds}%</td><td>$${mktPrice}</td><td>${Number.isNaN(avgPrice) ? "-" : ("$" + avgPrice)}</td><td>$${pay}</td></tr>`
             });
             marketPrices.innerHTML = (await Promise.all(prices)).join("");
