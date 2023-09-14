@@ -18,7 +18,7 @@
 
 <body style="margin: 0">
 <div
-        style="padding: 5px; box-shadow: rgba(0, 0, 0, 0.5) 0px 3px 8px; border: 0; min-height:50px; background-color: #5d67ce; width: 100%; position: fixed; left: 0; display: flex; flex-direction: row; justify-content: space-around; align-items: center;">
+        style="padding: 5px; box-shadow: rgba(0, 0, 0, 0.5) 0px 3px 8px; border: 0; min-height:50px; background-color: #02024b; width: 100%; position: fixed; left: 0; display: flex; flex-direction: row; justify-content: space-around; align-items: center;">
     <div style="display: flex; flex-direction: row; justify-content: center; align-items: center">
         <img src="gambeth.svg" alt="Gambeth" style="width: 4vw"/>
         <div style="font-size: 250%">Gambeth</div>
@@ -41,10 +41,10 @@
                     style="visibility: hidden; border: 2px solid black; position: fixed; width: 100%; border-radius: 0; opacity: 0; top: 0; flex-direction: column; justify-content: space-around;"
                     id="message">
                 <div id="close-message"
-                     style="color: white; margin-left: auto; margin-bottom: 0.25em; align-self: flex-start"
+                     style="color: #f3f9d2; margin-left: auto; margin-bottom: 0.25em; align-self: flex-start"
                      onclick="hideMessage()">✖
                 </div>
-                <div id="inner-message" style="display: flex; align-items: center; justify-content: center; color: white"></div>
+                <div id="inner-message" style="display: flex; align-items: center; justify-content: center; color: #f3f9d2"></div>
             </button>
         </div>
         <div id="new-bet"
@@ -65,7 +65,7 @@
                     <div class="" style="border: 0; margin: 0">Query</div>
                     <label for="create-bet-schema" style="margin-top: 1em">How should the contract determine the outcome
                         of your bet?</label>
-                    <select onchange="changeBetType()" style="color: white; margin: 1rem; text-align: center"
+                    <select onchange="changeBetType()" style="color: #f3f9d2; margin: 1rem; text-align: center"
                             name="create-bet-schema" id="create-bet-schema">
                         <option value="oo" selected>Optimistic oracle decision</option>
                         <option value="bc">Bet creator's decision</option>
@@ -116,7 +116,7 @@
                     <div class="" style="border: 0; margin: 0">Commission</div>
                     <div style="display: flex; align-items: center">
                         <input id="create-bet-commission" style="font-size: 1em; margin: 0.5rem;" inputmode="decimal"/>
-                        <div class="info" style="color: white; background-color: transparent">%</div>
+                        <div class="info" style="color: #f3f9d2; background-color: transparent">%</div>
                     </div>
                     <label id="create-bet-commission-label" for="create-bet-commission">
                         Will be taken when winners collect their earnings.
@@ -127,7 +127,7 @@
                     <div class="" style="border: 0; margin: 0">Initial pool</div>
                     <div style="display: flex; align-items: center">
                         <input id="create-bet-initial-pool" inputmode="decimal" style="margin: 0.5rem;"/>
-                        <div class="info" style="color: white; background-color: transparent">USDC</div>
+                        <div class="info" style="color: #f3f9d2; background-color: transparent">USDC</div>
                     </div>
                     <label for="create-bet-initial-pool">
                         An initial pool incentivizes people to participate, but is not mandatory.
@@ -213,13 +213,13 @@
                                 <div id="place-bet-choice-container"
                                      style="display: flex; flex-direction: column; justify-content: center; align-items: center">
                                     <label style="font-size: 0.7rem" for="choose-bet-inputs">Outcome</label>
-                                    <select id="choose-bet-inputs" style="color: white" onchange="renderPlaceSingleBet()">
+                                    <select id="choose-bet-inputs" style="color: #f3f9d2" onchange="renderPlaceSingleBet()">
                                     </select>
                                 </div>
                                 <div id="place-bet-position-container"
                                      style="display: flex; flex-direction: column; justify-content: center; align-items: center">
                                     <label style="font-size: 0.7rem" for="choose-bet-position">Position</label>
-                                    <select id="choose-bet-position" style="color: white" onchange="renderPlaceSingleBet()">
+                                    <select id="choose-bet-position" style="color: #f3f9d2" onchange="renderPlaceSingleBet()">
                                         <option value="buy">Buy</option>
                                         <option value="sell">Sell</option>
                                     </select>

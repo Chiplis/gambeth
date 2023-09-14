@@ -1,6 +1,6 @@
 html {
-    background-color: #5d67ce;
-    color: white;
+    background-color: #02024b;
+    color: #f3f9d2;
 }
 
 * {
@@ -26,7 +26,7 @@ td {
 
 label {
     font-weight: bold;
-    color: white;
+    color: #f3f9d2;
     font-size: 0.85rem;
 }
 
@@ -89,43 +89,43 @@ span {
     text-decoration: none;
     text-align: center;
     font-weight: 700;
-    color: white;
+    color: #f3f9d2;
     -webkit-appearance: none;
     transition: opacity 200ms linear, visibility 200ms linear, background-color 300ms ease-in-out, box-shadow 300ms ease-in-out, color 300ms ease-in-out;
 }
 
 .search {
-    color: white;
+    color: #f3f9d2;
     border: 0;
     background-color: #ff6927;
 }
 
 .search::placeholder {
-    color: white;
+    color: #f3f9d2;
     opacity: 1;
     background-color: #ff6927;
 }
 
 .info {
-    color: white;
+    color: #f3f9d2;
     background-color: #b50fc4;
 }
 
 .info:hover {
-    color: white;
+    color: #f3f9d2;
 }
 
 .link {
     cursor: pointer;
-    background-color: #ff8f00;
+    background-color: #ff5400;
 }
 
 .details {
-    color: white;
+    color: #f3f9d2;
 }
 
 .details:hover {
-    color: white;
+    color: #f3f9d2;
     background-color: #ff6927;
 }
 
@@ -135,11 +135,11 @@ span {
 
 .btn::placeholder {
     opacity: 1;
-    color: white;
+    color: #f3f9d2;
 }
 
 .btn:hover::placeholder {
-    color: white;
+    color: #f3f9d2;
 }
 
 .error {
@@ -148,21 +148,21 @@ span {
 
 
 .close:hover, .error:hover {
-    color: white;
+    color: #f3f9d2;
 }
 
 .processing {
-    color: white;
+    color: #f3f9d2;
 }
 
 .processing:hover {
-    color: white;
+    color: #f3f9d2;
     background-color: #ff6927;
 }
 
 .success {
     background-color: lightseagreen;
-    color: white;
+    color: #f3f9d2;
 }
 
 .styled-table {
@@ -170,7 +170,7 @@ span {
     width: 100%;
     border-collapse: collapse;
     margin: 25px 0;
-    color: white;
+    color: #f3f9d2;
     font-size: 0.9rem;
     font-family: sans-serif;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
