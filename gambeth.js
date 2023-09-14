@@ -623,7 +623,7 @@ async function renderPlacedBets() {
     const newBets = {};
     placedBets.filter(p => p.orderPosition === "BUY").forEach(b => newBets[b.outcome] = (newBets[b.outcome] || 0) + Number(b.amount));
     const totalCost = await calculateCost(newBets);
-    placeBetEntries.innerHTML = placedBets.map((order, i) => `<tr style="background-color: ${order.orderPosition === "BUY" ? "#069b69" : "#ff4747"}"><td onclick="placedBets.splice(${i}, 1); renderPlacedBets()">✖</td><td>${order.orderPosition}</td><td>${order.outcome}</td><td>${order.amount}</td><td>${order.orderPosition === 'BUY' ? ('$' + totalCost.payout[order.outcome].toFixed(3)) : ''}</td><td></td></tr>`).join("");
+    placeBetEntries.innerHTML = placedBets.map((order, i) => `<tr style="background-color: ${order.orderPosition === "BUY" ? "#069b69" : "#ff4747"}"><td style="margin: 5px; display: block" onclick="placedBets.splice(${i}, 1); renderPlacedBets()">✖</td><td>${order.orderPosition}</td><td>${order.outcome}</td><td>${order.amount}</td><td>${order.orderPosition === 'BUY' ? ('$' + totalCost.payout[order.outcome].toFixed(3)) : ''}</td><td></td></tr>`).join("");
     placeBetEntries.innerHTML += totalCost ? `<tr style="background-color: #0882ee"><td></td><td></td><td></td><td><td></td><td>${totalCost.cost.toFixed(3)}</td></tr>` : "";
 }
 
