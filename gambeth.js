@@ -462,7 +462,6 @@ async function calculateCost(newBets) {
     const outcomes = await activeBetChoices();
     const pools = await Promise.all(outcomes.map(o => activeContract.resultPools(activeBet, o).then(Number)));
     outcomes.forEach((outcome, i) => newBets[outcome] = (newBets[outcome] || 0) + pools[i]);
-    console.log(newBets);
     const newCost = Math.sqrt(Object.values(newBets).map(v => Math.pow(v, 2)).reduce((a, b) => a + b));
     const payouts = outcomes.map((o, i) => ({[o]: newCost / newBets[o]}));
     return {
@@ -689,7 +688,6 @@ async function renderOrders() {
 
     const groupedOrders = (orders) => {
         const grouped = [];
-        console.log(orders);
         orders.forEach(o => {
             const {outcome, orderPosition, amount, pricePerShare} = o;
             const update = grouped.filter(g => g.orderPosition === orderPosition && g.pricePerShare === pricePerShare && g.outcome === outcome)[0];
