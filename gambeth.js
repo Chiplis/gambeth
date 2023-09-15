@@ -624,7 +624,7 @@ async function renderPlacedBets() {
     placedBets.filter(p => p.orderPosition === "BUY").forEach(b => newBets[b.outcome] = (newBets[b.outcome] || 0) + Number(b.amount));
     const totalCost = await calculateCost(newBets);
     placeBetEntries.innerHTML = placedBets.map((order, i) => `<tr style="background-color: ${order.orderPosition === "BUY" ? "#069b69" : "#ff4747"}"><td style="margin: 5px; display: block" onclick="placedBets.splice(${i}, 1); renderPlacedBets()">✖</td><td>${order.orderPosition}</td><td>${order.outcome}</td><td>${order.amount}</td><td>${order.orderPosition === 'BUY' ? ('$' + totalCost.payout[order.outcome].toFixed(3)) : ''}</td><td></td></tr>`).join("");
-    placeBetEntries.innerHTML += totalCost ? `<tr style="background-color: #0882ee"><td></td><td></td><td></td><td><td></td><td>${totalCost.cost.toFixed(3)}</td></tr>` : "";
+    placeBetEntries.innerHTML += totalCost ? `<tr style="background-color: #6f75e5"><td></td><td></td><td></td><td><td></td><td>${totalCost.cost.toFixed(3)}</td></tr>` : "";
 }
 
 async function activeDecimals() {
@@ -634,7 +634,7 @@ async function activeDecimals() {
 async function addSingleBet(order) {
     const foundOrder = placedBets.filter(o => o.orderPosition === order.orderPosition && o.outcome === order.outcome)[0];
     if (!foundOrder) {
-        placedBets.push({...order, pricePerShare: await activeDecimals()});
+        placedBets.push({...order, pricePerShare: await calculatePrice(order.outcome) * await activeDecimals()});
     } else {
         foundOrder.amount += order.amount;
     }
@@ -645,7 +645,7 @@ async function addSingleBet(order) {
 
 async function buyBet() {
     if (await activeBetKind() === "oo") {
-        await fillOrder("BUY");
+        await fillOrder();
     } else {
         await addFreeBet();
     }
