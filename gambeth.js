@@ -101,7 +101,6 @@ const newBet = document.getElementById("new-bet");
 
 const urlBet = document.getElementById("url-bet");
 const ooBet = document.getElementById("oo-bet");
-const betInnerInitialPool = document.getElementById("bet-initial-pool");
 const betInnerCommission = document.getElementById("bet-commission");
 const betInnerTotalPool = document.getElementById("bet-total-pool");
 const betQuery = document.getElementById("bet-query");
@@ -474,10 +473,9 @@ async function calculatePrice(result) {
     return Number(await activeContract.resultPools(activeBet, result)) / Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals()));
 }
 
-const totalPool = async () => {
+const allTransfers = async () => {
     const outcomes = await activeBetChoices();
-    const pools = await Promise.all(outcomes.map(o => activeContract.resultTransfers(activeBet, o)));
-    return pools.reduce((a, b) => a + b, 0n);
+    return await Promise.all(outcomes.map(o => activeContract.resultTransfers(activeBet, o)));
 }
 
 async function searchBet(betId = activeBet) {
@@ -525,7 +523,6 @@ async function searchBet(betId = activeBet) {
         betSchedule.innerHTML = schedule.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
         let outcome = await activeContract.getResult(activeBet);
         let symbol = await usdc.symbol();
-        betInnerInitialPool.innerHTML = (await tokenToNumber(initialPool)).toString() + " " + symbol;
         const innerCommission = Number(await activeContract.betCommissions(activeBet)) / Number(await activeContract.betCommissionDenominator(activeBet)) * 100;
         betInnerCommission.innerHTML = Number.parseFloat(innerCommission) + "%";
         betInnerOutcome.innerHTML = outcome || "Unresolved";
@@ -849,7 +846,22 @@ async function decideBet() {
 
 async function renderBetPool() {
     try {
-        betInnerTotalPool.innerHTML = (await tokenToNumber(await totalPool())).toString() + " " + await usdc.symbol();
+        let transfers = (await Promise.all((await allTransfers()).map(t => tokenToNumber(t))));
+        const total = transfers.map(Number).reduce((a, b) => a + b, 0);
+        transfers = transfers.map(a => a + " USDC");
+        const choices = await activeBetChoices();
+        betInnerTotalPool.innerHTML = ``;
+        betInnerTotalPool.innerHTML += `<div style="margin-bottom: 0.25rem; font-size: 0.8rem">Total</div>${total + " " + await usdc.symbol()}`;
+        betInnerTotalPool.innerHTML += choices.map((choice, i) =>
+            `<div style="margin: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center">
+                <div style="font-size: 0.8rem; margin-bottom: 0.25rem">
+                    ${choice}
+                </div>
+                <div>
+                    ${transfers[i]}
+                </div>
+            </div>`
+        ).join("");
         const placedBets = await activeContract.queryFilter(activeContract.filters.PlacedBets(null, activeBet));
         const contractPrices = await activeContract.betPools(activeBet);
         marketPrices.innerHTML = ``;
