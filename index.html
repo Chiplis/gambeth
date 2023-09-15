@@ -22,7 +22,7 @@
         style="padding: 5px; box-shadow: rgba(0, 0, 0, 0.5) 0px 3px 8px; border: 0; min-height:50px; background-color: #02024b; width: 100%; position: fixed; left: 0; display: flex; flex-direction: row; justify-content: space-around; align-items: center;">
     <div style="display: flex; flex-direction: row; justify-content: center; align-items: center">
         <img src="gambeth.svg" alt="Gambeth" style="width: 4vw"/>
-        <div style="font-size: 250%">Gambeth</div>
+        <div style="font-size: 250%; font-family: Saira; text-transform: lowercase">Gambeth</div>
     </div>
     <div style="display: flex">
         <div class="btn link create-bet" style="color:white; border: 0" onclick="createBetBtn()">
@@ -195,7 +195,7 @@
                         </thead>
                         <tbody id="market-prices"></tbody>
                     </table>
-                    <div style="max-width: 20vw">
+                    <div style="">
                         <canvas id="bet-pool"></canvas>
                     </div>
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center">
@@ -205,27 +205,20 @@
                             </label>
                             <input name="decide-bet-outcome" id="decide-bet-outcome"/>
                         </div>
-                        <div id="place-bet-data-container"
-                             style="display: flex; flex-direction: row; justify-content: center; align-items: center">
-                            <button class="btn link" id="queue-buy-order" style="opacity: 0">Add</button>
+                        <div id="place-bet-data-container" style="display: flex; flex-direction: row; justify-content: center; align-items: center">
+                            <button class="btn link" id="queue-buy-order" style="opacity: 1; cursor: pointer; display: block;">Add</button>
                             <div id="place-bet-amount-container">
                                 <label for="place-bet-amount"></label>
-                                <input name="place-bet-amount" id="place-bet-amount" oninput="renderPlaceSingleBet()"
-                                       type="number" step="0.0001" placeholder="# of Shares"/>
+                                <input name="place-bet-amount" id="place-bet-amount" oninput="renderPlaceSingleBet()" type="number" step="0.0001" placeholder="# of Shares" size="11">
                             </div>
-                            <div style="display: flex; flex-direction: column; align-items: center; height: 33%; margin: 10%; justify-content: space-around; width: 100%">
-                                <div id="place-bet-choice-container"
-                                     style="display: flex; flex-direction: column; justify-content: center; align-items: center">
+                            <div style="display: flex; flex-direction: column; align-items: center; height: 33%; margin: 10%; justify-content: flex-end; width: 100%">
+                                <div id="place-bet-choice-container" style="display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start;margin: 10%;">
                                     <label style="font-size: 0.7rem" for="choose-bet-inputs">Outcome</label>
-                                    <select id="choose-bet-inputs" style="color: #f3f9d2"
-                                            onchange="renderPlaceSingleBet()">
-                                    </select>
+                                    <select id="choose-bet-inputs" style="color: rgb(243, 249, 210); display: block;" onchange="renderPlaceSingleBet()"><option value="Sergio Massa">Sergio Massa</option><option value="Patricia Bullrich">Patricia Bullrich</option><option value="Javier Milei">Javier Milei</option></select>
                                 </div>
-                                <div id="place-bet-position-container"
-                                     style="display: flex; flex-direction: column; justify-content: center; align-items: center">
+                                <div id="place-bet-position-container" style="display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start;width: 100%;">
                                     <label style="font-size: 0.7rem" for="choose-bet-position">Position</label>
-                                    <select id="choose-bet-position" style="color: #f3f9d2"
-                                            onchange="renderPlaceSingleBet()">
+                                    <select id="choose-bet-position" style="color: #f3f9d2" onchange="renderPlaceSingleBet()">
                                         <option value="buy">Buy</option>
                                         <option value="sell">Sell</option>
                                     </select>
