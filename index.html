@@ -207,6 +207,7 @@
                         </div>
                         <div id="place-bet-data-container"
                              style="display: flex; flex-direction: row; justify-content: center; align-items: center">
+                            <button class="btn link" id="queue-buy-order" style="opacity: 0">Add</button>
                             <div id="place-bet-amount-container">
                                 <label for="place-bet-amount"></label>
                                 <input name="place-bet-amount" id="place-bet-amount" oninput="renderPlaceSingleBet()"
@@ -238,9 +239,6 @@
                                        oninput="renderPlaceSingleBet()" placeholder="Expected outcome"/>
                             </div>
                             <button class="btn link" id="claim-bet" onclick="claimReward()"></button>
-                            <button class="btn link" id="queue-buy-order" style="opacity: 0">
-                                +
-                            </button>
                         </div>
                     </div>
                 </div>
