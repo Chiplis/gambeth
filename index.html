@@ -12,7 +12,8 @@
     <link rel=“shortcut icon” href="/favicon.ico" type=“image/x-icon”>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather+Sans&family=Saira:wght@100;500&family=Poppins&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather+Sans&family=Saira:wght@100;500&family=Poppins&display=swap"
+          rel="stylesheet">
     <link rel=“icon” href="/favicon.ico" type=“image/x-icon”>
 </head>
 
@@ -44,7 +45,8 @@
                      style="color: #f3f9d2; margin-left: auto; margin-bottom: 0.25em; align-self: flex-start"
                      onclick="hideMessage()">✖
                 </div>
-                <div id="inner-message" style="display: flex; align-items: center; justify-content: center; color: #f3f9d2"></div>
+                <div id="inner-message"
+                     style="display: flex; align-items: center; justify-content: center; color: #f3f9d2"></div>
             </button>
         </div>
         <div id="new-bet"
@@ -203,7 +205,8 @@
                             </label>
                             <input name="decide-bet-outcome" id="decide-bet-outcome"/>
                         </div>
-                        <div id="place-bet-data-container" style="display: flex; flex-direction: row; justify-content: center; align-items: center">
+                        <div id="place-bet-data-container"
+                             style="display: flex; flex-direction: row; justify-content: center; align-items: center">
                             <div id="place-bet-amount-container">
                                 <label for="place-bet-amount"></label>
                                 <input name="place-bet-amount" id="place-bet-amount" oninput="renderPlaceSingleBet()"
@@ -213,13 +216,15 @@
                                 <div id="place-bet-choice-container"
                                      style="display: flex; flex-direction: column; justify-content: center; align-items: center">
                                     <label style="font-size: 0.7rem" for="choose-bet-inputs">Outcome</label>
-                                    <select id="choose-bet-inputs" style="color: #f3f9d2" onchange="renderPlaceSingleBet()">
+                                    <select id="choose-bet-inputs" style="color: #f3f9d2"
+                                            onchange="renderPlaceSingleBet()">
                                     </select>
                                 </div>
                                 <div id="place-bet-position-container"
                                      style="display: flex; flex-direction: column; justify-content: center; align-items: center">
                                     <label style="font-size: 0.7rem" for="choose-bet-position">Position</label>
-                                    <select id="choose-bet-position" style="color: #f3f9d2" onchange="renderPlaceSingleBet()">
+                                    <select id="choose-bet-position" style="color: #f3f9d2"
+                                            onchange="renderPlaceSingleBet()">
                                         <option value="buy">Buy</option>
                                         <option value="sell">Sell</option>
                                     </select>
@@ -430,13 +435,19 @@
             </div>
             <div>
                 <h3>How do I place a bet?</h3>
-                <p>
-                    Simply search for the ID of the bet you want to participate in (check the bet's info to make
-                    sure everything looks good), write down your outcome and the amount you're betting, and click the
-                    "Bet" button.
-                    If you want to bet on more than one outcome, you can click on the "+" button to pack your
-                    bets into a single transaction, saving you time and money.
-                </p>
+                <ul>
+                    <li>
+                        Search for the ID of the bet you want to participate in (check the bet's info to make
+                        sure everything looks good).
+                    </li>
+                    <li>
+                        Choose your predicted outcome and how many shares you'd like to buy, then click the "+" button
+                        to add your pending order.
+                    </li>
+                    <li>
+                        Once all your placed orders are ready, click the "Place orders" button and approve the transaction!
+                    </li>
+                </ul>
             </div>
             <div id="what-happens-if-i-win">
                 <h3>What happens if I win?</h3>
@@ -455,7 +466,8 @@
             <div id="create-bet-info">
                 <h3>How do I create a bet?</h3>
                 <p>
-                    Click the "Create Market" button and you'll be presented with all the information you need to complete
+                    Click the "Create Market" button and you'll be presented with all the information you need to
+                    complete
                     when creating a market.
                     If you'd like to get people interested in your market, a great way to do so is setting up an initial
                     pool!
