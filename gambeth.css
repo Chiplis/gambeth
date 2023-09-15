@@ -97,13 +97,12 @@ span {
 .search {
     color: #f3f9d2;
     border: 0;
-    background-color: #ff6927;
+    background-color: #6f75e5;
 }
 
 .search::placeholder {
     color: #f3f9d2;
     opacity: 1;
-    background-color: #ff6927;
 }
 
 .info {
