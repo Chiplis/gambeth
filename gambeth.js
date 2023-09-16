@@ -82,6 +82,9 @@ const createBetCommission = document.getElementById("create-bet-commission");
 const createBetChoices = document.getElementById("create-bet-choices");
 const createBetChoice = document.getElementById("create-bet-choice");
 
+const createBetOdds = document.getElementById("create-bet-odds");
+const createBetOddsList = document.getElementById("create-bet-odds-list");
+
 const placeBetInfo = document.getElementById("place-bet-info");
 const placeBetEntries = document.getElementById("place-bet-entries");
 const betUrl = document.getElementById("bet-url");
@@ -209,7 +212,7 @@ function triggerProcessing(msg, after = defaultMessageLocation) {
     innerMessage.innerHTML = msg + `<div style='transform: scale(0.5)' class='lds-dual-ring'></div>`;
 }
 
-const ooContractAddress = "0xf126dAa671c771A6694A5264C9A033A9D415A21C";
+const ooContractAddress = "0xEF9760aCC40283B47AeF234783938c9468853317";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
@@ -564,24 +567,27 @@ async function createBet() {
         let exponent = commission.includes(".") ? commission.length - commission.indexOf(".") : 0;
         commission = commission.replace(".", "");
         let commissionDenominator = exponent ? Math.pow(10, exponent - 1) : 100;
-
+        const odds = Array.from(createBetOdds.getElementsByTagName("input")).map(e => Number(e.value || 0));
         if (!window.ethereum) {
-            triggerError("No Ethereum provider detected", createBetQuery, () => window.location.href = "https://metamask.io/");
+            triggerError("No Ethereum provider detected", undefined, () => window.location.href = "https://metamask.io/");
             return;
         } else if (!betId.value.trim()) {
-            triggerError("No bet ID submitted", createBetQuery, () => renderCreationStep(0));
+            triggerError("No bet ID submitted", undefined, () => renderCreationStep(0));
             return;
         } else if (!deadline || !schedule) {
-            triggerError("Need to specify both deadline and scheduled execution", createBetQuery, () => renderCreationStep(6));
+            triggerError("Need to specify both deadline and scheduled execution", undefined, () => renderCreationStep(7));
             return;
         } else if (deadline > schedule) {
-            triggerError("Bet's deadline to enter can't be set after scheduled time to run", createBetQuery, () => renderCreationStep(6));
+            triggerError("Bet's deadline to enter can't be set after scheduled time to run", undefined, () => renderCreationStep(7));
             return;
         } else if (deadline < Date.parse(new Date()) / 1000) {
-            triggerError("Bet's deadline to enter needs to be a future date", createBetQuery, () => renderCreationStep(6));
+            triggerError("Bet's deadline to enter needs to be a future date", undefined, () => renderCreationStep(7));
+            return;
+        } else if (odds.reduce((a, b) => a + b, 0) !== 100) {
+            triggerError("Outcome odds must add up to 100", undefined, () => renderCreationStep(3));
             return;
         } else if (isNaN(Number.parseFloat(commission)) || commission > 50) {
-            triggerError("Commission should be a number between 0 and 50", createBetQuery, () => renderCreationStep(2));
+            triggerError("Commission should be a number between 0 and 50", undefined, () => renderCreationStep(4));
             return;
         } else if (await activeContract.createdBets(betId.value)) {
             triggerError("Bet ID already exists", undefined, () => renderCreationStep(0));
@@ -603,7 +609,7 @@ async function createBet() {
                 await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, query);
                 break;
             case "oo":
-                await (await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, [...new Set(outcomes)], query)).wait();
+                await (await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, [...new Set(outcomes)], odds, query)).wait();
                 break;
         }
     } catch (error) {
@@ -770,6 +776,8 @@ async function addBetChoice() {
         createdBetChoices.push(createBetChoice.value);
     }
     createBetChoicesList.innerHTML = createdBetChoices.map(v => `<li>${v}</li>`).join("");
+    createBetOdds.innerHTML = createdBetChoices.map(v => `<div><input style="width: 3rem; height: 1rem; margin: 1rem; placeholder="${v}">%</div>`).join("");
+    createBetOddsList.innerHTML = createdBetChoices.map(v => `<li style="display: flex; justify-content: flex-start; margin: 1rem; width: 100%">${v}</li>`).join("");
     createBetChoice.value = "";
 }
 
