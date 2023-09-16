@@ -781,8 +781,6 @@ async function addBetChoice() {
     createBetChoice.value = "";
 }
 
-changeBetType();
-
 async function changeBetType() {
 
     const betType = createBetSchema.value;
