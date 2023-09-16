@@ -227,7 +227,9 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
         for (uint i = 0; i < results.length; i++) {
             resultPools[betId][results[i]] += (initialPool / tokenDecimals[address(betTokens[betId])]) / results.length;
+            userBets[betId][sender][results[i]] += (initialPool / tokenDecimals[address(betTokens[betId])]) / results.length;
             resultTransfers[betId][results[i]] += initialPool / results.length;
+            userTransfers[betId][sender][results[i]] += int(initialPool / results.length);
         }
 
         // Bet creation should succeed from this point onward
