@@ -54,7 +54,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         require(betSchedules[betId] <= block.timestamp, "Bet still not scheduled to run");
         betRequestTimes[betId] = block.timestamp; // Set the request time to the current block time.
         IERC20 bondCurrency = betTokens[betId];
-        uint256 reward = tokenFees[address(betTokens[betId])]; // Set the reward to 0 (so we dont have to fund it from this contract).
+        uint256 reward = tokenFees[address(betTokens[betId])];
 
         // Now, make the price request to the Optimistic oracle and set the liveness to 30 so it will settle quickly.
         oo.requestPrice(PRICE_ID, betRequestTimes[betId], bytes(query), bondCurrency, reward);
