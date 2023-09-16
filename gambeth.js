@@ -126,7 +126,7 @@ const createBetBtn = async () => {
     newBet.hideBet = betContainer.style.display === 'none';
     betContainer.style.display = 'none';
     newBet.style.display = 'flex';
-    newBet.scrollIntoViewIfNeeded();
+    window.scrollTo({ top: 0, behavior: "smooth" })
     createBetSchema.selectedIndex = 0;
     [betContainer.style.display, newBet.style.display] = ['none', 'flex'];
     steps[currentStep].style.position = "initial";
@@ -177,21 +177,15 @@ function hideMessage() {
 }
 
 function triggerMessage(msg, add, remove, after = defaultMessageLocation, click, showClose = true) {
-    message.style.visibility = "visible";
     after.append(message);
-    message.onmouseover = undefined;
-    message.onclick = undefined;
-    message.ontouchstart = undefined;
     message.classList.add(add);
     remove.forEach((r) => message.classList.remove(r));
     closeMessage.style.display = showClose ? "block" : "none";
-    message.style.cursor = "default";
+    message.style.visibility = "visible";
+    message.style.cursor = click ? "pointer" : "default";
     message.style.display = "flex";
     message.style.opacity = "100%";
-    innerMessage.style.cursor = click ? "pointer" : "default";
-    innerMessage.onclick = click;
     innerMessage.innerHTML = msg;
-    message.scrollIntoViewIfNeeded();
 }
 
 function triggerError(msg, after = defaultMessageLocation, click) {
