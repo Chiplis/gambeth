@@ -701,7 +701,7 @@ async function fillOrder() {
         const userBet = await activeContract.userBets(activeBet, owner, order.outcome);
         const orderAmount = BigInt(order.amount);
         if (order.orderPosition === "SELL" && pendingSells + orderAmount > userBet) {
-            triggerError("Insufficient owned shares to perform sell order.")
+            triggerError(`You don't have enough '${order.outcome}' shares to place sell order`)
             return;
         }
     }
