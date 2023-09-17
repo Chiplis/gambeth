@@ -194,7 +194,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
     function createBet(BetKind kind, address sender, address token, string calldata betId, uint256 commissionDenominator, uint256 commission, uint64 deadline, uint64 schedule, uint256 initialPool, string calldata query, string[] calldata results) public {
         require(approvedTokens[token] && !createdBets[betId], "Unapproved token for creating bets");
         require(commissionDenominator > 0, "Invalid commission denominator");
-        bool success = IERC20(token).transferFrom(sender, address(this), initialPool);
+        bool success = IERC20(token).safeTransferFrom(sender, address(this), initialPool);
         require(success, "Not enough balance for initial pool");
 
         // Nothing fancy going on here, just boring old state updates
@@ -276,7 +276,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             total += transfer;
         }
 
-        bool success = token.transferFrom(sender, address(this), total);
+        bool success = token.safeTransferFrom(sender, address(this), total);
 
         require(success, "Error transferring funds to contract while placing bet.");
 
@@ -288,7 +288,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         uint256 pending = pendingBuys[betId][sender];
         if (pending != 0) {
             pendingBuys[betId][sender] = 0;
-            betTokens[betId].transfer(sender, pending);
+            betTokens[betId].safeTransfer(sender, pending);
         }
         // Did the user bet on the correct result?
         uint256 userBet = userBets[betId][sender][result];
@@ -313,9 +313,9 @@ contract GambethOptimisticOracle is OptimisticRequester {
         uint256 ownerFee = (reward / betCommissionDenominator[betId]) * betCommissions[betId];
         reward -= ownerFee;
         IERC20 token = betTokens[betId];
-        bool success = token.transfer(sender, reward);
+        bool success = token.safeTransfer(sender, reward);
         require(success, "Failed to transfer reward to user.");
-        success = token.transfer(betOwners[betId], ownerFee);
+        success = token.safeTransfer(betOwners[betId], ownerFee);
         require(success, "Failed to transfer commission to bet owner.");
     }
 
@@ -344,7 +344,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         if (order.orderPosition == OrderPosition.BUY) {
             uint transferAmount = (order.amount * order.ratioNumerator) / order.ratioDenominator;
             pendingBuys[betId][sender] += transferAmount;
-            betTokens[betId].transferFrom(sender, address(this), transferAmount);
+            betTokens[betId].safeTransferFrom(sender, address(this), transferAmount);
         } else if (order.orderPosition == OrderPosition.SELL) {
             pendingSells[betId][sender][order.result] += order.amount;
             require(pendingSells[betId][sender][order.result] <= userBets[betId][sender][order.result], "Exceeded valid sell amount when adding order");
@@ -365,9 +365,9 @@ contract GambethOptimisticOracle is OptimisticRequester {
                 pendingBuys[betId][sender] -= previousAmount;
                 pendingBuys[betId][sender] += newAmount;
                 if (newAmount > previousAmount) {
-                    success = betTokens[betId].transferFrom(sender, address(this), newAmount - previousAmount);
+                    success = betTokens[betId].safeTransferFrom(sender, address(this), newAmount - previousAmount);
                 } else if (newAmount < previousAmount) {
-                    success = betTokens[betId].transfer(sender, previousAmount - newAmount);
+                    success = betTokens[betId].safeTransfer(sender, previousAmount - newAmount);
                 }
                 require(success, "Failed token transfer after updating amounts");
             } else if (order.orderPosition == OrderPosition.SELL) {
@@ -456,7 +456,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
                 if (orderPosition == OrderPosition.BUY) {
                     require(pendingSells[betId][seller][result] >= shareAmount, "Seller does not have enough shares to complete buy order");
                     require(
-                        betTokens[betId].transferFrom(buyer, address(this), transferAmount),
+                        betTokens[betId].safeTransferFrom(buyer, address(this), transferAmount),
                         "Error while transferring tokens from buyer for matching order"
                     );
                     pendingSells[betId][seller][result] -= shareAmount;
@@ -466,7 +466,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
                 }
 
                 require(
-                    betTokens[betId].transfer(seller, transferAmount),
+                    betTokens[betId].safeTransfer(seller, transferAmount),
                     "Error while transferring tokens for matching order"
                 );
             }
