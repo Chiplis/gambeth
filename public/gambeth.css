@@ -123,11 +123,6 @@ span {
     color: #f3f9d2;
 }
 
-.details:hover {
-    color: #f3f9d2;
-    background-color: #ff6927;
-}
-
 .btn:disabled:hover {
     cursor: default;
 }
@@ -156,11 +151,10 @@ span {
 
 .processing:hover {
     color: #f3f9d2;
-    background-color: #ff6927;
 }
 
 .success {
-    background-color: lightseagreen;
+    background-color: #2dd23b;
     color: #f3f9d2;
 }
 
@@ -248,7 +242,6 @@ select {
     margin: 8px;
     border-radius: 50%;
     border: 6px solid #fff;
-    border-color: #fff transparent #fff transparent;
     animation: lds-dual-ring 1.2s linear infinite;
 }
 @keyframes lds-dual-ring {
