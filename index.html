@@ -250,104 +250,105 @@
                     </div>
                 </div>
             </div>
-            <div id="bet-pool-container" style="justify-content: space-around; width: 100%; display: flex; margin: 1%">
-                <div class="msg details" id="oo-bet"
-                     style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
+            <div id="bet-pool-container" style="justify-content: space-around; width: 90%; display: flex;">
+                <div class="msg details" id="oo-bet" style="display: flex; width: 50%; justify-content: center; align-items: center; flex-direction: column;">
                     <div style="margin-bottom: 0.25rem; font-size: 0.8rem">Terms</div>
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 0; border-radius: 0">
                         <div id="bet-oo-query"></div>
                     </div>
-                    <div id="bet-outcome"
-                         style="margin-top: 1rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
-                        <div style="font-size: 0.8rem; margin-bottom: 0.25rem;">
-                            Outcome
+                    <div class="msg details" style="display: flex; width: 100%; justify-content: space-around">
+                        <div
+                                style="display: flex; flex-direction: column; justify-content: center; border: 0; border-radius: 0">
+                            <div style="font-size: 0.8rem; margin-bottom: 0.25rem;">
+                                Schedule
+                            </div>
+                            <div id="bet-schedule"></div>
                         </div>
-                        <div id="bet-inner-outcome"></div>
+                        <div style="display: flex; flex-direction: column; border: 0; border-radius: 0">
+                            <div style="font-size: 0.8rem; margin-bottom: 0.25rem;">
+                                Lockout
+                            </div>
+                            <div id="bet-deadline"></div>
+                        </div>
                     </div>
-                    <div style="margin-top: 1rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
-                        <div style="font-size: 0.8rem; margin-bottom: 0.25rem;">
-                            Commission
+                    <div class="details" style="display: flex; justify-content: space-around; width: 100%">
+                        <div id="bet-outcome"
+                             style="display: flex; flex-direction: column; border: 0; border-radius: 0">
+                            <div style="font-size: 0.8rem; margin-bottom: 0.25rem;">
+                                Outcome
+                            </div>
+                            <div id="bet-inner-outcome"></div>
                         </div>
-                        <div id="bet-commission"></div>
+                        <div style="display: flex; flex-direction: column; border: 0; border-radius: 0">
+                            <div style="font-size: 0.8rem; margin-bottom: 0.25rem;">
+                                Commission
+                            </div>
+                            <div id="bet-commission"></div>
+                        </div>
                     </div>
                 </div>
-                <div class="msg details" style="flex-direction: column;">
-                    <div style="font-size: 0.9rem">Timeline (UTC)</div>
-                    <div
-                            style="margin-top: 1rem; display: flex; flex-direction: column; align-items: space-around; justify-content: center; border: 0; border-radius: 0">
-                        <div style="font-size: 0.8rem; margin-bottom: 0.25rem;">
-                            Schedule
+                <div style="display: flex; width: 50%; flex-direction: column">
+                    <div style="margin-bottom: 3rem">
+                        <div style="display: flex; justify-content: center">Open orders</div>
+                        <div style="display: flex; justify-content: center; align-items: flex-start">
+                            <table style="width: 100%; background-color: #ff4747" id="user-sell-orders">
+                                <thead>
+                                <tr>
+                                    <th colspan="3" style="text-align: center;">Sells</th>
+                                </tr>
+                                <tr>
+                                    <th>Outcome</th>
+                                    <th>#</th>
+                                    <th>$</th>
+                                </tr>
+                                </thead>
+                                <tbody id="user-sell-orders-entries"></tbody>
+                            </table>
+                            <table style="width: 100%; background-color: #069b69" id="user-buy-orders">
+                                <thead>
+                                <tr>
+                                    <th colspan="3" style="text-align: center;">Buys</th>
+                                </tr>
+                                <tr>
+                                    <th>Outcome</th>
+                                    <th>#</th>
+                                    <th>$</th>
+                                </tr>
+                                </thead>
+                                <tbody id="user-buy-orders-entries"></tbody>
+                            </table>
                         </div>
-                        <div id="bet-schedule"></div>
                     </div>
-                    <div
-                            style="margin-top: 1rem; display: flex; flex-direction: column; border: 0; border-radius: 0">
-                        <div style="font-size: 0.8rem; margin-bottom: 0.25rem;">
-                            Lockout
+                    <div>
+                        <div style="display: flex; justify-content: center">Order book</div>
+                        <div style="display: flex; justify-content: center; align-items: flex-start">
+                            <table style="width: 100%; background-color: #ff4747" id="pool-sell-orders">
+                                <thead>
+                                <tr>
+                                    <th colspan="3" style="text-align: center;">Sells</th>
+                                </tr>
+                                <tr>
+                                    <th>Outcome</th>
+                                    <th>#</th>
+                                    <th>$</th>
+                                </tr>
+                                </thead>
+                                <tbody id="pool-sell-orders-entries"></tbody>
+                            </table>
+                            <table style="width: 100%; background-color: #069b69" id="pool-buy-orders">
+                                <thead>
+                                <tr>
+                                    <th colspan="3" style="text-align: center;">Buys</th>
+                                </tr>
+                                <tr>
+                                    <th>Outcome</th>
+                                    <th>#</th>
+                                    <th>$</th>
+                                </tr>
+                                </thead>
+                                <tbody id="pool-buy-orders-entries"></tbody>
+                            </table>
                         </div>
-                        <div id="bet-deadline"></div>
-                    </div>
-                </div>
-                <div id="user-orders" style="width: 100%">
-                    <div style="display: flex; justify-content: center">Open orders</div>
-                    <div style="display: flex; justify-content: center; align-items: flex-start">
-                        <table style="width: 33%; background-color: #ff4747" id="user-sell-orders">
-                            <thead>
-                            <tr>
-                                <th colspan="3" style="text-align: center;">Sells</th>
-                            </tr>
-                            <tr>
-                                <th>Outcome</th>
-                                <th>#</th>
-                                <th>$</th>
-                            </tr>
-                            </thead>
-                            <tbody id="user-sell-orders-entries"></tbody>
-                        </table>
-                        <table style="width: 33%; background-color: #069b69" id="user-buy-orders">
-                            <thead>
-                            <tr>
-                                <th colspan="3" style="text-align: center;">Buys</th>
-                            </tr>
-                            <tr>
-                                <th>Outcome</th>
-                                <th>#</th>
-                                <th>$</th>
-                            </tr>
-                            </thead>
-                            <tbody id="user-buy-orders-entries"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div style="width: 100%">
-                    <div style="display: flex; justify-content: center">Order book</div>
-                    <div style="display: flex; justify-content: center; align-items: flex-start">
-                        <table style="width: 33%; background-color: #ff4747" id="pool-sell-orders">
-                            <thead>
-                            <tr>
-                                <th colspan="3" style="text-align: center;">Sells</th>
-                            </tr>
-                            <tr>
-                                <th>Outcome</th>
-                                <th>#</th>
-                                <th>$</th>
-                            </tr>
-                            </thead>
-                            <tbody id="pool-sell-orders-entries"></tbody>
-                        </table>
-                        <table style="width: 33%; background-color: #069b69" id="pool-buy-orders">
-                            <thead>
-                            <tr>
-                                <th colspan="3" style="text-align: center;">Buys</th>
-                            </tr>
-                            <tr>
-                                <th>Outcome</th>
-                                <th>#</th>
-                                <th>$</th>
-                            </tr>
-                            </thead>
-                            <tbody id="pool-buy-orders-entries"></tbody>
-                        </table>
                     </div>
                 </div>
             </div>
