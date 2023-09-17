@@ -89,7 +89,6 @@ const newBet = document.getElementById("new-bet");
 const urlBet = document.getElementById("url-bet");
 const ooBet = document.getElementById("oo-bet");
 const betInnerCommission = document.getElementById("bet-commission");
-const betInnerTotalPool = document.getElementById("bet-total-pool");
 const betQuery = document.getElementById("bet-query");
 const betOoQuery = document.getElementById("bet-oo-query");
 const betInnerOutcome = document.getElementById("bet-inner-outcome");
@@ -835,18 +834,6 @@ async function renderBetPool() {
         const total = transfers.map(Number).reduce((a, b) => a + b, 0);
         transfers = transfers.map(a => a + " USDC");
         const choices = await activeBetChoices();
-        betInnerTotalPool.innerHTML = ``;
-        betInnerTotalPool.innerHTML += `<div style="margin-bottom: 0.25rem; font-size: 0.8rem">Total</div>${total + " " + await usdc.symbol()}`;
-        betInnerTotalPool.innerHTML += choices.map((choice, i) =>
-            `<div style="margin: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center">
-                <div style="font-size: 0.8rem; margin-bottom: 0.25rem">
-                    ${choice}
-                </div>
-                <div>
-                    ${transfers[i]}
-                </div>
-            </div>`
-        ).join("");
         const placedBets = await activeContract.queryFilter(activeContract.filters.PlacedBets(null, activeBet));
         const contractPrices = await activeContract.betPools(activeBet);
         marketPrices.innerHTML = ``;
