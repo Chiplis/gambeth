@@ -4,8 +4,7 @@ let betChart = null;
 
 const numberToToken = async n => {
     if (!activeBet) return BigInt(n);
-    const betToken = await activeContract.betTokens(activeBet);
-    let d = await activeContract.tokenDecimals(BigInt(betToken));
+    let d = await activeContract.tokenDecimals(await activeContract.betTokens(activeBet));
     return BigInt(n) * BigInt(d);
 }
 
