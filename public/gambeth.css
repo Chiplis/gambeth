@@ -65,11 +65,6 @@ span {
     transition: width 200ms linear, background-color 300ms ease-in-out, box-shadow 300ms ease-in-out, color 300ms ease-in-out;
 }
 
-.msg:hover {
-    color: #fff;
-    outline: 0;
-}
-
 @font-face {
     font-family: Telegraf;
     src: url("PPTelegraf-Regular.otf") format("opentype");
