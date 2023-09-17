@@ -109,7 +109,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         _;
     }
 
-    function placeBets(string calldata betId, string[] calldata results, uint256[] calldata amounts) virtual public {
+    function placeBets(string calldata betId, string[] calldata results, uint256[] memory amounts) virtual public {
         _placeBets(betId, msg.sender, results, amounts);
     }
 
