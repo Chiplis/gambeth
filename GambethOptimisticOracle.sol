@@ -214,8 +214,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
             totalRatio += ratios[i];
         }
         require(totalRatio == 100, "Share ratio should add up to 100.");
-        bool success = IERC20(token).transferFrom(sender, address(this), initialPool + tokenFees[token]);
-        require(success, "Not enough balance for initial pool");
+        bool success = IERC20(token).transferFrom(sender, address(this), tokenFees[token]);
+        require(success, "Not enough balance for oracle fees.");
 
         // Nothing fancy going on here, just boring old state updates
         betKinds[betId] = kind;
@@ -230,15 +230,14 @@ contract GambethOptimisticOracle is OptimisticRequester {
         userPools[betId][sender] = initialPool;
         betPools[betId] = initialPool;
 
-        for (uint i = 0; i < results.length; i++) {
-            resultPools[betId][results[i]] += initialPool / tokenDecimals[address(betTokens[betId])] / 100 * ratios[i];
-            userBets[betId][sender][results[i]] += initialPool / tokenDecimals[address(betTokens[betId])] / 100 * ratios[i];
-            resultTransfers[betId][results[i]] += initialPool / 100 * ratios[i];
-            userTransfers[betId][sender][results[i]] += int(initialPool / 100 * ratios[i]);
-        }
-
         // Bet creation should succeed from this point onward
         createdBets[betId] = true;
+
+        uint256[] memory shares = new uint256[](results.length);
+        for (uint i = 0; i < results.length; i++) {
+            shares[i] = initialPool / 100 * ratios[i];
+        }
+        placeBets(betId, results, shares);
 
         emit CreatedBet(betId, initialPool, query);
     }

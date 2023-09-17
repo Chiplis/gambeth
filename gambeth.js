@@ -191,7 +191,7 @@ function triggerProcessing(msg, after = defaultMessageLocation) {
     innerMessage.innerHTML = msg + `<div style='transform: scale(0.5)' class='lds-dual-ring'></div>`;
 }
 
-const ooContractAddress = "0xEF9760aCC40283B47AeF234783938c9468853317";
+const ooContractAddress = "0x24137bE8E2eB2c1341147552c3E063dD485644D8";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
@@ -574,7 +574,7 @@ async function createBet() {
         }
         activeBet = betId.value.toLowerCase().trim();
         newBetId = activeBet;
-        const initialPool = await numberToToken(createBetInitialPool.value || "0");
+        const initialPool = createBetInitialPool.value || "0";
         triggerProcessing("Creating market", createBetQueryOutcome);
         const outcomes = createdBetChoices;
         if (outcomes.length) {
