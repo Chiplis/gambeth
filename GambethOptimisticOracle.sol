@@ -303,10 +303,9 @@ contract GambethOptimisticOracle is OptimisticRequester {
     function _claimBet(string memory betId, address sender, string memory result) private {
         // Does the user have any pending buys?
         uint256 pending = pendingBuys[betId][sender];
-        if (pending != 0) {
-            pendingBuys[betId][sender] = 0;
-            betTokens[betId].transfer(sender, pending);
-        }
+        pendingBuys[betId][sender] = 0;
+        betTokens[betId].transfer(sender, pending);
+
         // Did the user bet on the correct result?
         uint256 userBet = userBets[betId][sender][result];
 

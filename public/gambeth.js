@@ -655,7 +655,7 @@ const fetchOrders = async (refresh) => {
         outcome: o[2],
         amount: o[3],
         user: o[4],
-        idx
+        idx: orderCounter + idx
     }));
     orderCounter += newOrders.length;
     betOrders[activeBet] = betOrders[activeBet].concat(newOrders.filter(o => o.amount !== 0n));
