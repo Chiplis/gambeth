@@ -304,7 +304,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         // Does the user have any pending buys?
         uint256 pending = pendingBuys[betId][sender];
         pendingBuys[betId][sender] = 0;
-        betTokens[betId].transfer(sender, pending);
+        require(betTokens[betId].transfer(sender, pending), "Failed to transfer pending buys");
 
         // Did the user bet on the correct result?
         uint256 userBet = userBets[betId][sender][result];
@@ -367,7 +367,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         if (order.orderPosition == OrderPosition.BUY) {
             uint transferAmount = order.amount * order.pricePerShare;
             pendingBuys[betId][sender] += transferAmount;
-            betTokens[betId].transferFrom(sender, address(this), transferAmount);
+            require(betTokens[betId].transferFrom(sender, address(this), transferAmount), "Failed to transfer user funds to complete buy order");
         } else if (order.orderPosition == OrderPosition.SELL) {
             pendingSells[betId][sender][order.result] += order.amount;
             require(pendingSells[betId][sender][order.result] <= userBets[betId][sender][order.result], "Exceeded valid sell amount when adding order");
