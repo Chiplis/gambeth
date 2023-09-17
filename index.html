@@ -291,19 +291,6 @@
                     <div style="margin-bottom: 3rem">
                         <div style="display: flex; justify-content: center">Your Orders</div>
                         <div style="display: flex; justify-content: center; align-items: flex-start">
-                            <table style="width: 100%; background-color: #ff4747" id="user-sell-orders">
-                                <thead>
-                                <tr>
-                                    <th colspan="3" style="text-align: center;">Asks</th>
-                                </tr>
-                                <tr>
-                                    <th>Outcome</th>
-                                    <th>#</th>
-                                    <th>$</th>
-                                </tr>
-                                </thead>
-                                <tbody id="user-sell-orders-entries"></tbody>
-                            </table>
                             <table style="width: 100%; background-color: #069b69" id="user-buy-orders">
                                 <thead>
                                 <tr>
@@ -317,12 +304,7 @@
                                 </thead>
                                 <tbody id="user-buy-orders-entries"></tbody>
                             </table>
-                        </div>
-                    </div>
-                    <div>
-                        <div style="display: flex; justify-content: center">Open Orders</div>
-                        <div style="display: flex; justify-content: center; align-items: flex-start">
-                            <table style="width: 100%; background-color: #ff4747" id="pool-sell-orders">
+                            <table style="width: 100%; background-color: #ff4747" id="user-sell-orders">
                                 <thead>
                                 <tr>
                                     <th colspan="3" style="text-align: center;">Asks</th>
@@ -333,8 +315,13 @@
                                     <th>$</th>
                                 </tr>
                                 </thead>
-                                <tbody id="pool-sell-orders-entries"></tbody>
+                                <tbody id="user-sell-orders-entries"></tbody>
                             </table>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: center">Open Orders</div>
+                        <div style="display: flex; justify-content: center; align-items: flex-start">
                             <table style="width: 100%; background-color: #069b69" id="pool-buy-orders">
                                 <thead>
                                 <tr>
@@ -347,6 +334,19 @@
                                 </tr>
                                 </thead>
                                 <tbody id="pool-buy-orders-entries"></tbody>
+                            </table>
+                            <table style="width: 100%; background-color: #ff4747" id="pool-sell-orders">
+                                <thead>
+                                <tr>
+                                    <th colspan="3" style="text-align: center;">Asks</th>
+                                </tr>
+                                <tr>
+                                    <th>Outcome</th>
+                                    <th>#</th>
+                                    <th>$</th>
+                                </tr>
+                                </thead>
+                                <tbody id="pool-sell-orders-entries"></tbody>
                             </table>
                         </div>
                     </div>
