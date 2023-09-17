@@ -3,18 +3,16 @@ let usdc;
 let betChart = null;
 
 const numberToToken = async n => {
-    if (!activeBet && !m) return BigInt(n);
+    if (!activeBet) return BigInt(n);
     const betToken = await activeContract.betTokens(activeBet);
-    let d = m || await activeContract.tokenDecimals(BigInt(betToken) ? betToken : usdcAddress);
-    if (!d) return BigInt(0);
+    let d = await activeContract.tokenDecimals(BigInt(betToken));
     return BigInt(n) * BigInt(d);
 }
 
 const tokenToNumber = async n => {
-    if (!activeBet && !m) return BigInt(n);
-    let d = m || await activeContract.tokenDecimals(await activeContract.betTokens(activeBet) || usdcAddress);
-    if (!d) return BigInt(0);
-    return (Number(n) / Number(d)).toFixed(2);
+    if (!activeBet) return BigInt(n);
+    let d = await activeContract.tokenDecimals(await activeContract.betTokens(activeBet));
+    return (Number(n) / Number(d)).toFixed(3);
 }
 
 const aboutBet = document.getElementById("about-bet");
