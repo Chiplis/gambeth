@@ -513,6 +513,7 @@ async function searchBet(betId = activeBet) {
             betContainer.style.opacity = "100%";
             betContainer.style.visibility = "visible";
         });
+        fetchOrders(true);
     } catch (error) {
         betContainer.style.display = "none";
         console.error(error);
@@ -643,6 +644,9 @@ const fetchOrders = async (refresh) => {
     orderCounter = refresh ? 0 : orderCounter;
     const contractOrders = await activeContract.getOrders(activeBet, orderCounter, 100);
     if (!contractOrders.length) {
+        if (refresh) {
+            await renderOrders();
+        }
         return;
     }
     const newOrders = contractOrders.map((o, idx) => ({
