@@ -2,7 +2,7 @@ const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
 let usdc;
 let betChart = null;
 
-const numberToToken = async (n, m) => {
+const numberToToken = async n => {
     if (!activeBet && !m) return BigInt(n);
     const betToken = await activeContract.betTokens(activeBet);
     let d = m || await activeContract.tokenDecimals(BigInt(betToken) ? betToken : usdcAddress);
@@ -10,7 +10,7 @@ const numberToToken = async (n, m) => {
     return BigInt(n) * BigInt(d);
 }
 
-const tokenToNumber = async (n, m) => {
+const tokenToNumber = async n => {
     if (!activeBet && !m) return BigInt(n);
     let d = m || await activeContract.tokenDecimals(await activeContract.betTokens(activeBet) || usdcAddress);
     if (!d) return BigInt(0);
@@ -663,7 +663,7 @@ const fetchOrders = async (refresh) => {
 }
 
 async function renderOrders() {
-    const toRow = async ({orderPosition, outcome, amount, pricePerShare}) => {
+    const toRow = async ({outcome, amount, pricePerShare}) => {
         return (`<tr></tr><td>${outcome}</td><td>${amount}</td><td>${(Number(pricePerShare) / await activeDecimals()).toFixed(3)}</td></tr>`)
     };
 
@@ -694,10 +694,10 @@ async function renderOrders() {
 setInterval(fetchOrders, 10000);
 
 async function fillOrder() {
-    const outcomes = placedBets.filter(order => order.amount > 0n);
-    const prices = placedBets.filter(order => order.amount > 0n).map(o => o.pricePerShare);
-    const amounts = await Promise.all(outcomes.map(o => o.amount).map(a => numberToToken(a)));
-    if (!outcomes.length || !amounts.length) {
+    const newOrders = placedBets.filter(order => order.amount > 0n);
+    const prices = newOrders.map(o => o.pricePerShare);
+    const amounts = await Promise.all(newOrders.map(o => o.amount).map(numberToToken));
+    if (!newOrders.length || !amounts.length) {
         triggerError("No bets have been placed, make sure outcome and amount fields are not empty.")
         return;
     }
@@ -712,7 +712,7 @@ async function fillOrder() {
         }
     }
 
-    triggerProcessing(`Placing order${outcomes.length > 1 ? "s" : ""}`);
+    triggerProcessing(`Placing order${newOrders.length > 1 ? "s" : ""}`);
     const finalAmounts = amounts.map(a => a.toString());
     const orders = betOrders[activeBet];
     const orderIndexes = placedBets.map(({orderPosition, outcome, pricePerShare}) => orders
@@ -721,7 +721,7 @@ async function fillOrder() {
         .filter(o => o.orderPosition !== orderPosition)
         .filter(o => orderPosition === "BUY" ? (pricePerShare >= o.pricePerShare) : (pricePerShare <= o.pricePerShare))
         .map(o => o.idx));
-    const filledOrder = await activeContract.fillOrder(await Promise.all(finalAmounts.map(async a => a / await activeDecimals())), prices, placedBets.map(o => o.orderPosition === "BUY" ? 0n : 1n), activeBet, outcomes.map(o => o.outcome), orderIndexes);
+    const filledOrder = await activeContract.fillOrder(await Promise.all(finalAmounts.map(async a => a / await activeDecimals())), prices, placedBets.map(o => o.orderPosition === "BUY" ? 0n : 1n), activeBet, newOrders.map(o => o.outcome), orderIndexes);
     await filledOrder.wait();
     hideMessage();
     placedBets = [];
@@ -836,7 +836,7 @@ async function decideBet() {
 
 async function renderBetPool() {
     try {
-        let transfers = (await Promise.all((await allTransfers()).map(t => tokenToNumber(t))));
+        let transfers = (await Promise.all((await allTransfers()).map(tokenToNumber)));
         const total = transfers.map(Number).reduce((a, b) => a + b, 0);
         transfers = transfers.map(a => a + " USDC");
         const choices = await activeBetChoices();
