@@ -168,6 +168,7 @@ function triggerMessage(msg, add, remove, after = defaultMessageLocation, click,
         if (click) {
             click();
             hideMessage();
+            window.scrollTo({top: 0, behavior: "smooth"});
         }
     }
     message.style.cursor = click ? "pointer" : "default";
