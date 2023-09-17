@@ -166,6 +166,7 @@ function triggerMessage(msg, add, remove, after = defaultMessageLocation, click,
     remove.forEach((r) => message.classList.remove(r));
     closeMessage.style.display = showClose ? "block" : "none";
     message.style.visibility = "visible";
+    message.onclick = click;
     message.style.cursor = click ? "pointer" : "default";
     message.style.display = "flex";
     message.style.opacity = "100%";
