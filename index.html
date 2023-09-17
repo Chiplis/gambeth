@@ -220,10 +220,12 @@
                             <input name="decide-bet-outcome" id="decide-bet-outcome"/>
                         </div>
                         <div id="place-bet-data-container" style="display: flex; flex-direction: row; justify-content: center; align-items: center">
-                            <button class="btn link" id="queue-buy-order" style="opacity: 1; cursor: pointer; display: block;">Add</button>
-                            <div id="place-bet-amount-container">
+                            <button class="btn link" id="queue-buy-order" style="margin-right: 1rem; opacity: 1; cursor: pointer; display: block;">Add</button>
+                            <div id="place-bet-amount-container" style="display: flex; flex-direction: column">
                                 <label for="place-bet-amount"></label>
                                 <input name="place-bet-amount" id="place-bet-amount" oninput="renderPlaceSingleBet()" type="number" step="0.0001" placeholder="# of Shares" size="11">
+                                <label for="place-bet-price"></label>
+                                <input style="margin-top: 1rem" name="place-bet-price" id="place-bet-price" oninput="renderPlaceSingleBet()" type="number" step="0.0001" placeholder="Price per Share" size="11">
                             </div>
                             <div style="display: flex; flex-direction: column; align-items: center; height: 33%; margin: 10%; justify-content: flex-end; width: 100%">
                                 <div id="place-bet-choice-container" style="display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start;margin: 10%;">
