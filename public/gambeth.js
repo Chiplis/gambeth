@@ -620,7 +620,7 @@ async function activeDecimals() {
 async function addSingleBet(order) {
     const foundOrder = placedBets.filter(o => o.orderPosition === order.orderPosition && o.outcome === order.outcome && o.pricePerShare === order.pricePerShare)[0];
     if (!foundOrder) {
-        placedBets.push({...order, pricePerShare: (placeBetPrice.value || await calculatePrice(order.outcome)) * await activeDecimals()});
+        placedBets.push({...order, pricePerShare: Math.floor((placeBetPrice.value || await calculatePrice(order.outcome)) * await activeDecimals())});
     } else {
         foundOrder.amount += order.amount;
     }
@@ -698,6 +698,7 @@ setInterval(fetchOrders, 10000);
 
 async function fillOrder() {
     const newOrders = placedBets.filter(order => order.amount > 0n);
+    console.log(newOrders);
     const prices = newOrders.map(o => o.pricePerShare);
     const amounts = await Promise.all(newOrders.map(o => o.amount).map(numberToToken));
     if (!newOrders.length || !amounts.length) {
@@ -716,7 +717,7 @@ async function fillOrder() {
     }
 
     triggerProcessing(`Placing order${newOrders.length > 1 ? "s" : ""}`);
-    const finalAmounts = amounts.map(a => a.toString());
+    const finalAmounts = await Promise.all(amounts.map(async a => a.toString() / await activeDecimals()));
     const orders = betOrders[activeBet];
     const orderIndexes = placedBets.map(({orderPosition, outcome, pricePerShare}) => orders
         .filter(o => o.amount)
@@ -724,7 +725,8 @@ async function fillOrder() {
         .filter(o => o.orderPosition !== orderPosition)
         .filter(o => orderPosition === "BUY" ? (pricePerShare >= o.pricePerShare) : (pricePerShare <= o.pricePerShare))
         .map(o => o.idx));
-    const filledOrder = await activeContract.fillOrder(await Promise.all(finalAmounts.map(async a => a / await activeDecimals())), prices, placedBets.map(o => o.orderPosition === "BUY" ? 0n : 1n), activeBet, newOrders.map(o => o.outcome), orderIndexes);
+    console.log(finalAmounts, prices, activeBet, newOrders.map(o => o.outcome), orderIndexes);
+    const filledOrder = await activeContract.fillOrder(finalAmounts, prices, placedBets.map(o => o.orderPosition === "BUY" ? 0n : 1n), activeBet, newOrders.map(o => o.outcome), orderIndexes);
     await filledOrder.wait();
     hideMessage();
     placedBets = [];
