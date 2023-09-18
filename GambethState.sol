@@ -352,7 +352,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         orders[betId].push(order);
     }
 
-    function changeOrder(address sender, uint[] calldata orderAmounts, uint[] calldata numerators, uint[] calldata denominators, string calldata betId, string[] calldata results, uint256[] calldata ids) public {
+    function changeOrder(address sender, uint[] calldata orderAmounts, uint[] calldata prices, uint[] calldata denominators, string calldata betId, string[] calldata results, uint256[] calldata ids) public {
         require(ids.length == orderAmounts.length && ids.length == numerators.length && ids.length == denominators.length && ids.length == results.length, "Invalid change order");
         for (uint i = 0; i < ids.length; i++) {
             Order storage order = orders[betId][i];

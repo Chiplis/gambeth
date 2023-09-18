@@ -379,7 +379,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
             if (order.orderPosition == OrderPosition.BUY) {
                 uint256 newCost = orderAmounts[i] * prices[i];
-                require(newCost > 0, "Invalid new cost");
                 uint256 previousCost = order.amount * order.pricePerShare;
                 pendingBuys[betId][sender] -= previousCost;
                 pendingBuys[betId][sender] += newCost;

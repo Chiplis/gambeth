@@ -84,6 +84,8 @@ const betQuery = document.getElementById("bet-query");
 const betOoQuery = document.getElementById("bet-oo-query");
 const betInnerOutcome = document.getElementById("bet-inner-outcome");
 
+const updateOrdersBtn = document.getElementById("update-orders");
+
 const betIdChanged = () => betIdLabel.innerHTML = betIdMsg.replace("{BET_ID}", betId.value.trim());
 
 const closeNewBet = () => {
@@ -100,7 +102,7 @@ const createBetBtn = async () => {
     newBet.hideBet = betContainer.style.display === 'none';
     betContainer.style.display = 'none';
     newBet.style.display = 'flex';
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    window.scrollTo({top: 0, behavior: "smooth"})
     createBetSchema.selectedIndex = 0;
     [betContainer.style.display, newBet.style.display] = ['none', 'flex'];
     steps[currentStep].style.position = "initial";
@@ -158,7 +160,6 @@ function triggerMessage(msg, add, remove, after = defaultMessageLocation, click,
     message.style.visibility = "visible";
     message.onclick = () => {
         if (click) {
-            console.log(click);
             click();
             hideMessage();
             window.scrollTo({top: 0, behavior: "smooth"});
@@ -187,7 +188,7 @@ function triggerProcessing(msg, after = defaultMessageLocation) {
     innerMessage.innerHTML = msg + `<div style='transform: scale(0.5)' class='lds-dual-ring'></div>`;
 }
 
-const ooContractAddress = "0x3EB4Bd59161E80f3d2833105774899d7082bc70f";
+const ooContractAddress = "0x75361CA8003A31Af31b0B96F593DcBA5BFCC384d";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
@@ -223,7 +224,6 @@ async function loadProvider({
 
         provider = new ethers.BrowserProvider(window.ethereum);
         const {chainId} = await provider.getNetwork();
-        console.log(chainId);
         if (chainId !== 5n) {
             hideMessage();
             clearTimeout();
@@ -599,7 +599,10 @@ async function activeDecimals() {
 async function addSingleBet(order) {
     const foundOrder = placedBets.filter(o => o.orderPosition === order.orderPosition && o.outcome === order.outcome && o.pricePerShare === order.pricePerShare)[0];
     if (!foundOrder) {
-        placedBets.push({...order, pricePerShare: Math.floor((placeBetPrice.value || await calculatePrice(order.outcome)) * await activeDecimals())});
+        placedBets.push({
+            ...order,
+            pricePerShare: Math.floor((placeBetPrice.value || await calculatePrice(order.outcome)) * await activeDecimals())
+        });
     } else {
         foundOrder.amount += order.amount;
     }
@@ -640,19 +643,19 @@ const fetchOrders = async (refresh) => {
         idx: orderCounter + idx
     }));
     orderCounter += newOrders.length;
-    betOrders[activeBet] = betOrders[activeBet].concat(newOrders.filter(o => o.amount !== 0n));
+    betOrders[activeBet] = betOrders[activeBet].concat(newOrders);
     await renderOrders();
 }
 
 async function renderOrders() {
-    const toRow = async ({outcome, amount, pricePerShare}) => {
-        return (`<tr></tr><td>${outcome}</td><td>${amount}</td><td>${(Number(pricePerShare) / await activeDecimals()).toFixed(3)}</td></tr>`)
+    const toRow = async ({idx, outcome, amount, pricePerShare}) => {
+        return (`<tr><td>${outcome}</td><td>${amount}</td><td>${(Number(pricePerShare) / await activeDecimals()).toFixed(3)}</td><td style="display: none">${idx}</td></tr>`)
     };
 
-    const userBuys = betOrders[activeBet].filter(b => b.user === owner).filter(o => o.orderPosition === "BUY");
-    const userSells = betOrders[activeBet].filter(b => b.user === owner).filter(o => o.orderPosition === "SELL");
-    const poolBuys = betOrders[activeBet].filter(b => b.user !== owner).filter(o => o.orderPosition === "BUY");
-    const poolSells = betOrders[activeBet].filter(b => b.user !== owner).filter(o => o.orderPosition === "SELL");
+    const userBuys = betOrders[activeBet].filter(b => b.amount > 0n && b.user === owner).filter(o => o.orderPosition === "BUY");
+    const userSells = betOrders[activeBet].filter(b => b.amount > 0n && b.user === owner).filter(o => o.orderPosition === "SELL");
+    const poolBuys = betOrders[activeBet].filter(b => b.amount > 0n && b.user !== owner).filter(o => o.orderPosition === "BUY");
+    const poolSells = betOrders[activeBet].filter(b => b.amount > 0n && b.user !== owner).filter(o => o.orderPosition === "SELL");
 
     const groupedOrders = (orders) => {
         const grouped = [];
@@ -668,9 +671,45 @@ async function renderOrders() {
         return grouped;
     }
 
-    [[userBuyOrdersEntries, userBuys], [userSellOrdersEntries, userSells], [poolBuyOrdersEntries, poolBuys], [poolSellOrdersEntries, poolSells]].map(async ([elm, orders]) => {
+    await Promise.all([[userBuyOrdersEntries, userBuys], [userSellOrdersEntries, userSells]].map(async ([elm, orders]) => {
+        elm.innerHTML = `${(await Promise.all(orders.map(toRow))).join("")}`;
+    }));
+
+    await Promise.all([[poolBuyOrdersEntries, poolBuys], [poolSellOrdersEntries, poolSells]].map(async ([elm, orders]) => {
         elm.innerHTML = `${(await Promise.all(groupedOrders(orders).map(toRow))).join("")}`;
-    })
+    }));
+
+    [userBuyOrdersEntries, userSellOrdersEntries]
+        .map(entries => Array.from(entries.getElementsByTagName("td")))
+        .forEach(tds => tds.map(elm => {
+            elm.setAttribute("contenteditable", true);
+            elm.addEventListener("input",() => updateOrdersBtn.style.display = "flex");
+        }));
+}
+
+async function updateOrders() {
+    const amounts = [];
+    const prices = [];
+    const outcomes = [];
+    const ids = [];
+
+    const decimals = await activeDecimals();
+
+    [userBuyOrdersEntries, userSellOrdersEntries]
+        .map(entries => Array.from(entries.getElementsByTagName("tr")))
+        .flatMap(rows => rows.map(row => Array.from(row.getElementsByTagName("td"))))
+        .map(([outcome, amount, price, id]) => {
+            amounts.push(amount.innerHTML);
+            prices.push(price.innerHTML * decimals);
+            outcomes.push(outcome.innerHTML);
+            ids.push(id.innerHTML);
+        });
+    const sanitizedOutcomes = outcomes.map(o => o.replaceAll("<div>", "").replaceAll("</div>", "").replaceAll("<br>", ""));
+
+    const tx = await activeContract.changeOrder(amounts, prices, activeBet, sanitizedOutcomes, ids);
+    await tx.wait();
+    await fetchOrders(true);
+    updateOrdersBtn.style.display = "none";
 }
 
 setInterval(fetchOrders, 10000);
@@ -704,19 +743,18 @@ async function fillOrder() {
         .filter(o => o.orderPosition !== orderPosition)
         .filter(o => orderPosition === "BUY" ? (pricePerShare >= o.pricePerShare) : (pricePerShare <= o.pricePerShare))
         .map(o => o.idx));
-    console.log(finalAmounts, prices, activeBet, newOrders.map(o => o.outcome), orderIndexes);
     const filledOrder = await activeContract.fillOrder(finalAmounts, prices, placedBets.map(o => o.orderPosition === "BUY" ? 0n : 1n), activeBet, newOrders.map(o => o.outcome), orderIndexes);
     await filledOrder.wait();
     hideMessage();
     placedBets = [];
     await fetchOrders(true);
-    renderPlacedBets();
+    await renderPlacedBets();
 }
 
 async function addFreeBet() {
     try {
         if (placeBetAmount.value && placeBetOutcome.value) {
-            addSingleBet({
+            await addSingleBet({
                 amount: Number(placeBetAmount.value),
                 outcome: placeBetOutcome.value || chooseBetInputs.value,
                 orderPosition: document.getElementById("choose-bet-position").value.toUpperCase()
