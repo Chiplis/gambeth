@@ -188,7 +188,7 @@ function triggerProcessing(msg, after = defaultMessageLocation) {
     innerMessage.innerHTML = msg + `<div style='transform: scale(0.5)' class='lds-dual-ring'></div>`;
 }
 
-const ooContractAddress = "0x75361CA8003A31Af31b0B96F593DcBA5BFCC384d";
+const ooContractAddress = "0x08Df0838C9f6585F91Eb777dE52fbF0f73072F48";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
@@ -705,7 +705,7 @@ async function updateOrders() {
             ids.push(id.innerHTML);
         });
     const sanitizedOutcomes = outcomes.map(o => o.replaceAll("<div>", "").replaceAll("</div>", "").replaceAll("<br>", ""));
-
+    console.log(amounts, prices, sanitizedOutcomes, ids);
     const tx = await activeContract.changeOrder(amounts, prices, activeBet, sanitizedOutcomes, ids);
     await tx.wait();
     await fetchOrders(true);

@@ -374,9 +374,9 @@ contract GambethOptimisticOracle is OptimisticRequester {
     function _changeOrder(address sender, uint[] calldata orderAmounts, uint[] calldata prices, string calldata betId, string[] calldata results, uint256[] calldata ids) private {
         require(ids.length == orderAmounts.length && ids.length == prices.length && ids.length == results.length, "Invalid change order");
         for (uint i = 0; i < ids.length; i++) {
-            Order storage order = orders[betId][i];
+            Order storage order = orders[betId][ids[i]];
             require(order.user == sender, "User did not create specified order");
-
+            require(order.amount * order.pricePerShare > 0, "Filled/deleted order cannot be modified");
             if (order.orderPosition == OrderPosition.BUY) {
                 uint256 newCost = orderAmounts[i] * prices[i];
                 uint256 previousCost = order.amount * order.pricePerShare;
