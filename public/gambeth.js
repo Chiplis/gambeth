@@ -34,13 +34,9 @@ const placeBetPrice = document.getElementById("place-bet-price");
 const createBetSchema = document.getElementById("create-bet-schema");
 const createBetOo = document.getElementById("create-bet-oo");
 const createBetPath = document.getElementById("create-bet-path");
-const betEntries = document.getElementById("bet-entries");
 const marketPrices = document.getElementById("market-prices");
 
 const betPool = document.getElementById("bet-pool");
-const userPool = document.getElementById("user-pool");
-const ordersPool = document.getElementById("orders-pool");
-const openOrders = document.getElementById("open-orders");
 
 const userBuyOrdersEntries = document.getElementById("user-buy-orders-entries");
 const userSellOrdersEntries = document.getElementById("user-sell-orders-entries");
@@ -48,12 +44,10 @@ const poolBuyOrdersEntries = document.getElementById("pool-buy-orders-entries");
 const poolSellOrdersEntries = document.getElementById("pool-sell-orders-entries");
 
 const searchBetId = document.getElementById("search-bet");
-const poolName = document.getElementById("pool-name");
 const message = document.getElementById("message");
 const betContainer = document.getElementById("bet-container");
 const createBetChoicesList = document.getElementById("create-bet-choices-list");
 const queueBuyOrder = document.getElementById("queue-buy-order");
-const queueSellOrder = document.getElementById("queue-sell-order");
 
 const placeBetDataContainer = document.getElementById("place-bet-data-container");
 const placeBetChoiceContainer = document.getElementById("place-bet-choice-container");
@@ -72,7 +66,6 @@ const placeBetEntries = document.getElementById("place-bet-entries");
 const betUrl = document.getElementById("bet-url");
 const betDeadline = document.getElementById("bet-deadline");
 const betSchedule = document.getElementById("bet-schedule");
-const betInfo = document.getElementById("bet-info");
 const urlSchema = document.getElementById("bet-schema");
 const schemaPath = document.getElementById("bet-path");
 const defaultMessageLocation = document.getElementById("default-message-location");
@@ -190,7 +183,6 @@ function triggerSuccess(msg, callback, after = defaultMessageLocation, delay = 0
 
 function triggerProcessing(msg, after = defaultMessageLocation) {
     triggerMessage(msg, "info", ["error", "success"], after, null, false);
-    let i = 0;
     innerMessage.innerHTML = msg + `<div style='transform: scale(0.5)' class='lds-dual-ring'></div>`;
 }
 
@@ -221,7 +213,8 @@ async function loadProvider({
         if (window.ethereum) {
             await window.ethereum.request({method: "eth_requestAccounts"});
         } else {
-            clearTimeout(hideMessage());
+            hideMessage();
+            clearTimeout();
             triggerError("No Ethereum provider detected, click to install MetaMask", undefined, () => window.location.href = "https://metamask.io/");
             providerLoaded = false;
             return false;
@@ -229,7 +222,7 @@ async function loadProvider({
 
         provider = new ethers.BrowserProvider(window.ethereum);
         const {chainId} = await provider.getNetwork();
-        if (chainId != 5) {
+        if (chainId !== 5) {
             hideMessage();
             clearTimeout();
             triggerError("Please switch to Goerli tesnet", undefined, loadChain);
@@ -428,17 +421,6 @@ async function renderPlaceBet() {
 
 }
 
-async function calculateShares({outcome, cost}) {
-    const currentCost = await activeContract.calculateCost(activeBet);
-    const outcomes = await activeBetChoices();
-    const pool = await activeContract.resultPools(activeBet, outcome);
-    let restPools = await Promise.all(outcomes.filter(r => r !== outcome).map(r => activeContract.resultPools(activeBet, r)));
-    restPools = restPools.map(a => a * a).reduce((a, b) => a + b, 0n);
-    const prices = (cost + currentCost) * (cost + currentCost);
-    const shares = Math.sqrt(Number(prices - restPools)) - Number(pool);
-    return shares;
-}
-
 async function calculateCost(newBets) {
     if (!Object.keys(newBets).length) {
         return "";
@@ -447,7 +429,7 @@ async function calculateCost(newBets) {
     const pools = await Promise.all(outcomes.map(o => activeContract.resultPools(activeBet, o).then(Number)));
     outcomes.forEach((outcome, i) => newBets[outcome] = (newBets[outcome] || 0) + pools[i]);
     const newCost = Math.sqrt(Object.values(newBets).map(v => Math.pow(v, 2)).reduce((a, b) => a + b));
-    const payouts = outcomes.map((o, i) => ({[o]: newCost / newBets[o]}));
+    const payouts = outcomes.map(o => ({[o]: newCost / newBets[o]}));
     return {
         payout: Object.assign({}, ...payouts),
         cost: newCost - await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals())
@@ -456,11 +438,6 @@ async function calculateCost(newBets) {
 
 async function calculatePrice(result) {
     return Number(await activeContract.resultPools(activeBet, result)) / Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals()));
-}
-
-const allTransfers = async () => {
-    const outcomes = await activeBetChoices();
-    return await Promise.all(outcomes.map(o => activeContract.resultTransfers(activeBet, o)));
 }
 
 async function searchBet(betId = activeBet) {
@@ -491,7 +468,7 @@ async function searchBet(betId = activeBet) {
         betContainer.style.display = "flex";
         const bets = await activeContract.queryFilter(activeContract.filters.CreatedBet(activeBet));
         const createdFilter = bets[0];
-        const [initialPool, query] = createdFilter.args.slice(1).map(arg => arg.toString());
+        const query = createdFilter.args.slice(1).map(arg => arg.toString())[1];
         const {url, schema, path} = unpackQuery(query);
 
         ooBet.style.display = schema ? "none" : "flex";
@@ -507,7 +484,6 @@ async function searchBet(betId = activeBet) {
         schedule = new Date(Number(schedule.toString()));
         betSchedule.innerHTML = schedule.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
         let outcome = await activeContract.getResult(activeBet);
-        let symbol = await usdc.symbol();
         const innerCommission = Number(await activeContract.betCommissions(activeBet)) / Number(await activeContract.betCommissionDenominator(activeBet)) * 100;
         betInnerCommission.innerHTML = Number.parseFloat(innerCommission) + "%";
         betInnerOutcome.innerHTML = outcome || "Unresolved";
@@ -540,7 +516,8 @@ const parseBetQuery = (schema, url, path) => `${schema}(${url})${schema === "htm
 async function createBet() {
     try {
         betContainer.style.display = "none";
-        clearTimeout(hideMessage());
+        hideMessage();
+        clearTimeout();
 
         const schema = createBetSchema.value;
         let query = createBetOo.value;
@@ -749,7 +726,8 @@ async function addFreeBet() {
         placeBetEntries.innerHTML = "";
     } catch (error) {
         console.error(error);
-        clearTimeout(hideMessage());
+        hideMessage();
+        clearTimeout();
         triggerError(providerErrorMsg(error));
     }
 }
@@ -841,10 +819,6 @@ async function decideBet() {
 
 async function renderBetPool() {
     try {
-        let transfers = (await Promise.all((await allTransfers()).map(tokenToNumber)));
-        const total = transfers.map(Number).reduce((a, b) => a + b, 0);
-        transfers = transfers.map(a => a + " USDC");
-        const choices = await activeBetChoices();
         const placedBets = await activeContract.queryFilter(activeContract.filters.PlacedBets(null, activeBet));
         const contractPrices = await activeContract.betPools(activeBet);
         marketPrices.innerHTML = ``;
