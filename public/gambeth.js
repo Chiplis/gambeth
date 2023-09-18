@@ -158,6 +158,7 @@ function triggerMessage(msg, add, remove, after = defaultMessageLocation, click,
     message.style.visibility = "visible";
     message.onclick = () => {
         if (click) {
+            console.log(click);
             click();
             hideMessage();
             window.scrollTo({top: 0, behavior: "smooth"});
@@ -222,7 +223,8 @@ async function loadProvider({
 
         provider = new ethers.BrowserProvider(window.ethereum);
         const {chainId} = await provider.getNetwork();
-        if (chainId !== 5) {
+        console.log(chainId);
+        if (chainId !== 5n) {
             hideMessage();
             clearTimeout();
             triggerError("Please switch to Goerli tesnet", undefined, loadChain);
