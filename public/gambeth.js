@@ -378,7 +378,7 @@ async function activeBetKind() {
     }
 }
 
-async function activeBetChoices() {
+async function activeBetOutcomes() {
     return await activeContract.getOutcomes(activeBet);
 }
 
@@ -413,7 +413,7 @@ async function renderPlaceBet() {
     if (betKind === "oo") {
         placeBetInputs.style.display = "none";
         chooseBetInputs.style.display = "block";
-        chooseBetInputs.innerHTML = (await activeBetChoices())
+        chooseBetInputs.innerHTML = (await activeBetOutcomes())
             .map(choice => `<option value="${choice}">${choice}</option>`)
             .join("");
     } else {
@@ -427,7 +427,7 @@ async function calculateCost(newBets) {
     if (!Object.keys(newBets).length) {
         return "";
     }
-    const outcomes = await activeBetChoices();
+    const outcomes = await activeBetOutcomes();
     const pools = await Promise.all(outcomes.map(o => activeContract.resultPools(activeBet, o).then(Number)));
     outcomes.forEach((outcome, i) => newBets[outcome] = (newBets[outcome] || 0) + pools[i]);
     const newCost = Math.sqrt(Object.values(newBets).map(v => Math.pow(v, 2)).reduce((a, b) => a + b));
@@ -652,6 +652,18 @@ async function renderOrders() {
         return (`<tr><td>${outcome}</td><td>${amount}</td><td>${(Number(pricePerShare) / await activeDecimals()).toFixed(3)}</td><td style="display: none">${idx}</td></tr>`)
     };
 
+    const outcomes = await activeBetOutcomes();
+
+    const toEditableRow = async ({idx, outcome, amount, pricePerShare}) => {
+        const price = (Number(pricePerShare) / await activeDecimals()).toFixed(3);
+        return (`<tr>
+                    <td><select onchange="updateOrdersBtn.style.display = 'flex'" style="color: #f3f9d2">${outcomes.map(o => `<option ${o === outcome ? 'selected' : ''} value="${o}">${o}</option>`).join("")}</select></td>
+                    <td><input onchange="updateOrdersBtn.style.display = 'flex'" style="color: #f3f9d2; background-color: rgba(0,0,0,0)" type="number" value="${amount}" size="${amount.toString().length + 3}" oninput="this.size = this.value.length + 3" min="0" step="1"></td>
+                    <td><input onchange="updateOrdersBtn.style.display = 'flex'" style="color: #f3f9d2; background-color: rgba(0,0,0,0)" type="number" value="${price}" size="${price.toString().length + 3}" oninput="this.size = this.value.length + 3" min="0" step="0.001"></td>
+                    <td style="display: none">${idx}</td>
+                    </tr>`)
+    };
+
     const userBuys = betOrders[activeBet].filter(b => b.amount > 0n && b.user === owner).filter(o => o.orderPosition === "BUY");
     const userSells = betOrders[activeBet].filter(b => b.amount > 0n && b.user === owner).filter(o => o.orderPosition === "SELL");
     const poolBuys = betOrders[activeBet].filter(b => b.amount > 0n && b.user !== owner).filter(o => o.orderPosition === "BUY");
@@ -672,19 +684,12 @@ async function renderOrders() {
     }
 
     await Promise.all([[userBuyOrdersEntries, userBuys], [userSellOrdersEntries, userSells]].map(async ([elm, orders]) => {
-        elm.innerHTML = `${(await Promise.all(orders.map(toRow))).join("")}`;
+        elm.innerHTML = `${(await Promise.all(orders.map(toEditableRow))).join("")}`;
     }));
 
     await Promise.all([[poolBuyOrdersEntries, poolBuys], [poolSellOrdersEntries, poolSells]].map(async ([elm, orders]) => {
         elm.innerHTML = `${(await Promise.all(groupedOrders(orders).map(toRow))).join("")}`;
     }));
-
-    [userBuyOrdersEntries, userSellOrdersEntries]
-        .map(entries => Array.from(entries.getElementsByTagName("td")))
-        .forEach(tds => tds.map(elm => {
-            elm.setAttribute("contenteditable", true);
-            elm.addEventListener("input",() => updateOrdersBtn.style.display = "flex");
-        }));
 }
 
 async function updateOrders() {
@@ -699,9 +704,9 @@ async function updateOrders() {
         .map(entries => Array.from(entries.getElementsByTagName("tr")))
         .flatMap(rows => rows.map(row => Array.from(row.getElementsByTagName("td"))))
         .map(([outcome, amount, price, id]) => {
-            amounts.push(amount.innerHTML);
-            prices.push(price.innerHTML * decimals);
-            outcomes.push(outcome.innerHTML);
+            amounts.push(amount.getElementsByTagName("input")[0].value);
+            prices.push(price.getElementsByTagName("input")[0].value * decimals);
+            outcomes.push(outcome.getElementsByTagName("select")[0].value);
             ids.push(id.innerHTML);
         });
     const sanitizedOutcomes = outcomes.map(o => o.replaceAll("<div>", "").replaceAll("</div>", "").replaceAll("<br>", ""));
@@ -863,7 +868,7 @@ async function renderBetPool() {
         const contractPrices = await activeContract.betPools(activeBet);
         marketPrices.innerHTML = ``;
         if (contractPrices) {
-            const betChoices = await activeBetChoices();
+            const betChoices = await activeBetOutcomes();
             const payout = async outcome => (Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals())) / Number(await activeContract.resultPools(activeBet, outcome)));
             const calcPrices = await Promise.all(betChoices.map(calculatePrice));
             const prices = calcPrices.map(async (p, i) => {
@@ -878,10 +883,10 @@ async function renderBetPool() {
             marketPrices.innerHTML = (await Promise.all(prices)).join("");
         }
         const betOutcomes = {};
-        (await activeBetChoices()).forEach(o => betOutcomes[o] = 0);
+        (await activeBetOutcomes()).forEach(o => betOutcomes[o] = 0);
         placedBets.forEach(pb => pb.args[3].forEach(outcome => betOutcomes[outcome] += 1));
         const outcomes = await Promise.all(
-            await activeBetChoices().then(outcomes => outcomes.map(o => activeContract.resultPools(activeBet, o)))
+            await activeBetOutcomes().then(outcomes => outcomes.map(o => activeContract.resultPools(activeBet, o)))
         );
         const outcomesPool = outcomes;
         const selectColor = (number) => `hsl(${number * 137.508},50%,75%)`;
