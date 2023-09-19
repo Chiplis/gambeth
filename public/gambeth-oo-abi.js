@@ -475,6 +475,35 @@ window.optimisticOracleAbi = [
         "inputs": [
             {
                 "internalType": "uint256",
+                "name": "p",
+                "type": "uint256"
+            },
+            {
+                "internalType": "string",
+                "name": "betId",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "result",
+                "type": "string"
+            }
+        ],
+        "name": "calcRoot",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
                 "name": "",
                 "type": "uint256"
             },
@@ -509,6 +538,88 @@ window.optimisticOracleAbi = [
             }
         ],
         "name": "calculateCost",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "betId",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "result",
+                "type": "string"
+            }
+        ],
+        "name": "calculatePrice",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "betId",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "result",
+                "type": "string"
+            },
+            {
+                "internalType": "uint256",
+                "name": "cost",
+                "type": "uint256"
+            }
+        ],
+        "name": "calculateSharesForCost",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "betId",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "result",
+                "type": "string"
+            },
+            {
+                "internalType": "uint256",
+                "name": "p",
+                "type": "uint256"
+            }
+        ],
+        "name": "calculateSharesForPrice",
         "outputs": [
             {
                 "internalType": "uint256",
@@ -1236,6 +1347,25 @@ window.optimisticOracleAbi = [
     {
         "inputs": [
             {
+                "internalType": "uint256",
+                "name": "y",
+                "type": "uint256"
+            }
+        ],
+        "name": "sqrt",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "z",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "address",
                 "name": "",
                 "type": "address"
@@ -1353,4 +1483,4 @@ window.optimisticOracleAbi = [
         "stateMutability": "view",
         "type": "function"
     }
-];
+]

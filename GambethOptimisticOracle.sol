@@ -242,7 +242,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         emit CreatedBet(betId, initialPool, query);
     }
 
-    function sqrt(uint y) internal pure returns (uint z) {
+    function sqrt(uint y) public view returns (uint z) {
         if (y > 3) {
             z = y;
             uint x = y / 2 + 1;
@@ -261,6 +261,48 @@ contract GambethOptimisticOracle is OptimisticRequester {
             cost += (resultPools[betId][betResults[betId][i]] * tokenDecimals[address(betTokens[betId])]) ** 2;
         }
         return sqrt(cost);
+    }
+
+    function calculateSharesForPrice(string calldata betId, string memory result, uint256 p) public view returns (uint) {
+        int s = int(resultPools[betId][result]);
+        uint r = 0;
+        string[] memory outcomes = getOutcomes(betId);
+        for (uint i = 0; i < outcomes.length; i++) {
+            r += (Strings.equal(outcomes[i], result) ? 0 : resultPools[betId][outcomes[i]]) ** 2;
+        }
+        uint decimals = tokenDecimals[betId];
+        uint sqa = (p ** 2 - p ** 4 / decimals**2);
+        uint sq = r * (sqa / decimals);
+        uint root = sqrt(sq);
+        int a = int(p ** 2 / (decimals * sqrt(decimals))) * -int(s) - int(root) + int(s * sqrt(decimals));
+        int q = int(p ** 2 / decimals) - decimals;
+        if (a < 0 && q > 0 || q < 0 && a > 0) {
+            a = int(p ** 2 / decimals * sqrt(decimals)) * -int(s) + int(root) + int(s * sqrt(decimals));
+        }
+        return uint(a / (q / 1000));
+    }
+
+    function calcRoot(uint p, string calldata betId, string calldata result) public view returns (uint) {
+        uint r = 0;
+        string[] memory outcomes = getOutcomes(betId);
+        for (uint i = 0; i < outcomes.length; i++) {
+            r += (Strings.equal(outcomes[i], result) ? 0 : resultPools[betId][outcomes[i]]) ** 2;
+        }
+        uint root = (p**2 / 1e6) * r - (p**4 / 1e18) * r;
+        return root;
+    }
+
+    function calculateSharesForCost(string calldata betId, string memory result, uint256 cost) public view returns (uint256) {
+        uint currentCost = calculateCost(betId);
+        uint currentShares = resultPools[betId][result];
+        uint restShares = 0;
+        string[] memory outcomes = getOutcomes(betId);
+        for (uint i = 0; i < outcomes.length; i++) {
+            restShares += resultPools[betId][outcomes[i]] ** 2;
+        }
+        uint prices = (cost + currentCost) ** 2;
+        uint shares = sqrt(prices - restShares) - currentShares;
+        return shares;
     }
 
     function _placeBets(string calldata betId, address sender, string[] memory results, uint256[] memory amounts) private {
@@ -351,13 +393,17 @@ contract GambethOptimisticOracle is OptimisticRequester {
     function addOrder(address sender, string calldata betId, Order memory order) private {
         require(order.amount != 0, "Invalid new order state");
         // If before pool lockout, should be able to simply place a bet
-        if (betDeadlines[betId] >= block.timestamp && order.orderPosition == OrderPosition.BUY) {
+        uint256 shares = 0;
+        if (betDeadlines[betId] >= block.timestamp && order.orderPosition == OrderPosition.BUY && order.pricePerShare > calculatePrice(betId, order.result)) {
             uint[] memory amounts = new uint[](1);
-            amounts[0] = order.amount;
             string[] memory results = new string[](1);
             results[0] = order.result;
+            amounts[0] = uint(calculateSharesForPrice(betId, order.result, order.pricePerShare));
             _placeBets(betId, sender, results, amounts);
-            return;
+            order.amount -= amounts[0] > order.amount ? order.amount : amounts[0];
+            if (order.amount == 0) {
+                return;
+            }
         }
 
         if (order.orderPosition == OrderPosition.BUY) {
@@ -369,6 +415,10 @@ contract GambethOptimisticOracle is OptimisticRequester {
             require(pendingSells[betId][sender][order.result] <= userBets[betId][sender][order.result], "Exceeded valid sell amount when adding order");
         }
         orders[betId].push(order);
+    }
+
+    function calculatePrice(string calldata betId, string memory result) public view returns (uint256) {
+        return resultPools[betId][result] * tokenDecimals[betId] ** 2 / calculateCost(betId);
     }
 
     function _changeOrder(address sender, uint[] calldata orderAmounts, uint[] calldata prices, string calldata betId, string[] calldata results, uint256[] calldata ids) private {

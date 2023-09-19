@@ -188,7 +188,7 @@ function triggerProcessing(msg, after = defaultMessageLocation) {
     innerMessage.innerHTML = msg + `<div style='transform: scale(0.5)' class='lds-dual-ring'></div>`;
 }
 
-const ooContractAddress = "0x08Df0838C9f6585F91Eb777dE52fbF0f73072F48";
+const ooContractAddress = "0x2fc3f8C5c1cEc1772144Dc1eeb7758748A21b205";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
@@ -421,6 +421,21 @@ async function renderPlaceBet() {
         chooseBetInputs.style.display = "none";
     }
 
+}
+
+async function calculateSharesForPrice(result, p) {
+    const s = Number(await activeContract.resultPools(activeBet, result));
+    let r = 0;
+    const outcomes = await activeContract.getOutcomes(activeBet);
+    for (let i = 0; i < outcomes.length; i++) {
+        const price = Number(await activeContract.resultPools(activeBet, outcomes[i]));
+        r += (outcomes[i] === result ? 0 : price) ** 2;
+    }
+    console.log(p ** 2 / 1e12 * r - p ** 4 / 1e24 * r);
+    const root = Math.sqrt(p ** 2 / 1e12 * r - p ** 4 / 1e24 * r);
+    const a = p ** 2 / 1e12 * -s - root;
+    console.log(a, s, a+s, root, (p ** 2 / 1e12 - 1))
+    return (a + s) / (p ** 2 / 1e12 - 1);
 }
 
 async function calculateCost(newBets) {
