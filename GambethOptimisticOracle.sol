@@ -393,7 +393,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
     function addOrder(address sender, string calldata betId, Order memory order) private {
         require(order.amount != 0, "Invalid new order state");
         // If before pool lockout, should be able to simply place a bet
-        uint256 shares = 0;
         if (betDeadlines[betId] >= block.timestamp && order.orderPosition == OrderPosition.BUY && order.pricePerShare > calculatePrice(betId, order.result)) {
             uint[] memory amounts = new uint[](1);
             string[] memory results = new string[](1);

@@ -188,7 +188,7 @@ function triggerProcessing(msg, after = defaultMessageLocation) {
     innerMessage.innerHTML = msg + `<div style='transform: scale(0.5)' class='lds-dual-ring'></div>`;
 }
 
-const ooContractAddress = "0x2fc3f8C5c1cEc1772144Dc1eeb7758748A21b205";
+const ooContractAddress = "0xFCB6800d8E096D6015bBD69d12b96bE26674933f";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
