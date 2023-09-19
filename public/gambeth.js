@@ -188,7 +188,7 @@ function triggerProcessing(msg, after = defaultMessageLocation) {
     innerMessage.innerHTML = msg + `<div style='transform: scale(0.5)' class='lds-dual-ring'></div>`;
 }
 
-const ooContractAddress = "0xFCB6800d8E096D6015bBD69d12b96bE26674933f";
+const ooContractAddress = "0x3bCE973017f0978FeA5A49F27fF564BE256Df2bC";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 let awaitingApproval = false;
@@ -616,7 +616,7 @@ async function addSingleBet(order) {
     if (!foundOrder) {
         placedBets.push({
             ...order,
-            pricePerShare: Math.floor((placeBetPrice.value || await calculatePrice(order.outcome)) * await activeDecimals())
+            pricePerShare: Math.floor((placeBetPrice.value || 0) * await activeDecimals())
         });
     } else {
         foundOrder.amount += order.amount;

@@ -113,11 +113,23 @@
                     <ul id="create-bet-choices-list"
                         style="display: flex; flex-direction: column; align-items: center; justify-content: center"></ul>
                 </div>
+                <div class="create-bet-step"
+                     style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: none; flex-direction: column; justify-content: center; align-items: center">
+                    <div class="" style="border: 0; margin: 0">Initial pool</div>
+                    <div style="display: flex; align-items: center">
+                        <input id="create-bet-initial-pool" inputmode="decimal" style="margin: 0.5rem;"/>
+                        <div class="info" style="color: #f3f9d2; background-color: transparent">Shares</div>
+                    </div>
+                    <label for="create-bet-initial-pool">
+                        An initial pool of shares is not strictly needed,
+                        but is greatly encouraged to attract people to your market.
+                    </label>
+                </div>
                 <div class="create-bet-step" style="display: none; flex-direction: column; justify-content: center; visibility: hidden">
-                    <div class="" style="display: flex; justify-content: center; border: 0; margin: 0">Odds</div>
+                    <div class="" style="display: flex; justify-content: center; border: 0; margin: 0">Pool distrbution</div>
                     <label id="create-bet-odds-label" for="create-bet-choice"
                            style="display: flex; justify-content: center">
-                        Add the odds for each possible outcome (must add up to 100%)
+                        The initial share distribution determines the final cost of creating your market.
                     </label>
                     <div style="display: flex; justify-content: center">
                         <ul id="create-bet-odds-list" style="display: flex; flex-direction: column; align-items: center; justify-content: center">
@@ -125,7 +137,6 @@
                         <div id="create-bet-odds" style="display: flex; flex-direction: column; align-items: center; justify-content: center">
                         </div>
                     </div>
-
                 </div>
                 <div class="create-bet-step"
                      style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: none; flex-direction: column; justify-content: center; align-items: center">
@@ -136,17 +147,6 @@
                     </div>
                     <label id="create-bet-commission-label" for="create-bet-commission">
                         Will be taken when winners collect their earnings.
-                    </label>
-                </div>
-                <div class="create-bet-step"
-                     style="visibility: hidden; opacity: 0; transition: opacity 0.5s linear; position: absolute; top: 5em; display: none; flex-direction: column; justify-content: center; align-items: center">
-                    <div class="" style="border: 0; margin: 0">Initial pool</div>
-                    <div style="display: flex; align-items: center">
-                        <input id="create-bet-initial-pool" inputmode="decimal" style="margin: 0.5rem;"/>
-                        <div class="info" style="color: #f3f9d2; background-color: transparent">Shares</div>
-                    </div>
-                    <label for="create-bet-initial-pool">
-                        An initial pool incentivizes people to participate, but is not mandatory.
                     </label>
                 </div>
                 <div class="create-bet-step"

@@ -33,7 +33,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             "Unable to Create market, check arguments."
         );
         betQueries[betId][keccak256(bytes(query))] = true;
-        createBet(BetKind.OPTIMISTIC_ORACLE, msg.sender, currency, betId, commissionDenominator, commission, deadline, schedule, initialPool, query, results, ratios);
+        _createBet(BetKind.OPTIMISTIC_ORACLE, msg.sender, currency, betId, commissionDenominator, commission, deadline, schedule, initialPool, query, results, ratios);
         emit CreatedOptimisticBet(betId, query);
     }
 
@@ -108,10 +108,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
     modifier ownerOnly() {
         require(msg.sender == contractOwner);
         _;
-    }
-
-    function placeBets(string calldata betId, string[] calldata results, uint256[] memory amounts) virtual public {
-        _placeBets(betId, msg.sender, results, amounts);
     }
 
     constructor() {
@@ -206,7 +202,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         return results;
     }
 
-    function createBet(BetKind kind, address sender, address token, string calldata betId, uint256 commissionDenominator, uint256 commission, uint64 deadline, uint64 schedule, uint256 initialPool, string calldata query, string[] calldata results, uint256[] calldata ratios) public {
+    function _createBet(BetKind kind, address sender, address token, string calldata betId, uint256 commissionDenominator, uint256 commission, uint64 deadline, uint64 schedule, uint256 initialPool, string calldata query, string[] calldata results, uint256[] calldata ratios) internal {
         require(approvedTokens[token] && !createdBets[betId], "Unapproved token for creating bets.");
         require(commissionDenominator > 0, "Invalid commission denominator.");
         require(results.length == ratios.length, "Each outcome should have a corresponding ratio to split initial pool.");
@@ -237,7 +233,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         for (uint i = 0; i < results.length; i++) {
             shares[i] = initialPool / 100 * ratios[i];
         }
-        placeBets(betId, results, shares);
+        _placeBets(betId, sender, results, shares, true);
 
         emit CreatedBet(betId, initialPool, query);
     }
@@ -305,7 +301,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         return shares;
     }
 
-    function _placeBets(string calldata betId, address sender, string[] memory results, uint256[] memory amounts) private {
+    function _placeBets(string calldata betId, address sender, string[] memory results, uint256[] memory amounts, bool skipTransfer) private {
         require(
             results.length > 0
             && results.length == amounts.length
@@ -335,7 +331,9 @@ contract GambethOptimisticOracle is OptimisticRequester {
             total += transfer;
         }
 
-        token.safeTransferFrom(sender, address(this), total);
+        if (!skipTransfer) {
+            token.safeTransferFrom(sender, address(this), total);
+        }
 
         emit PlacedBets(sender, betId, betId, results);
     }
@@ -390,19 +388,22 @@ contract GambethOptimisticOracle is OptimisticRequester {
     mapping(string => mapping(address => uint256)) public pendingBuys;
     mapping(string => mapping(address => mapping(string => uint256))) public pendingSells;
 
-    function addOrder(address sender, string calldata betId, Order memory order) private {
-        require(order.amount != 0, "Invalid new order state");
+    function placeOrder(address sender, string calldata betId, Order memory order, bool pushOrder) private {
+        require(order.amount != 0, "Invalid placed order state");
+        bool placeBet = order.pricePerShare > calculatePrice(betId, order.result) || order.pricePerShare == 0;
         // If before pool lockout, should be able to simply place a bet
-        if (betDeadlines[betId] >= block.timestamp && order.orderPosition == OrderPosition.BUY && order.pricePerShare > calculatePrice(betId, order.result)) {
+        if (betDeadlines[betId] >= block.timestamp && order.orderPosition == OrderPosition.BUY && placeBet) {
             uint[] memory amounts = new uint[](1);
             string[] memory results = new string[](1);
             results[0] = order.result;
-            amounts[0] = uint(calculateSharesForPrice(betId, order.result, order.pricePerShare));
-            _placeBets(betId, sender, results, amounts);
-            order.amount -= amounts[0] > order.amount ? order.amount : amounts[0];
-            if (order.amount == 0) {
-                return;
-            }
+            amounts[0] = order.pricePerShare == 0 ? order.amount : calculateSharesForPrice(betId, order.result, order.pricePerShare);
+            amounts[0] = amounts[0] > order.amount ? order.amount : amounts[0];
+            _placeBets(betId, sender, results, amounts, false);
+            order.amount -= amounts[0];
+        }
+
+        if (order.amount == 0 || !pushOrder) {
+            return;
         }
 
         if (order.orderPosition == OrderPosition.BUY) {
@@ -413,7 +414,9 @@ contract GambethOptimisticOracle is OptimisticRequester {
             pendingSells[betId][sender][order.result] += order.amount;
             require(pendingSells[betId][sender][order.result] <= userBets[betId][sender][order.result], "Exceeded valid sell amount when adding order");
         }
+
         orders[betId].push(order);
+
     }
 
     function calculatePrice(string calldata betId, string memory result) public view returns (uint256) {
@@ -444,6 +447,9 @@ contract GambethOptimisticOracle is OptimisticRequester {
             order.result = results[i];
             order.amount = orderAmounts[i];
             order.pricePerShare = prices[i];
+            if (order.amount != 0) {
+                placeOrder(sender, betId, order, false);
+            }
         }
     }
 
@@ -534,7 +540,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
                     amount: orderAmount,
                     user: sender
                 });
-                addOrder(sender, betId, newOrder);
+                placeOrder(sender, betId, newOrder, true);
             }
         }
     }
