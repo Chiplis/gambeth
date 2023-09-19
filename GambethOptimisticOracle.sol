@@ -233,7 +233,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         for (uint i = 0; i < results.length; i++) {
             shares[i] = initialPool / 100 * ratios[i];
         }
-        _placeBets(betId, sender, results, shares, true);
+        marketBuy(betId, sender, results, shares, true);
 
         emit CreatedBet(betId, initialPool, query);
     }
@@ -301,7 +301,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         return shares;
     }
 
-    function _placeBets(string calldata betId, address sender, string[] memory results, uint256[] memory amounts, bool skipTransfer) private {
+    function marketBuy(string calldata betId, address sender, string[] memory results, uint256[] memory amounts, bool skipTransfer) private {
         require(
             results.length > 0
             && results.length == amounts.length
@@ -379,6 +379,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         string result;
         uint amount;
         address user;
+        uint index;
     }
     enum OrderPosition {BUY, SELL}
     enum OrderType{MARKET, LIMIT}
@@ -388,21 +389,26 @@ contract GambethOptimisticOracle is OptimisticRequester {
     mapping(string => mapping(address => uint256)) public pendingBuys;
     mapping(string => mapping(address => mapping(string => uint256))) public pendingSells;
 
-    function placeOrder(address sender, string calldata betId, Order memory order, bool pushOrder) private {
+    function placeOrder(address sender, string calldata betId, Order memory order, bool newOrder) private {
         require(order.amount != 0, "Invalid placed order state");
-        bool placeBet = order.pricePerShare > calculatePrice(betId, order.result) || order.pricePerShare == 0;
-        // If before pool lockout, should be able to simply place a bet
-        if (betDeadlines[betId] >= block.timestamp && order.orderPosition == OrderPosition.BUY && placeBet) {
+        bool buyFromMarket = order.pricePerShare > calculatePrice(betId, order.result) || order.pricePerShare == 0;
+
+        // If before pool lockout, should always be able to buy from market
+        if (betDeadlines[betId] >= block.timestamp && order.orderPosition == OrderPosition.BUY && buyFromMarket) {
             uint[] memory amounts = new uint[](1);
             string[] memory results = new string[](1);
             results[0] = order.result;
             amounts[0] = order.pricePerShare == 0 ? order.amount : calculateSharesForPrice(betId, order.result, order.pricePerShare);
             amounts[0] = amounts[0] > order.amount ? order.amount : amounts[0];
-            _placeBets(betId, sender, results, amounts, false);
-            order.amount -= amounts[0];
+            marketBuy(betId, sender, results, amounts, order.pricePerShare != 0);
+            if (order.index < orders[betId].length) {
+                orders[betId][order.index].amount -= amounts[0];
+            } else {
+                order.amount -= amounts[0];
+            }
         }
 
-        if (order.amount == 0 || !pushOrder) {
+        if (order.amount == 0 || !newOrder) {
             return;
         }
 
@@ -416,7 +422,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
         }
 
         orders[betId].push(order);
-
     }
 
     function calculatePrice(string calldata betId, string memory result) public view returns (uint256) {
@@ -538,7 +543,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
                     pricePerShare: pricePerShare,
                     result: result,
                     amount: orderAmount,
-                    user: sender
+                    user: sender,
+                    index: orders[betId].length
                 });
                 placeOrder(sender, betId, newOrder, true);
             }
