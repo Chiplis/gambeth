@@ -1,5 +1,5 @@
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
-const ooContractAddress = "0x6443730aeCc2De1852779ED98F5404aF89BAf256";
+const ooContractAddress = "0xa76F96f97f4c53436f0c03c717Aa56fcC1bb123d";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 

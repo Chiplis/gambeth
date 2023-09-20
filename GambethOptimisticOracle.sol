@@ -138,12 +138,14 @@ contract GambethOptimisticOracle is OptimisticRequester {
         _;
     }
 
+    address USDC = 0x07865c6E87B9F70255377e024ace6630C1Eaa37F;
+
     constructor() {
         contractCreator = msg.sender;
-        approvedTokens[0x07865c6E87B9F70255377e024ace6630C1Eaa37F] = true;
-        IERC20(0x07865c6E87B9F70255377e024ace6630C1Eaa37F).approve(OO_ADDRESS, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
-        tokenDecimals[0x07865c6E87B9F70255377e024ace6630C1Eaa37F] = 1e6;
-        tokenFees[0x07865c6E87B9F70255377e024ace6630C1Eaa37F] = 5e6;
+        approvedTokens[USDC] = true;
+        IERC20(USDC).approve(OO_ADDRESS, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+        tokenDecimals[USDC] = 1e6;
+        tokenFees[USDC] = 5e6;
     }
 
     enum BetKind {
@@ -392,7 +394,21 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
         IERC20 token = betTokens[betId];
         token.safeTransfer(sender, reward);
+        contractFees += ownerFee /= 2;
+
         token.safeTransfer(betOwners[betId], ownerFee);
+    }
+
+
+    uint public contractFees = 0;
+    function withdrawUsdc(uint total) public ownerOnly {
+        withdraw(total, USDC);
+    }
+
+    function withdraw(uint total, address token) public ownerOnly {
+        require(contractFees >= total);
+        contractFees -= total;
+        IERC20(token).safeTransfer(msg.sender, total);
     }
 
     function calculateContractCommission(uint256, string[] calldata, uint256[] calldata) pure public returns (uint256) {
