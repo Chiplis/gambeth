@@ -1,5 +1,5 @@
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
-const ooContractAddress = "0xC718c71bE121E1b4f283e358995C9cad9C927c12";
+const ooContractAddress = "0x55b513A90Bd6fBb897413a243046E14601C5db1C";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 
@@ -51,7 +51,7 @@ const poolSellOrdersEntries = document.getElementById("pool-sell-orders-entries"
 const searchBetId = document.getElementById("search-bet");
 const message = document.getElementById("message");
 const betContainer = document.getElementById("bet-container");
-const createBetChoicesList = document.getElementById("create-bet-choices-list");
+const createmarketOutcomeList = document.getElementById("create-bet-choices-list");
 const queueBuyOrder = document.getElementById("queue-buy-order");
 
 const placeBetDataContainer = document.getElementById("place-bet-data-container");
@@ -60,7 +60,7 @@ const placeBetPositionContainer = document.getElementById("place-bet-position-co
 
 const createBetInitialPool = document.getElementById("create-bet-initial-pool");
 const createBetCommission = document.getElementById("create-bet-commission");
-const createBetChoices = document.getElementById("create-bet-choices");
+const createmarketOutcome = document.getElementById("create-bet-choices");
 const createBetChoice = document.getElementById("create-bet-choice");
 
 const createBetOdds = document.getElementById("create-bet-odds");
@@ -239,7 +239,7 @@ async function loadProvider({
             const betKind = await activeContract.betKinds(betId);
             switch (betKind) {
                 case 0n:
-                    activeContract = new ethers.Contract(ooContractAddress, optimisticOracleAbi, provider).connect(signer);
+                    activeContract = new ethers.Contract(ooContractAddress, ooAbi, provider).connect(signer);
                     break;
                 case 1n:
                     activeContract = new ethers.Contract(humanContractAddress, [], provider).connect(signer);
@@ -248,7 +248,7 @@ async function loadProvider({
         } else if (betType) {
             switch (betType) {
                 case "oo":
-                    activeContract = new ethers.Contract(ooContractAddress, optimisticOracleAbi, provider).connect(signer);
+                    activeContract = new ethers.Contract(ooContractAddress, ooAbi, provider).connect(signer);
                     break;
                 case "bc":
                     activeContract = humanContractAddress
@@ -343,7 +343,7 @@ async function renderClaimBet() {
     const finishedBet = await activeContract.finishedBets(activeBet);
     const outcome = await activeContract.getResult(activeBet);
     const resolutionRequested = BigInt(await activeContract.betRequester(activeBet)) !== 0n;
-    const scheduleReached = await activeContract.betSchedules(activeBet) * BigInt(1000) < BigInt(new Date().getTime());
+    const scheduleReached = await activeContract.marketDeadline(activeBet) * BigInt(1000) < BigInt(new Date().getTime());
     let showClaim = finishedBet || (!resolutionRequested && scheduleReached) || (resolutionRequested && !finishedBet);
     showClaim &&= !outcome.length ? true : await activeContract.userBets(activeBet, addr, outcome) !== 0n;
     if (!showClaim) {
@@ -385,9 +385,9 @@ async function activeBetOutcomes() {
 
 async function renderPlaceBet() {
 
-    const deadline = await activeContract.betDeadlines(activeBet) * BigInt(1000);
+    const deadline = await activeContract.marketLockout(activeBet) * BigInt(1000);
     const lockedPool = deadline <= Math.round(new Date().getTime());
-    const schedule = await activeContract.betSchedules(activeBet) * BigInt(1000);
+    const schedule = await activeContract.marketDeadline(activeBet) * BigInt(1000);
     const scheduleReached = schedule <= Math.round(new Date().getTime());
     const betKind = await activeBetKind();
 
@@ -495,10 +495,10 @@ async function searchBet(betId = activeBet) {
         urlSchema.innerHTML = schema || "Unknown";
         betUrl.innerHTML = url || query;
         schemaPath.innerHTML = path || "Unknown";
-        let deadline = await activeContract.betDeadlines(activeBet) * BigInt(1000);
+        let deadline = await activeContract.marketLockout(activeBet) * BigInt(1000);
         deadline = new Date(Number(deadline.toString()));
         betDeadline.innerHTML = deadline.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
-        let schedule = await activeContract.betSchedules(activeBet) * BigInt(1000);
+        let schedule = await activeContract.marketDeadline(activeBet) * BigInt(1000);
         schedule = new Date(Number(schedule.toString()));
         betSchedule.innerHTML = schedule.toISOString().replace("T", " ").split(".")[0].slice(0, -3);
         let outcome = await activeContract.getResult(activeBet);
@@ -538,7 +538,9 @@ async function createBet() {
         clearTimeout();
 
         const schema = createBetSchema.value;
-        const query = createBetOo.innerHTML.replaceAll("<br>", " ").replaceAll("<div>", " ").replaceAll("</div>", " ");
+        console.log(createBetOo);
+        const query = createBetOo.value.replaceAll("<br>", " ").replaceAll("<div>", " ").replaceAll("</div>", " ");
+        console.log(query);
         const title = createBetOoTitle.value;
         const schedule = Date.parse(`${scheduleDate.value}`) / 1000;
         const deadline = Date.parse(`${deadlineDate.value}`) / 1000;
@@ -576,7 +578,7 @@ async function createBet() {
         newBetId = activeBet;
         const initialPool = createBetInitialPool.value || "0";
         triggerProcessing("Creating market", createBetQueryOutcome);
-        const outcomes = createdBetChoices;
+        const outcomes = createdmarketOutcome;
         triggerProcessing("Creating market");
         switch (schema) {
             case "bc":
@@ -592,7 +594,7 @@ async function createBet() {
         triggerError(providerErrorMsg(error), createBetQuery);
     }
 
-    createdBetChoices = [];
+    createdmarketOutcome = [];
 }
 
 async function renderPlacedBets() {
@@ -789,26 +791,26 @@ async function addFreeBet() {
     }
 }
 
-let createdBetChoices = [];
+let createdmarketOutcome = [];
 
 async function addBetChoice() {
     createBetChoice.value ||= "";
     if (!(createBetChoice.value.trim())) {
         return;
     }
-    if (!createdBetChoices.includes(createBetChoice.value)) {
-        createdBetChoices.push(createBetChoice.value);
+    if (!createdmarketOutcome.includes(createBetChoice.value)) {
+        createdmarketOutcome.push(createBetChoice.value);
     }
-    createBetChoicesList.innerHTML = createdBetChoices.map(v => `<li>${v}</li>`).join("");
-    createBetOdds.innerHTML = createdBetChoices.map(v => `<div><input style="width: 3rem; height: 1rem; margin: 1rem; placeholder="${v}">%</div>`).join("");
-    createBetOddsList.innerHTML = createdBetChoices.map(v => `<li style="display: flex; justify-content: flex-start; margin: 1rem; width: 100%">${v}</li>`).join("");
+    createmarketOutcomeList.innerHTML = createdmarketOutcome.map(v => `<li>${v}</li>`).join("");
+    createBetOdds.innerHTML = createdmarketOutcome.map(v => `<div><input style="width: 3rem; height: 1rem; margin: 1rem; placeholder="${v}">%</div>`).join("");
+    createBetOddsList.innerHTML = createdmarketOutcome.map(v => `<li style="display: flex; justify-content: flex-start; margin: 1rem; width: 100%">${v}</li>`).join("");
     createBetChoice.value = "";
 }
 
 async function changeBetType() {
 
     const betType = createBetSchema.value;
-    createBetChoices.style.display = betType === "oo" ? "flex" : "none";
+    createmarketOutcome.style.display = betType === "oo" ? "flex" : "none";
 
     createBetOo.style.display = ["bc", "oo"].includes(betType) ? "block" : "none";
 
@@ -845,8 +847,8 @@ function providerErrorMsg(error) {
 async function claimReward() {
     try {
         if (await activeBetKind() === "oo") {
-            const query = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args[2];
-            if (!(await activeContract.betRequestTimes(activeBet))) {
+            const query = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args[3];
+            if (!(await activeContract.marketCreation(activeBet))) {
                 triggerProcessing("Reward will be transferred after bet's been settled.");
                 await activeContract.requestBetResolution(activeBet, query);
             } else {
@@ -880,14 +882,14 @@ async function renderBetPool() {
         const contractPrices = await activeContract.betPools(activeBet);
         marketPrices.innerHTML = ``;
         if (contractPrices) {
-            const betChoices = await activeBetOutcomes();
+            const marketOutcome = await activeBetOutcomes();
             const payout = async outcome => (Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals())) / Number(await activeContract.resultPools(activeBet, outcome)));
-            const calcPrices = await Promise.all(betChoices.map(calculatePrice));
+            const calcPrices = await Promise.all(marketOutcome.map(calculatePrice));
             const prices = calcPrices.map(async (p, i) => {
-                const outcome = betChoices[i];
+                const outcome = marketOutcome[i];
                 const mktPrice = Math.round(p * 1000) / 1000;
                 const odds = (Math.pow(p, 2) * 100).toFixed(2);
-                const pay = (await payout(betChoices[i])).toFixed(3);
+                const pay = (await payout(marketOutcome[i])).toFixed(3);
                 const owned = await activeContract.userBets(activeBet, owner, outcome);
                 const avgPrice = await activeContract.userTransfers(activeBet, owner, outcome).then(async a => Math.round((Number(a) / await activeDecimals()) / Number(owned) * 1000) / 1000);
                 return `<tr><td>${outcome}</td><td>${owned || "-"}</td><td>${odds}%</td><td>$${mktPrice}</td><td>${Number.isNaN(avgPrice) ? "-" : ("$" + avgPrice)}</td><td>$${pay}</td></tr>`

@@ -34,13 +34,13 @@ contract GambethProvableOracle is GambethOracle, usingProvable {
         require(msg.sender == provable_cbAddress() && !finishedBets[betId]);
 
         // Recursive query required since scheduled execution is after 60 day max threshold
-        if (state.betSchedules(betId) > block.timestamp) {
-            uint256 nextSchedule = state.betSchedules(betId);
+        if (state.marketDeadline(betId) > block.timestamp) {
+            uint256 nextSchedule = state.marketDeadline(betId);
             if (nextSchedule > block.timestamp + SCHEDULE_THRESHOLD) {
                 nextSchedule = block.timestamp + NEXT_SCHEDULE;
             }
 
-            bytes32 nextQueryId = provable_query(nextSchedule, betTypes[betId], state.betQueries(betId));
+            bytes32 nextQueryId = provable_query(nextSchedule, betTypes[betId], state.marketQuery(betId));
             queryBets[nextQueryId] = betId;
             return;
         }
@@ -51,7 +51,7 @@ contract GambethProvableOracle is GambethOracle, usingProvable {
 
     modifier validateClaimedBet(bytes32 betId) override {
         // If the bet has not finished but its threshold has been reached, let the user get back their funds
-        bool betExpired = state.betSchedules(betId) + state.BET_THRESHOLD() < block.timestamp;
+        bool betExpired = state.marketDeadline(betId) + state.BET_THRESHOLD() < block.timestamp;
         require(
             finishedBets[betId] || betExpired,
             "Invalid bet state while claiming reward."

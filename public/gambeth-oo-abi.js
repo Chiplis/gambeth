@@ -1,4 +1,9 @@
-window.optimisticOracleAbi = [
+window.ooAbi = [
+    {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
     {
         "anonymous": false,
         "inputs": [
@@ -43,6 +48,12 @@ window.optimisticOracleAbi = [
                 "indexed": false,
                 "internalType": "string",
                 "name": "query",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "request",
                 "type": "string"
             }
         ],
@@ -126,6 +137,45 @@ window.optimisticOracleAbi = [
         "type": "event"
     },
     {
+        "inputs": [],
+        "name": "BET_THRESHOLD",
+        "outputs": [
+            {
+                "internalType": "uint64",
+                "name": "",
+                "type": "uint64"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "OO_ADDRESS",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "PRICE_ID",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
                 "internalType": "address",
@@ -141,288 +191,6 @@ window.optimisticOracleAbi = [
     {
         "inputs": [
             {
-                "internalType": "uint256[]",
-                "name": "orderAmounts",
-                "type": "uint256[]"
-            },
-            {
-                "internalType": "uint256[]",
-                "name": "prices",
-                "type": "uint256[]"
-            },
-            {
-                "internalType": "string",
-                "name": "betId",
-                "type": "string"
-            },
-            {
-                "internalType": "string[]",
-                "name": "results",
-                "type": "string[]"
-            },
-            {
-                "internalType": "uint256[]",
-                "name": "ids",
-                "type": "uint256[]"
-            }
-        ],
-        "name": "changeOrder",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "betId",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "query",
-                "type": "string"
-            }
-        ],
-        "name": "claimBet",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "currency",
-                "type": "address"
-            },
-            {
-                "internalType": "string",
-                "name": "betId",
-                "type": "string"
-            },
-            {
-                "internalType": "uint64",
-                "name": "deadline",
-                "type": "uint64"
-            },
-            {
-                "internalType": "uint64",
-                "name": "schedule",
-                "type": "uint64"
-            },
-            {
-                "internalType": "uint256",
-                "name": "commissionDenominator",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "commission",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "initialPool",
-                "type": "uint256"
-            },
-            {
-                "internalType": "string[]",
-                "name": "results",
-                "type": "string[]"
-            },
-            {
-                "internalType": "uint256[]",
-                "name": "ratios",
-                "type": "uint256[]"
-            },
-            {
-                "internalType": "string",
-                "name": "title",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "query",
-                "type": "string"
-            }
-        ],
-        "name": "createOptimisticBet",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256[]",
-                "name": "orderAmounts",
-                "type": "uint256[]"
-            },
-            {
-                "internalType": "uint256[]",
-                "name": "prices",
-                "type": "uint256[]"
-            },
-            {
-                "internalType": "enum GambethOptimisticOracle.OrderPosition[]",
-                "name": "orderPositions",
-                "type": "uint8[]"
-            },
-            {
-                "internalType": "string",
-                "name": "betId",
-                "type": "string"
-            },
-            {
-                "internalType": "string[]",
-                "name": "results",
-                "type": "string[]"
-            },
-            {
-                "internalType": "uint256[][]",
-                "name": "idxs",
-                "type": "uint256[][]"
-            }
-        ],
-        "name": "fillOrder",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "token",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "decimals",
-                "type": "uint256"
-            },
-            {
-                "internalType": "bool",
-                "name": "approved",
-                "type": "bool"
-            }
-        ],
-        "name": "manageToken",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "bytes32",
-                "name": "identifier",
-                "type": "bytes32"
-            },
-            {
-                "internalType": "uint256",
-                "name": "timestamp",
-                "type": "uint256"
-            },
-            {
-                "internalType": "bytes",
-                "name": "data",
-                "type": "bytes"
-            },
-            {
-                "internalType": "uint256",
-                "name": "refund",
-                "type": "uint256"
-            }
-        ],
-        "name": "priceDisputed",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "bytes32",
-                "name": "identifier",
-                "type": "bytes32"
-            },
-            {
-                "internalType": "uint256",
-                "name": "timestamp",
-                "type": "uint256"
-            },
-            {
-                "internalType": "bytes",
-                "name": "query",
-                "type": "bytes"
-            }
-        ],
-        "name": "priceProposed",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "bytes32",
-                "name": "identifier",
-                "type": "bytes32"
-            },
-            {
-                "internalType": "uint256",
-                "name": "timestamp",
-                "type": "uint256"
-            },
-            {
-                "internalType": "bytes",
-                "name": "query",
-                "type": "bytes"
-            },
-            {
-                "internalType": "int256",
-                "name": "price",
-                "type": "int256"
-            }
-        ],
-        "name": "priceSettled",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "betId",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "title",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "query",
-                "type": "string"
-            }
-        ],
-        "name": "requestBetResolution",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "stateMutability": "nonpayable",
-        "type": "constructor"
-    },
-    {
-        "inputs": [
-            {
                 "internalType": "address",
                 "name": "",
                 "type": "address"
@@ -434,38 +202,6 @@ window.optimisticOracleAbi = [
                 "internalType": "bool",
                 "name": "",
                 "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "BET_THRESHOLD",
-        "outputs": [
-            {
-                "internalType": "uint64",
-                "name": "",
-                "type": "uint64"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "betChoices",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
             }
         ],
         "stateMutability": "view",
@@ -504,25 +240,6 @@ window.optimisticOracleAbi = [
                 "internalType": "uint256",
                 "name": "",
                 "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "betDeadlines",
-        "outputs": [
-            {
-                "internalType": "uint64",
-                "name": "",
-                "type": "uint64"
             }
         ],
         "stateMutability": "view",
@@ -593,74 +310,12 @@ window.optimisticOracleAbi = [
                 "type": "string"
             }
         ],
-        "name": "betProposals",
-        "outputs": [
-            {
-                "internalType": "int256",
-                "name": "",
-                "type": "int256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            },
-            {
-                "internalType": "bytes32",
-                "name": "",
-                "type": "bytes32"
-            }
-        ],
-        "name": "betQueries",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
         "name": "betRequester",
         "outputs": [
             {
                 "internalType": "address",
                 "name": "",
                 "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "betRequestTimes",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
             }
         ],
         "stateMutability": "view",
@@ -685,25 +340,6 @@ window.optimisticOracleAbi = [
                 "internalType": "string",
                 "name": "",
                 "type": "string"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "betSchedules",
-        "outputs": [
-            {
-                "internalType": "uint64",
-                "name": "",
-                "type": "uint64"
             }
         ],
         "stateMutability": "view",
@@ -890,6 +526,57 @@ window.optimisticOracleAbi = [
     {
         "inputs": [
             {
+                "internalType": "uint256[]",
+                "name": "orderAmounts",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "prices",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "string",
+                "name": "betId",
+                "type": "string"
+            },
+            {
+                "internalType": "string[]",
+                "name": "results",
+                "type": "string[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "ids",
+                "type": "uint256[]"
+            }
+        ],
+        "name": "changeOrder",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "betId",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "request",
+                "type": "string"
+            }
+        ],
+        "name": "claimBet",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "string",
                 "name": "",
                 "type": "string"
@@ -927,6 +614,69 @@ window.optimisticOracleAbi = [
     {
         "inputs": [
             {
+                "internalType": "address",
+                "name": "currency",
+                "type": "address"
+            },
+            {
+                "internalType": "string",
+                "name": "betId",
+                "type": "string"
+            },
+            {
+                "internalType": "uint64",
+                "name": "deadline",
+                "type": "uint64"
+            },
+            {
+                "internalType": "uint64",
+                "name": "schedule",
+                "type": "uint64"
+            },
+            {
+                "internalType": "uint256",
+                "name": "commissionDenominator",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "commission",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "initialPool",
+                "type": "uint256"
+            },
+            {
+                "internalType": "string[]",
+                "name": "results",
+                "type": "string[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "ratios",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "string",
+                "name": "title",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "query",
+                "type": "string"
+            }
+        ],
+        "name": "createOptimisticBet",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "string",
                 "name": "",
                 "type": "string"
@@ -941,6 +691,44 @@ window.optimisticOracleAbi = [
             }
         ],
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "orderAmounts",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "prices",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "enum GambethOptimisticOracle.OrderPosition[]",
+                "name": "orderPositions",
+                "type": "uint8[]"
+            },
+            {
+                "internalType": "string",
+                "name": "betId",
+                "type": "string"
+            },
+            {
+                "internalType": "string[]",
+                "name": "results",
+                "type": "string[]"
+            },
+            {
+                "internalType": "uint256[][]",
+                "name": "idxs",
+                "type": "uint256[][]"
+            }
+        ],
+        "name": "fillOrder",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -1062,13 +850,152 @@ window.optimisticOracleAbi = [
         "type": "function"
     },
     {
-        "inputs": [],
-        "name": "oo",
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "token",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "decimals",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bool",
+                "name": "approved",
+                "type": "bool"
+            }
+        ],
+        "name": "manageToken",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "name": "marketCreation",
         "outputs": [
             {
-                "internalType": "contract OptimisticOracleV2Interface",
+                "internalType": "uint256",
                 "name": "",
-                "type": "address"
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "name": "marketDeadline",
+        "outputs": [
+            {
+                "internalType": "uint64",
+                "name": "",
+                "type": "uint64"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "name": "marketLockout",
+        "outputs": [
+            {
+                "internalType": "uint64",
+                "name": "",
+                "type": "uint64"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bytes",
+                "name": "",
+                "type": "bytes"
+            }
+        ],
+        "name": "marketOracleRequest",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "name": "marketOutcome",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "name": "marketQuery",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
             }
         ],
         "stateMutability": "view",
@@ -1076,10 +1003,10 @@ window.optimisticOracleAbi = [
     },
     {
         "inputs": [],
-        "name": "OO_ADDRESS",
+        "name": "oo",
         "outputs": [
             {
-                "internalType": "address",
+                "internalType": "contract OptimisticOracleV2Interface",
                 "name": "",
                 "type": "address"
             }
@@ -1190,45 +1117,82 @@ window.optimisticOracleAbi = [
         "type": "function"
     },
     {
-        "inputs": [],
-        "name": "PRICE_ID",
-        "outputs": [
+        "inputs": [
             {
                 "internalType": "bytes32",
-                "name": "",
+                "name": "identifier",
                 "type": "bytes32"
+            },
+            {
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bytes",
+                "name": "data",
+                "type": "bytes"
+            },
+            {
+                "internalType": "uint256",
+                "name": "refund",
+                "type": "uint256"
             }
         ],
-        "stateMutability": "view",
+        "name": "priceDisputed",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
         "inputs": [
             {
                 "internalType": "bytes32",
-                "name": "",
+                "name": "identifier",
                 "type": "bytes32"
             },
             {
                 "internalType": "uint256",
-                "name": "",
+                "name": "timestamp",
                 "type": "uint256"
             },
             {
                 "internalType": "bytes",
-                "name": "",
+                "name": "query",
                 "type": "bytes"
             }
         ],
-        "name": "requestBets",
-        "outputs": [
+        "name": "priceProposed",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
             {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
+                "internalType": "bytes32",
+                "name": "identifier",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bytes",
+                "name": "query",
+                "type": "bytes"
+            },
+            {
+                "internalType": "int256",
+                "name": "price",
+                "type": "int256"
             }
         ],
-        "stateMutability": "view",
+        "name": "priceSettled",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {

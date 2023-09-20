@@ -15,15 +15,13 @@ contract GambethOptimisticOracle is OptimisticRequester {
     OptimisticOracleV2Interface public oo = OptimisticOracleV2Interface(OO_ADDRESS);
     bytes32 public PRICE_ID = bytes32("NUMERICAL");
 
-    mapping(string => uint256) public betRequestTimes;
+    mapping(string => uint256) public marketCreation;
     mapping(string => bool) public finishedBets;
-    mapping(string => uint256) public betChoices;
-    mapping(bytes32 => mapping(uint256 => mapping(bytes => string))) public requestBets;
-    mapping(string => int256) public betProposals;
-    mapping(string => mapping(bytes32 => bool)) public betQueries;
+    mapping(string => uint256) public marketOutcome;
+    mapping(bytes32 => mapping(uint256 => mapping(bytes => string))) public marketOracleRequest;
     mapping(string => address) public betRequester;
 
-    event CreatedOptimisticBet(string indexed betId, string title, string query);
+    event CreatedOptimisticBet(string indexed betId, string title, string query, string request);
 
     function createOptimisticBet(address currency, string calldata betId, uint64 deadline, uint64 schedule, uint256 commissionDenominator, uint256 commission, uint256 initialPool, string[] calldata results, uint256[] calldata ratios, string calldata title, string calldata query) public {
         require(
@@ -33,16 +31,16 @@ contract GambethOptimisticOracle is OptimisticRequester {
             && !createdBets[betId], // Can't have duplicate bets
             "Unable to Create market, check arguments."
         );
-        betQueries[betId][keccak256(bytes(query))] = true;
         _createBet(BetKind.OPTIMISTIC_ORACLE, msg.sender, currency, betId, commissionDenominator, commission, deadline, schedule, initialPool, query, results, ratios);
-        requestBetResolution(betId, title, query);
-        emit CreatedOptimisticBet(betId, title, query);
+        emit CreatedOptimisticBet(betId, title, query, performOracleRequest(betId, title, query));
     }
 
-    function claimBet(string calldata betId, string calldata query) public {
-        require(betQueries[betId][keccak256(bytes(query))], "Invalid query for bet");
-        bool hasPrice = oo.hasPrice(address(this), PRICE_ID, betRequestTimes[betId], bytes(query));
-        bool betExpired = betSchedules[betId] + BET_THRESHOLD < block.timestamp;
+
+    mapping(string => mapping(bytes32 => bool)) public marketQuery;
+    function claimBet(string calldata betId, string calldata request) public {
+        require(marketQuery[betId][keccak256(bytes(request))], "Invalid query for bet");
+        bool hasPrice = oo.hasPrice(address(this), PRICE_ID, marketCreation[betId], bytes(request));
+        bool betExpired = marketDeadline[betId] + BET_THRESHOLD < block.timestamp;
 
         if (!hasPrice) {
             require(betExpired, "Bet result not yet settled");
@@ -57,10 +55,9 @@ contract GambethOptimisticOracle is OptimisticRequester {
     string oracleDescriptionIntro = '"This is a Gambeth multiple choice market. It should only resolve to one of the following outcomes, propose the number corresponding to it: ';
 
     // Submit a data request to the Optimistic oracle.
-    function requestBetResolution(string calldata betId, string calldata title, string calldata query) public {
-        require(betQueries[betId][keccak256(bytes(query))], "Invalid query for bet");
-        // require(betSchedules[betId] <= block.timestamp, "Bet still not scheduled to run");
-        betRequestTimes[betId] = block.timestamp; // Set the request time to the current block time.
+    function performOracleRequest(string calldata betId, string calldata title, string calldata query) private returns (string memory) {
+        // require(marketDeadline[betId] <= block.timestamp, "Bet still not scheduled to run");
+        marketCreation[betId] = block.timestamp; // Set the request time to the current block time.
         IERC20 bondCurrency = betTokens[betId];
         uint256 reward = tokenFees[address(betTokens[betId])];
         string memory description = "";
@@ -72,7 +69,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             "Propose ",
             Strings.toString(betResults[betId].length),
             " if none of the previous options are a valid outcome by the following date (UNIX timestamp): ",
-            Strings.toString(betDeadlines[betId]),
+            Strings.toString(marketLockout[betId]),
             ". "
         );
 
@@ -87,28 +84,28 @@ contract GambethOptimisticOracle is OptimisticRequester {
         );
         // Now, make the price request to the Optimistic oracle and set the liveness to 30 so it will settle quickly.
         bytes memory requestBytes = bytes(request);
-        oo.requestPrice(PRICE_ID, betRequestTimes[betId], requestBytes, bondCurrency, reward);
-        oo.setBond(PRICE_ID, betRequestTimes[betId], requestBytes, 1750 * 1e6);
-        oo.setEventBased(PRICE_ID, betRequestTimes[betId], requestBytes);
-        oo.setCustomLiveness(PRICE_ID, betRequestTimes[betId], requestBytes, 1);
-        oo.setCallbacks(PRICE_ID, betRequestTimes[betId], requestBytes, false, false, true);
-        requestBets[PRICE_ID][betRequestTimes[betId]][requestBytes] = betId;
+        oo.requestPrice(PRICE_ID, marketCreation[betId], requestBytes, bondCurrency, reward);
+        oo.setBond(PRICE_ID, marketCreation[betId], requestBytes, 1750 * 1e6);
+        oo.setEventBased(PRICE_ID, marketCreation[betId], requestBytes);
+        oo.setCustomLiveness(PRICE_ID, marketCreation[betId], requestBytes, 1);
+        oo.setCallbacks(PRICE_ID, marketCreation[betId], requestBytes, false, false, true);
+        marketOracleRequest[PRICE_ID][marketCreation[betId]][requestBytes] = betId;
         betRequester[betId] = msg.sender;
+        return request;
     }
 
     function getResult(string memory betId) public view returns (string memory) {
         if (!finishedBets[betId]) {
             return "";
         }
-        return betResults[betId][betChoices[betId]];
+        return betResults[betId][marketOutcome[betId]];
     }
 
     function priceSettled(bytes32 identifier, uint256 timestamp, bytes calldata query, int256 price) public {
         require(msg.sender == OO_ADDRESS);
-        string memory betId = requestBets[identifier][timestamp][query];
-        betChoices[betId] = uint(price) / 1e18;
+        string memory betId = marketOracleRequest[identifier][timestamp][query];
+        marketOutcome[betId] = uint(price) / 1e18;
         finishedBets[betId] = true;
-        _claimBet(betId, betRequester[betId], getResult(betId));
     }
 
     function changeOrder(uint[] calldata orderAmounts, uint[] calldata prices, string calldata betId, string[] calldata results, uint256[] calldata ids) public {
@@ -184,8 +181,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
     one for the deadline where a user can no longer place new bets,
     and another one that tells the smart oracle contract when to actually
     run. */
-    mapping(string => uint64) public betDeadlines;
-    mapping(string => uint64) public betSchedules;
+    mapping(string => uint64) public marketLockout;
+    mapping(string => uint64) public marketDeadline;
 
     // Keep track of all createdBets to prevent duplicates
     mapping(string => bool) public createdBets;
@@ -249,8 +246,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
         betTokens[betId] = IERC20(token);
         betCommissions[betId] = commission;
         betCommissionDenominator[betId] = commissionDenominator;
-        betDeadlines[betId] = deadline;
-        betSchedules[betId] = schedule;
+        marketLockout[betId] = deadline;
+        marketDeadline[betId] = schedule;
         betResults[betId] = results;
 
         userPools[betId][sender] = initialPool;
@@ -336,7 +333,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             results.length > 0
             && results.length == amounts.length
             && createdBets[betId]
-            && betDeadlines[betId] >= block.timestamp,
+            && marketLockout[betId] >= block.timestamp,
             "Unable to place bets, check arguments."
         );
 
@@ -419,22 +416,25 @@ contract GambethOptimisticOracle is OptimisticRequester {
     mapping(string => mapping(address => uint256)) public pendingBuys;
     mapping(string => mapping(address => mapping(string => uint256))) public pendingSells;
 
-    function placeOrder(address sender, string calldata betId, Order memory order, bool newOrder) private {
+    function placeOrder(address sender, string calldata betId, Order memory order) private {
         require(order.amount != 0, "Invalid placed order state");
         bool buyFromMarket = order.pricePerShare > calculatePrice(betId, order.result) || order.pricePerShare == 0;
+        bool newOrder = order.index == orders[betId].length;
 
         // If before pool lockout, should always be able to buy from market
-        if (betDeadlines[betId] >= block.timestamp && order.orderPosition == OrderPosition.BUY && buyFromMarket) {
+        if (marketLockout[betId] >= block.timestamp && order.orderPosition == OrderPosition.BUY && buyFromMarket) {
             uint[] memory amounts = new uint[](1);
             string[] memory results = new string[](1);
             results[0] = order.result;
             amounts[0] = order.pricePerShare == 0 ? order.amount : calculateSharesForPrice(betId, order.result, order.pricePerShare);
             amounts[0] = amounts[0] > order.amount ? order.amount : amounts[0];
-            marketBuy(betId, sender, results, amounts, order.pricePerShare != 0);
-            if (order.index < orders[betId].length) {
-                orders[betId][order.index].amount -= amounts[0];
-            } else {
+            if (newOrder) {
                 order.amount -= amounts[0];
+            } else {
+                orders[betId][order.index].amount -= amounts[0];
+            }
+            if (amounts[0] != 0) {
+                marketBuy(betId, sender, results, amounts, order.pricePerShare != 0);
             }
         }
 
@@ -483,7 +483,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             order.amount = orderAmounts[i];
             order.pricePerShare = prices[i];
             if (order.amount != 0) {
-                placeOrder(sender, betId, order, false);
+                placeOrder(sender, betId, order);
             }
         }
     }
@@ -576,7 +576,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
                     user: sender,
                     index: orders[betId].length
                 });
-                placeOrder(sender, betId, newOrder, true);
+                placeOrder(sender, betId, newOrder);
             }
         }
     }

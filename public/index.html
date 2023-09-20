@@ -87,9 +87,9 @@
                     <label for="create-bet-oo-title">What's the title for the market?</label>
                     <input id="create-bet-oo-title" type="text" placeholder="For example: Argentina's Presidential Elections"
                            style="width: 75%; margin-top: 1em"/>
-                    <label style="margin-top: 1rem">What are the terms of the market?</label>
-                    <span contenteditable id="create-bet-oo" type="text"
-                          style="color: black; background-color: white; width: 75%; margin-top: 1em">This market will resolve to the winning candidate for Argentina's 2023 Presidential Elections</span>
+                    <label for="create-bet-oo" style="margin-top: 1rem">What are the terms of the market?</label>
+                    <textarea placeholder="This market will resolve to the winning candidate for Argentina's 2023 Presidential Elections" id="create-bet-oo" type="text"
+                          style="color: black; background-color: white; width: 75%; margin-top: 1em"></textarea>
                     <label style="display: none" for="create-bet-path" id="create-bet-path-label"></label>
                     <input style="display: none"
                            oninput="createBetQueryInner.innerHTML=parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value)"

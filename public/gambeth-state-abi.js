@@ -448,7 +448,7 @@ window.gambethStateAbi = [
                 "type": "string"
             }
         ],
-        "name": "betDeadlines",
+        "name": "marketLockout",
         "outputs": [
             {
                 "internalType": "uint64",
@@ -548,7 +548,7 @@ window.gambethStateAbi = [
                 "type": "string"
             }
         ],
-        "name": "betSchedules",
+        "name": "marketDeadline",
         "outputs": [
             {
                 "internalType": "uint64",
