@@ -32,13 +32,15 @@ contract GambethOptimisticOracle is OptimisticRequester {
             "Unable to Create market, check arguments."
         );
         _createBet(BetKind.OPTIMISTIC_ORACLE, msg.sender, currency, betId, commissionDenominator, commission, deadline, schedule, initialPool, query, results, ratios);
-        emit CreatedOptimisticBet(betId, title, query, performOracleRequest(betId, title, query));
+        string memory request = performOracleRequest(betId, title, query);
+        marketRequest[betId][keccak256(bytes(request))] = true;
+        emit CreatedOptimisticBet(betId, title, query, request);
     }
 
 
-    mapping(string => mapping(bytes32 => bool)) public marketQuery;
+    mapping(string => mapping(bytes32 => bool)) public marketRequest;
     function claimBet(string calldata betId, string calldata request) public {
-        require(marketQuery[betId][keccak256(bytes(request))], "Invalid query for bet");
+        require(marketRequest[betId][keccak256(bytes(request))], "Invalid query for bet");
         bool hasPrice = oo.hasPrice(address(this), PRICE_ID, marketCreation[betId], bytes(request));
         bool betExpired = marketDeadline[betId] + BET_THRESHOLD < block.timestamp;
 
@@ -250,9 +252,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
         marketDeadline[betId] = schedule;
         betResults[betId] = results;
 
-        userPools[betId][sender] = initialPool;
-        betPools[betId] = initialPool;
-
         // Bet creation should succeed from this point onward
         createdBets[betId] = true;
 
@@ -260,7 +259,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         for (uint i = 0; i < results.length; i++) {
             shares[i] = initialPool / 100 * ratios[i];
         }
-        marketBuy(betId, sender, results, shares, true);
+        marketBuy(betId, sender, results, shares, false);
 
         emit CreatedBet(betId, initialPool, query);
     }

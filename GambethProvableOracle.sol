@@ -40,7 +40,7 @@ contract GambethProvableOracle is GambethOracle, usingProvable {
                 nextSchedule = block.timestamp + NEXT_SCHEDULE;
             }
 
-            bytes32 nextQueryId = provable_query(nextSchedule, betTypes[betId], state.marketQuery(betId));
+            bytes32 nextQueryId = provable_query(nextSchedule, betTypes[betId], state.marketRequest(betId));
             queryBets[nextQueryId] = betId;
             return;
         }

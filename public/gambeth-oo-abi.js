@@ -990,7 +990,7 @@ window.ooAbi = [
                 "type": "bytes32"
             }
         ],
-        "name": "marketQuery",
+        "name": "marketRequest",
         "outputs": [
             {
                 "internalType": "bool",
