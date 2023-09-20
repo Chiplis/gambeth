@@ -538,9 +538,7 @@ async function createBet() {
         clearTimeout();
 
         const schema = createBetSchema.value;
-        console.log(createBetOo);
-        const query = createBetOo.value.replaceAll("<br>", " ").replaceAll("<div>", " ").replaceAll("</div>", " ");
-        console.log(query);
+        const query = createBetOo.value;
         const title = createBetOoTitle.value;
         const schedule = Date.parse(`${scheduleDate.value}`) / 1000;
         const deadline = Date.parse(`${deadlineDate.value}`) / 1000;
