@@ -1,4 +1,8 @@
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
+const ooContractAddress = "0xC718c71bE121E1b4f283e358995C9cad9C927c12";
+const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
+const humanContractAddress = "";
+
 let usdc;
 let betChart = null;
 
@@ -33,6 +37,7 @@ const placeBetAmount = document.getElementById("place-bet-amount");
 const placeBetPrice = document.getElementById("place-bet-price");
 const createBetSchema = document.getElementById("create-bet-schema");
 const createBetOo = document.getElementById("create-bet-oo");
+const createBetOoTitle = document.getElementById("create-bet-oo-title");
 const createBetPath = document.getElementById("create-bet-path");
 const marketPrices = document.getElementById("market-prices");
 
@@ -188,11 +193,7 @@ function triggerProcessing(msg, after = defaultMessageLocation) {
     innerMessage.innerHTML = msg + `<div style='transform: scale(0.5)' class='lds-dual-ring'></div>`;
 }
 
-const ooContractAddress = "0xA82634E4931D624855a991FCff553C75B0a458d8";
-const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
-const humanContractAddress = "";
 let awaitingApproval = false;
-
 const loadChain = async () => {
     let eth = (window.ethereum || {request: () => null, on: () => null});
     ['chainChanged', 'accountsChanged'].forEach(e => eth.on(e, () => {
@@ -537,7 +538,8 @@ async function createBet() {
         clearTimeout();
 
         const schema = createBetSchema.value;
-        let query = createBetOo.value;
+        const query = createBetOo.innerHTML.replaceAll("<br>", " ").replaceAll("<div>", " ").replaceAll("</div>", " ");
+        const title = createBetOoTitle.value;
         const schedule = Date.parse(`${scheduleDate.value}`) / 1000;
         const deadline = Date.parse(`${deadlineDate.value}`) / 1000;
         let commission = Number(createBetCommission.value || 0).toString();
@@ -575,18 +577,13 @@ async function createBet() {
         const initialPool = createBetInitialPool.value || "0";
         triggerProcessing("Creating market", createBetQueryOutcome);
         const outcomes = createdBetChoices;
-        if (outcomes.length) {
-            query += " Choose " + outcomes.map((choice, idx) => `${idx} for ${choice}, `).join("");
-            query = query.slice(0, query.length - 2);
-            query += `. Choose ${outcomes.length} if the question can't be answered at the current time or if none of the previous options are correct.`
-        }
         triggerProcessing("Creating market");
         switch (schema) {
             case "bc":
                 await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, query);
                 break;
             case "oo":
-                await (await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, [...new Set(outcomes)], odds, query)).wait();
+                await (await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, [...new Set(outcomes)], odds, title, query)).wait();
                 break;
         }
     } catch (error) {
@@ -848,7 +845,7 @@ function providerErrorMsg(error) {
 async function claimReward() {
     try {
         if (await activeBetKind() === "oo") {
-            const query = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args[1];
+            const query = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args[2];
             if (!(await activeContract.betRequestTimes(activeBet))) {
                 triggerProcessing("Reward will be transferred after bet's been settled.");
                 await activeContract.requestBetResolution(activeBet, query);
@@ -916,7 +913,7 @@ async function renderBetPool() {
             type: 'doughnut',
             data,
         };
-        aboutBet.innerHTML = `${activeBet}`;
+        aboutBet.innerHTML = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args[1];
         if (betChart) {
             betChart.destroy();
         }

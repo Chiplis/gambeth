@@ -84,9 +84,12 @@
                            id="create-bet-url" type="text"
                            placeholder="https://www.therocktrading.com/api/ticker/BTCEUR"
                            style="width: 75%; margin-top: 1em"/>
-                    <label for="create-bet-oo">What will the bet determine?</label>
-                    <input id="create-bet-oo" type="text" placeholder="Winner of the 2038 Super Bowl"
+                    <label for="create-bet-oo-title">What's the title for the market?</label>
+                    <input id="create-bet-oo-title" type="text" placeholder="For example: Argentina's Presidential Elections"
                            style="width: 75%; margin-top: 1em"/>
+                    <label style="margin-top: 1rem">What are the terms of the market?</label>
+                    <span contenteditable id="create-bet-oo" type="text"
+                          style="color: black; background-color: white; width: 75%; margin-top: 1em">This market will resolve to the winning candidate for Argentina's 2023 Presidential Elections</span>
                     <label style="display: none" for="create-bet-path" id="create-bet-path-label"></label>
                     <input style="display: none"
                            oninput="createBetQueryInner.innerHTML=parseBetQuery(createBetSchema.value, createBetUrl.value, createBetPath.value)"
@@ -190,8 +193,8 @@
                 </table>
                 <button class="btn link" id="place-bet" onclick="buyBet()"></button>
             </div>
-            <div>
-                <div id="about-bet" style="font-size: 150%">About</div>
+            <div style="display: flex; justify-content: space-around; width: 100%">
+                <div id="about-bet" style="font-size: 150%"></div>
             </div>
             <div id="bet-operations"
                  style="display: flex; flex-direction: row; justify-content: space-around; width: 100%">

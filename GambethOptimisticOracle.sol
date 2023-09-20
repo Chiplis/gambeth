@@ -8,6 +8,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
     using SafeERC20 for IERC20;
 
+
     address public contractOwner;
 
     address public constant OO_ADDRESS = 0xA5B9d8a0B0Fa04Ba71BDD68069661ED5C0848884;
@@ -22,9 +23,9 @@ contract GambethOptimisticOracle is OptimisticRequester {
     mapping(string => mapping(bytes32 => bool)) public betQueries;
     mapping(string => address) public betRequester;
 
-    event CreatedOptimisticBet(string indexed betId, string query);
+    event CreatedOptimisticBet(string indexed betId, string title, string query);
 
-    function createOptimisticBet(address currency, string calldata betId, uint64 deadline, uint64 schedule, uint256 commissionDenominator, uint256 commission, uint256 initialPool, string[] calldata results, uint256[] calldata ratios, string calldata query) public {
+    function createOptimisticBet(address currency, string calldata betId, uint64 deadline, uint64 schedule, uint256 commissionDenominator, uint256 commission, uint256 initialPool, string[] calldata results, uint256[] calldata ratios, string calldata title, string calldata query) public {
         require(
             bytes(betId).length != 0
             && deadline > block.timestamp // Bet can't be set in the past
@@ -34,7 +35,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
         );
         betQueries[betId][keccak256(bytes(query))] = true;
         _createBet(BetKind.OPTIMISTIC_ORACLE, msg.sender, currency, betId, commissionDenominator, commission, deadline, schedule, initialPool, query, results, ratios);
-        emit CreatedOptimisticBet(betId, query);
+        requestBetResolution(betId, title, query);
+        emit CreatedOptimisticBet(betId, title, query);
     }
 
     function claimBet(string calldata betId, string calldata query) public {
@@ -49,21 +51,48 @@ contract GambethOptimisticOracle is OptimisticRequester {
         _claimBet(betId, msg.sender, getResult(betId));
     }
 
+
+    string oracleTitleHeader = "q: title: ";
+    string oracleDescriptionHeader = ", description: ";
+    string oracleDescriptionIntro = '"This is a Gambeth multiple choice market. It should only resolve to one of the following outcomes, propose the number corresponding to it: ';
+
     // Submit a data request to the Optimistic oracle.
-    function requestBetResolution(string calldata betId, string calldata query) public {
+    function requestBetResolution(string calldata betId, string calldata title, string calldata query) public {
         require(betQueries[betId][keccak256(bytes(query))], "Invalid query for bet");
-        require(betSchedules[betId] <= block.timestamp, "Bet still not scheduled to run");
+        // require(betSchedules[betId] <= block.timestamp, "Bet still not scheduled to run");
         betRequestTimes[betId] = block.timestamp; // Set the request time to the current block time.
         IERC20 bondCurrency = betTokens[betId];
         uint256 reward = tokenFees[address(betTokens[betId])];
+        string memory description = "";
+        for (uint i = 0; i < betResults[betId].length; i++) {
+            description = string.concat(description, "Propose ", Strings.toString(i), " for ", betResults[betId][i], ". ");
+        }
+        description = string.concat(
+            description,
+            "Propose ",
+            Strings.toString(betResults[betId].length),
+            " if none of the previous options are a valid outcome by the following date (UNIX timestamp): ",
+            Strings.toString(betDeadlines[betId]),
+            ". "
+        );
 
+        string memory request = string.concat(
+            oracleTitleHeader,
+            title,
+            oracleDescriptionHeader,
+            oracleDescriptionIntro,
+            description,
+            query,
+            '"'
+        );
         // Now, make the price request to the Optimistic oracle and set the liveness to 30 so it will settle quickly.
-        oo.requestPrice(PRICE_ID, betRequestTimes[betId], bytes(query), bondCurrency, reward);
-        oo.setBond(PRICE_ID, betRequestTimes[betId], bytes(query), 1750 * 1e6);
-        oo.setEventBased(PRICE_ID, betRequestTimes[betId], bytes(query));
-        oo.setCustomLiveness(PRICE_ID, betRequestTimes[betId], bytes(query), 1);
-        oo.setCallbacks(PRICE_ID, betRequestTimes[betId], bytes(query), false, false, true);
-        requestBets[PRICE_ID][betRequestTimes[betId]][bytes(query)] = betId;
+        bytes memory requestBytes = bytes(request);
+        oo.requestPrice(PRICE_ID, betRequestTimes[betId], requestBytes, bondCurrency, reward);
+        oo.setBond(PRICE_ID, betRequestTimes[betId], requestBytes, 1750 * 1e6);
+        oo.setEventBased(PRICE_ID, betRequestTimes[betId], requestBytes);
+        oo.setCustomLiveness(PRICE_ID, betRequestTimes[betId], requestBytes, 1);
+        oo.setCallbacks(PRICE_ID, betRequestTimes[betId], requestBytes, false, false, true);
+        requestBets[PRICE_ID][betRequestTimes[betId]][requestBytes] = betId;
         betRequester[betId] = msg.sender;
     }
 
@@ -113,6 +142,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
     constructor() {
         contractCreator = msg.sender;
         approvedTokens[0x07865c6E87B9F70255377e024ace6630C1Eaa37F] = true;
+        IERC20(0x07865c6E87B9F70255377e024ace6630C1Eaa37F).approve(OO_ADDRESS, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
         tokenDecimals[0x07865c6E87B9F70255377e024ace6630C1Eaa37F] = 1e6;
         tokenFees[0x07865c6E87B9F70255377e024ace6630C1Eaa37F] = 5e6;
     }
