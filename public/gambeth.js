@@ -1,5 +1,5 @@
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
-const ooContractAddress = "0xa76F96f97f4c53436f0c03c717Aa56fcC1bb123d";
+const ooContractAddress = "0x5208e75A26BE470dA46F1A59e8A7620E8d4aF763";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 
@@ -577,13 +577,15 @@ async function createBet() {
         const initialPool = createBetInitialPool.value || "0";
         triggerProcessing("Creating market", createBetQueryOutcome);
         const outcomes = createdmarketOutcome;
+        outcomes.sort((a, b) => odds[outcomes.indexOf(a)] > odds[outcomes.indexOf(b)] ? 1 : -1);
+        odds.sort();
         triggerProcessing("Creating market");
         switch (schema) {
             case "bc":
                 await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, query);
                 break;
             case "oo":
-                await (await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, [...new Set(outcomes)], odds, title, query)).wait();
+                await (await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, outcomes, odds, title, query)).wait();
                 break;
         }
     } catch (error) {

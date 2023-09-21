@@ -342,18 +342,19 @@ contract GambethOptimisticOracle is OptimisticRequester {
         uint total = 0;
         IERC20 token = betTokens[betId];
         for (uint i = 0; i < results.length; i++) {
-            uint previousCost = calculateCost(betId);
+
             // By not allowing anyone to bet on an empty string bets can be refunded if an error happens.
             require(bytes(results[i]).length > 0 && amounts[i] > 0,
                 "Attempted to place invalid bet, check amounts and results"
             );
 
             // Update all required state
+            uint previousCost = calculateCost(betId);
             resultPools[betId][results[i]] += amounts[i];
+            uint transfer = calculateCost(betId) - previousCost;
             userPools[betId][sender] += amounts[i];
             betPools[betId] += amounts[i];
             userBets[betId][sender][results[i]] += amounts[i];
-            uint transfer = calculateCost(betId) - previousCost;
             userTransfers[betId][sender][results[i]] += int(transfer);
             resultTransfers[betId][results[i]] += transfer;
             total += transfer;
@@ -528,12 +529,16 @@ contract GambethOptimisticOracle is OptimisticRequester {
             uint[] calldata indexes = idxs[r];
             OrderPosition orderPosition = orderPositions[r];
             for (uint i = 0; i < indexes.length && orderAmount != 0; i++) {
+
                 uint index = indexes[i];
                 Order storage matchedOrder = orders[betId][index];
 
+                if (matchedOrder.amount == 0) {
+                    continue;
+                }
+
                 require(
                     matchedOrder.orderPosition != orderPosition
-                    && matchedOrder.amount > 0
                     && orderPosition == OrderPosition.BUY
                         ? pricePerShare >= matchedOrder.pricePerShare
                         : pricePerShare <= matchedOrder.pricePerShare
