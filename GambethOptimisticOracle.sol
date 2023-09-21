@@ -8,7 +8,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
     using SafeERC20 for IERC20;
 
-
     address public contractOwner;
 
     address public constant OO_ADDRESS = 0xA5B9d8a0B0Fa04Ba71BDD68069661ED5C0848884;

@@ -562,8 +562,8 @@ async function createBet() {
         const initialPool = createBetInitialPool.value || "0";
         triggerProcessing("Creating market", createBetQueryOutcome);
         const outcomes = createdmarketOutcome;
-        outcomes.sort((a, b) => odds[outcomes.indexOf(a)] > odds[outcomes.indexOf(b)] ? 1 : -1);
-        odds.sort();
+        outcomes.sort((a, b) => odds[outcomes.indexOf(a)] - odds[outcomes.indexOf(b)]);
+        odds.sort((a, b) => a - b);
         triggerProcessing("Creating market");
         switch (schema) {
             case "bc":
