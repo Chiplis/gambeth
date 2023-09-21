@@ -424,21 +424,6 @@ async function renderPlaceBet() {
 
 }
 
-async function calculateSharesForPrice(result, p) {
-    const s = Number(await activeContract.resultPools(activeBet, result));
-    let r = 0;
-    const outcomes = await activeContract.getOutcomes(activeBet);
-    for (let i = 0; i < outcomes.length; i++) {
-        const price = Number(await activeContract.resultPools(activeBet, outcomes[i]));
-        r += (outcomes[i] === result ? 0 : price) ** 2;
-    }
-    console.log(p ** 2 / 1e12 * r - p ** 4 / 1e24 * r);
-    const root = Math.sqrt(p ** 2 / 1e12 * r - p ** 4 / 1e24 * r);
-    const a = p ** 2 / 1e12 * -s - root;
-    console.log(a, s, a+s, root, (p ** 2 / 1e12 - 1))
-    return (a + s) / (p ** 2 / 1e12 - 1);
-}
-
 async function calculateCost(newBets) {
     if (!Object.keys(newBets).length) {
         return "";
