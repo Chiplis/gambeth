@@ -785,7 +785,7 @@ async function fillOrder() {
     triggerProcessing(`Placing order${newOrders.length > 1 ? "s" : ""}`);
     const finalAmounts = await Promise.all(amounts.map(async a => a.toString() / await activeDecimals()));
     const orders = betOrders[activeBet];
-    const orderIndexes = placedBets.map(({orderPosition, outcome, pricePerShare}) => orders
+    const orderIndexes = placedBets.map(({orderPosition, outcome, pricePerShare}) => pricePerShare === 0 ? [] : orders
         .filter(o => o.amount)
         .filter(o => o.outcome === outcome)
         .filter(o => o.orderPosition !== orderPosition)
