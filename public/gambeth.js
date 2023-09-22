@@ -1,5 +1,5 @@
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
-const ooContractAddress = "0x5208e75A26BE470dA46F1A59e8A7620E8d4aF763";
+const ooContractAddress = "0xB7481ce983ce6396eB695eAA06Fb9C59FA2bE29e";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 
@@ -67,7 +67,10 @@ const createBetOdds = document.getElementById("create-bet-odds");
 const createBetOddsList = document.getElementById("create-bet-odds-list");
 
 const placeBetInfo = document.getElementById("place-bet-info");
-const placeBetEntries = document.getElementById("place-bet-entries");
+const placeBetBids = document.getElementById("place-bet-bids");
+const placeBetBidsTable = document.getElementById("place-bet-bids-table");
+const placeBetAsks = document.getElementById("place-bet-asks");
+const placeBetAsksTable = document.getElementById("place-bet-asks-table");
 const betUrl = document.getElementById("bet-url");
 const betDeadline = document.getElementById("bet-deadline");
 const betSchedule = document.getElementById("bet-schedule");
@@ -359,9 +362,9 @@ async function renderClaimBet() {
     claimBet.innerHTML = claimedBet
         ? "Claimed"
         : resolutionRequested
-            ? (finishedBet ? "Claim" : "Settling")
+            ? (finishedBet ? "Claim" : "")
             : "Settle";
-    const disableLink = ["Claimed", "Settling"].includes(claimBet.innerHTML);
+    const disableLink = ["Claimed", ""].includes(claimBet.innerHTML);
     claimBet.classList.remove(disableLink ? "link" : null);
     claimBet.classList.add(!disableLink ? "link" : null);
     claimBet.disabled = claimBet.innerHTML === "Claimed" || claimBet.innerHTML === "Settling";
@@ -424,19 +427,33 @@ async function renderPlaceBet() {
 
 }
 
-async function calculateCost(newBets) {
-    if (!Object.keys(newBets).length) {
+async function calculateCost(newBets, bids) {
+    if (!newBets.length) {
         return "";
     }
+
     const outcomes = await activeBetOutcomes();
     const pools = await Promise.all(outcomes.map(o => activeContract.resultPools(activeBet, o).then(Number)));
-    outcomes.forEach((outcome, i) => newBets[outcome] = (newBets[outcome] || 0) + pools[i]);
-    const newCost = Math.sqrt(Object.values(newBets).map(v => Math.pow(v, 2)).reduce((a, b) => a + b));
-    const payouts = outcomes.map(o => ({[o]: newCost / newBets[o]}));
-    return {
+    const limitCost = (await Promise.all(newBets
+        .filter(b => b.pricePerShare !== 0)
+        .map(async ({pricePerShare, amount}) => pricePerShare / await activeDecimals() * amount)))
+        .reduce((a, b) => a + b, 0);
+
+    const newCost = Math.sqrt(pools
+        .map((pool, o) =>
+            ((pool + newBets.filter(b => b.pricePerShare === 0 && b.outcome === outcomes[o])
+                .map(({amount}) => amount)
+                .reduce((a, b) => a + b, 0) * (bids ? 1 : -1)) ** 2)
+        ).reduce((a, b) => a + b)
+    );
+    console.log(newCost, limitCost);
+    const payouts = outcomes.map((o, i) => ({[o]: newCost / (newBets.filter(({outcome}) => outcome === o).map(({amount}) => amount).reduce((a, b) => a + b, 0) * (bids ? 1 : -1) + pools[i])}));
+    const result = {
         payout: Object.assign({}, ...payouts),
-        cost: newCost - await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals())
+        cost: limitCost + Math.abs(newCost - await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals()))
     };
+    console.log(result);
+    return result;
 }
 
 async function calculatePrice(result) {
@@ -583,12 +600,38 @@ async function createBet() {
 }
 
 async function renderPlacedBets() {
+
+    placedBets = groupOrders(placedBets);
+
+    const placedBids = placedBets.filter(({orderPosition}) => orderPosition === "BUY");
+    const placedAsks = placedBets.filter(({orderPosition}) => orderPosition === "SELL");
+
+    const totalBids = await calculateCost(placedBids, true);
+    const totalAsks = await calculateCost(placedAsks, false);
+
     placeBetInfo.style.display = placedBets.length ? "flex" : "none";
-    const newBets = {};
-    placedBets.filter(p => p.orderPosition === "BUY").forEach(b => newBets[b.outcome] = (newBets[b.outcome] || 0) + Number(b.amount));
-    const totalCost = await calculateCost(newBets);
-    placeBetEntries.innerHTML = placedBets.map((order, i) => `<tr style="background-color: ${order.orderPosition === "BUY" ? "#069b69" : "#ff4747"}"><td style="margin: 5px; display: block" onclick="placedBets.splice(${i}, 1); renderPlacedBets()">✖</td><td>${order.orderPosition}</td><td>${order.outcome}</td><td>${order.amount}</td><td>${order.orderPosition === 'BUY' ? ('$' + totalCost.payout[order.outcome].toFixed(3)) : ''}</td><td></td></tr>`).join("");
-    placeBetEntries.innerHTML += totalCost ? `<tr style="background-color: #6f75e5"><td></td><td></td><td></td><td><td></td><td>${totalCost.cost.toFixed(3)}</td></tr>` : "";
+    placeBetAsksTable.style.display = placedAsks.length ? "block" : "none";
+    placeBetBidsTable.style.display = placedBids.length ? "block" : "none";
+
+    placeBetBids.innerHTML = (await Promise.all(placedBids.map(async order => `
+    <tr style="background-color: #069b69">
+        <td style="margin: 5px; display: block" onclick='placedBets.splice(placedBets.map(p => JSON.stringify(p)).indexOf(${JSON.stringify(order)}), 1); renderPlacedBets()'>✖</td>
+        <td>${order.outcome}</td>
+        <td>${order.amount}</td>
+        <td>${order.pricePerShare ? (order.pricePerShare / await activeDecimals()) : "MARKET"}</td>
+        <td>${'$' + totalBids.payout[order.outcome].toFixed(3)}</td>
+        <td></td>
+    </tr>`))).join("");
+    placeBetAsks.innerHTML = (await Promise.all(placedAsks.map(async order => `
+    <tr style="background-color: #ff4747">
+        <td style="margin: 5px; display: block" onclick='placedBets.splice(placedBets.map(p => JSON.stringify(p)).indexOf(${JSON.stringify(order)}), 1); renderPlacedBets()'>✖</td>
+        <td>${order.outcome}</td>
+        <td>${order.amount}</td>
+        <td>${order.pricePerShare ? (order.pricePerShare / await activeDecimals()) : "MARKET"}</td>
+        <td></td>
+    </tr>`))).join("");
+    placeBetBids.innerHTML += totalBids ? `<tr style="background-color: #6f75e5"><td></td><td></td><td></td><td><td></td><td>${totalBids.cost.toFixed(3)}</td></tr>` : "";
+    placeBetAsks.innerHTML += totalAsks ? `<tr style="background-color: #6f75e5"><td></td><td></td><td><td></td><td>${totalAsks.cost.toFixed(3)}</td></tr>` : "";
 }
 
 async function activeDecimals() {
@@ -646,6 +689,20 @@ const fetchOrders = async (refresh) => {
     await renderOrders();
 }
 
+function groupOrders(orders) {
+    const grouped = [];
+    orders.forEach(o => {
+        const {outcome, orderPosition, amount, pricePerShare} = o;
+        const update = grouped.filter(g => g.orderPosition === orderPosition && g.pricePerShare === pricePerShare && g.outcome === outcome)[0];
+        if (update) {
+            update.amount += amount;
+        } else {
+            grouped.push(o);
+        }
+    });
+    return grouped;
+}
+
 async function renderOrders() {
     const toRow = async ({idx, outcome, amount, pricePerShare}) => {
         return (`<tr><td>${outcome}</td><td>${amount}</td><td>${(Number(pricePerShare) / await activeDecimals()).toFixed(3)}</td><td style="display: none">${idx}</td></tr>`)
@@ -668,26 +725,12 @@ async function renderOrders() {
     const poolBuys = betOrders[activeBet].filter(b => b.amount > 0n && b.user !== owner).filter(o => o.orderPosition === "BUY");
     const poolSells = betOrders[activeBet].filter(b => b.amount > 0n && b.user !== owner).filter(o => o.orderPosition === "SELL");
 
-    const groupedOrders = (orders) => {
-        const grouped = [];
-        orders.forEach(o => {
-            const {outcome, orderPosition, amount, pricePerShare} = o;
-            const update = grouped.filter(g => g.orderPosition === orderPosition && g.pricePerShare === pricePerShare && g.outcome === outcome)[0];
-            if (update) {
-                update.amount += amount;
-            } else {
-                grouped.push(o);
-            }
-        });
-        return grouped;
-    }
-
     await Promise.all([[userBuyOrdersEntries, userBuys], [userSellOrdersEntries, userSells]].map(async ([elm, orders]) => {
         elm.innerHTML = `${(await Promise.all(orders.map(toEditableRow))).join("")}`;
     }));
 
     await Promise.all([[poolBuyOrdersEntries, poolBuys], [poolSellOrdersEntries, poolSells]].map(async ([elm, orders]) => {
-        elm.innerHTML = `${(await Promise.all(groupedOrders(orders).map(toRow))).join("")}`;
+        elm.innerHTML = `${(await Promise.all(groupOrders(orders).map(toRow))).join("")}`;
     }));
 }
 
@@ -721,6 +764,7 @@ setInterval(fetchOrders, 10000);
 async function fillOrder() {
     const newOrders = placedBets.filter(order => order.amount > 0n);
     console.log(newOrders);
+    newOrders.sort((a, b) => a.pricePerShare - b.pricePerShare);
     const prices = newOrders.map(o => o.pricePerShare);
     const amounts = await Promise.all(newOrders.map(o => o.amount).map(numberToToken));
     if (!newOrders.length || !amounts.length) {
@@ -767,7 +811,7 @@ async function addFreeBet() {
         await placeContractBet();
         queueBuyOrder.style.opacity = 0;
         placeBetInfo.style.display = "none";
-        placeBetEntries.innerHTML = "";
+        placeBetBids.innerHTML = "";
     } catch (error) {
         console.error(error);
         hideMessage();

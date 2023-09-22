@@ -173,21 +173,36 @@
         </div>
         <div id="bet-container" style="width: 100%; margin-top: 3%; display: none">
             <div id="place-bet-info" style="display: none; flex-direction: row; width: 100%; justify-content: flex-end">
-                <table class="styled-table" style="width: auto">
+                <table id="place-bet-bids-table" class="styled-table" style="width: auto">
                     <thead>
                     <tr>
-                        <th colspan="6" style="text-align: center;">Placed Orders</th>
+                        <th colspan="6" style="text-align: center;">Placed Bids</th>
                     </tr>
                     <tr>
                         <th></th>
-                        <th>Position</th>
                         <th>Outcome</th>
                         <th>Amount</th>
+                        <th>Price</th>
                         <th>Payout</th>
-                        <th>Total cost</th>
+                        <th>Max cost</th>
                     </tr>
                     </thead>
-                    <tbody id="place-bet-entries"></tbody>
+                    <tbody id="place-bet-bids"></tbody>
+                </table>
+                <table id="place-bet-asks-table" class="styled-table" style="width: auto">
+                    <thead>
+                    <tr>
+                        <th colspan="5" style="text-align: center;">Placed Asks</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th>Outcome</th>
+                        <th>Amount</th>
+                        <th>Price</th>
+                        <th>Market pay</th>
+                    </tr>
+                    </thead>
+                    <tbody id="place-bet-asks"></tbody>
                 </table>
                 <button class="btn link" id="place-bet" onclick="buyBet()"></button>
             </div>

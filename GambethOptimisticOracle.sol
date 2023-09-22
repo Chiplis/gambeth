@@ -38,6 +38,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
 
     mapping(string => mapping(bytes32 => bool)) public marketRequest;
+
     function claimBet(string calldata betId, string calldata request) public {
         require(marketRequest[betId][keccak256(bytes(request))], "Invalid query for bet");
         bool hasPrice = oo.hasPrice(address(this), PRICE_ID, marketCreation[betId], bytes(request));
@@ -286,7 +287,11 @@ contract GambethOptimisticOracle is OptimisticRequester {
         return sqrt(cost);
     }
 
-    function calculateSharesForPrice(string calldata betId, string memory result, uint256 p) public view returns (uint) {
+    function calculateSharesForCost(string calldata betId, string memory result, uint p) internal view returns (uint) {
+        return (sqrt(2 * p * calculateCost(betId) + resultPools[betId][result] ** 2 + p ** 2) - resultPools[betId][result]) / tokenDecimals[address(betTokens[betId])];
+    }
+
+    function calculateSharesForPricePerShare(string calldata betId, string memory result, uint256 p) internal view returns (uint) {
         uint s = resultPools[betId][result];
         uint r = 0;
         string[] memory outcomes = getOutcomes(betId);
@@ -294,38 +299,56 @@ contract GambethOptimisticOracle is OptimisticRequester {
             r += (Strings.equal(outcomes[i], result) ? 0 : resultPools[betId][outcomes[i]]) ** 2;
         }
         uint decimals = tokenDecimals[address(betTokens[betId])];
-        uint sqa = (p ** 2 - p ** 4 / decimals**2);
+        uint sqa = (p ** 2 - p ** 4 / decimals ** 2);
         uint sq = r * (sqa / decimals);
         uint root = sqrt(sq);
-        int a = int(p ** 2 / (decimals * sqrt(decimals))) * -int(s) - int(root) + int(s * sqrt(decimals));
+        int a = int(p ** 2 / (decimals * sqrt(decimals))) * - int(s) - int(root) + int(s * sqrt(decimals));
         int q = int(p ** 2 / decimals) - int(decimals);
         if (a < 0 && q > 0 || q < 0 && a > 0) {
-            a = int(p ** 2 / decimals * sqrt(decimals)) * -int(s) + int(root) + int(s * sqrt(decimals));
+            a = int(p ** 2 / decimals * sqrt(decimals)) * - int(s) + int(root) + int(s * sqrt(decimals));
         }
         return uint(a / (q / 1000));
     }
 
-    function calcRoot(uint p, string calldata betId, string calldata result) public view returns (uint) {
-        uint r = 0;
-        string[] memory outcomes = getOutcomes(betId);
-        for (uint i = 0; i < outcomes.length; i++) {
-            r += (Strings.equal(outcomes[i], result) ? 0 : resultPools[betId][outcomes[i]]) ** 2;
-        }
-        uint root = (p**2 / 1e6) * r - (p**4 / 1e18) * r;
-        return root;
-    }
+    function marketSell(string calldata betId, address sender, string memory result, uint256 amount) private returns (bool) {
+        uint total = 0;
 
-    function calculateSharesForCost(string calldata betId, string memory result, uint256 cost) public view returns (uint256) {
-        uint currentCost = calculateCost(betId);
-        uint currentShares = resultPools[betId][result];
-        uint restShares = 0;
-        string[] memory outcomes = getOutcomes(betId);
-        for (uint i = 0; i < outcomes.length; i++) {
-            restShares += resultPools[betId][outcomes[i]] ** 2;
+        // Update all required state
+        uint previousCost = calculateCost(betId);
+        resultPools[betId][result] -= amount;
+        uint sale = previousCost - calculateCost(betId);
+
+        if (sale > resultTransfers[betId][result]) {
+            sale = resultTransfers[betId][result];
         }
-        uint prices = (cost + currentCost) ** 2;
-        uint shares = sqrt(prices - restShares) - currentShares;
-        return shares;
+
+        if (sale == 0) {
+            return false;
+        }
+
+        // Turn remaining pool into shares with no owner, increasing price of remaining outcomes
+        if (resultPools[betId][result] == 0 && sale != resultTransfers[betId][result]) {
+            uint mintedShares = calculateSharesForCost(betId, result, resultTransfers[betId][result] - sale);
+            resultPools[betId][result] += mintedShares;
+            betPools[betId] += mintedShares;
+        }
+
+        userPools[betId][sender] -= amount;
+        betPools[betId] -= amount;
+        userBets[betId][sender][result] -= amount;
+
+        resultTransfers[betId][result] -= sale;
+        userTransfers[betId][sender][result] -= int(sale);
+        total += sale;
+
+        uint256 ownerFee = (total / betCommissionDenominator[betId]) * betCommissions[betId];
+        total -= ownerFee;
+        emit WonBet(sender, total);
+        contractFees += ownerFee /= 2;
+        betTokens[betId].safeTransfer(betOwners[betId], ownerFee);
+        betTokens[betId].safeTransfer(sender, total);
+
+        return true;
     }
 
     function marketBuy(string calldata betId, address sender, string[] memory results, uint256[] memory amounts, bool skipTransfer) private {
@@ -395,12 +418,12 @@ contract GambethOptimisticOracle is OptimisticRequester {
         IERC20 token = betTokens[betId];
         token.safeTransfer(sender, reward);
         contractFees += ownerFee /= 2;
-
         token.safeTransfer(betOwners[betId], ownerFee);
     }
 
 
     uint public contractFees = 0;
+
     function withdrawUsdc(uint total) public ownerOnly {
         withdraw(total, USDC);
     }
@@ -433,23 +456,36 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
     function placeOrder(address sender, string calldata betId, Order memory order) private {
         require(order.amount != 0, "Invalid placed order state");
-        bool buyFromMarket = order.pricePerShare > calculatePrice(betId, order.result) || order.pricePerShare == 0;
+        bool fromMarket = order.pricePerShare == 0;
         bool newOrder = order.index == orders[betId].length;
 
         // If before pool lockout, should always be able to buy from market
-        if (marketLockout[betId] >= block.timestamp && order.orderPosition == OrderPosition.BUY && buyFromMarket) {
+        if (marketLockout[betId] >= block.timestamp) {
             uint[] memory amounts = new uint[](1);
             string[] memory results = new string[](1);
-            results[0] = order.result;
-            amounts[0] = order.pricePerShare == 0 ? order.amount : calculateSharesForPrice(betId, order.result, order.pricePerShare);
-            amounts[0] = amounts[0] > order.amount ? order.amount : amounts[0];
-            if (newOrder) {
-                order.amount -= amounts[0];
-            } else {
-                orders[betId][order.index].amount -= amounts[0];
-            }
-            if (amounts[0] != 0) {
-                marketBuy(betId, sender, results, amounts, order.pricePerShare != 0);
+            if (order.orderPosition == OrderPosition.BUY && (order.pricePerShare > calculatePrice(betId, order.result) || fromMarket)) {
+                results[0] = order.result;
+                amounts[0] = order.pricePerShare == 0 ? order.amount : calculateSharesForPricePerShare(betId, order.result, order.pricePerShare);
+                amounts[0] = amounts[0] > order.amount ? order.amount : amounts[0];
+                if (newOrder) {
+                    order.amount -= amounts[0];
+                } else {
+                    orders[betId][order.index].amount -= amounts[0];
+                }
+                if (amounts[0] != 0) {
+                    marketBuy(betId, sender, results, amounts, !fromMarket);
+                }
+            } else if (order.orderPosition == OrderPosition.SELL && fromMarket) {
+                if (order.amount != 0) {
+                    bool sellOnMarket = marketSell(betId, sender, order.result, order.amount);
+                    if (newOrder) {
+                        order.amount -= sellOnMarket ? order.amount : 0;
+                        order.pricePerShare = sellOnMarket ? order.pricePerShare : calculatePrice(betId, order.result);
+                    } else {
+                        orders[betId][order.index].amount -= sellOnMarket ? order.amount : 0;
+                        orders[betId][order.index].pricePerShare = sellOnMarket ? order.pricePerShare : calculatePrice(betId, order.result);
+                    }
+                }
             }
         }
 
