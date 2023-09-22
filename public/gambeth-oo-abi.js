@@ -368,35 +368,6 @@ window.ooAbi = [
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "p",
-                "type": "uint256"
-            },
-            {
-                "internalType": "string",
-                "name": "betId",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "result",
-                "type": "string"
-            }
-        ],
-        "name": "calcRoot",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
                 "name": "",
                 "type": "uint256"
             },
@@ -455,64 +426,6 @@ window.ooAbi = [
             }
         ],
         "name": "calculatePrice",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "betId",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "result",
-                "type": "string"
-            },
-            {
-                "internalType": "uint256",
-                "name": "cost",
-                "type": "uint256"
-            }
-        ],
-        "name": "calculateSharesForCost",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "betId",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "result",
-                "type": "string"
-            },
-            {
-                "internalType": "uint256",
-                "name": "p",
-                "type": "uint256"
-            }
-        ],
-        "name": "calculateSharesForPrice",
         "outputs": [
             {
                 "internalType": "uint256",
@@ -1426,4 +1339,4 @@ window.ooAbi = [
         "stateMutability": "nonpayable",
         "type": "function"
     }
-]
+];
