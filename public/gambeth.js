@@ -654,8 +654,7 @@ async function addSingleBet(order) {
 
 async function buyBet() {
     if (await activeBetKind() === "oo") {
-        await fillOrder().then(tx => tx.wait());
-        triggerSuccess(`Order placed!`, undefined, undefined, 2500);
+        await fillOrder();
     } else {
         await addFreeBet();
     }
@@ -781,7 +780,7 @@ async function fillOrder() {
         .map(o => o.idx));
     const filledOrder = await activeContract.fillOrder(finalAmounts, prices, placedBets.map(o => o.orderPosition === "BUY" ? 0n : 1n), activeBet, newOrders.map(o => o.outcome), orderIndexes);
     await filledOrder.wait();
-    hideMessage();
+    triggerSuccess(`Order placed!`, hideMessage, undefined, 2500);
     placedBets = [];
     await Promise.all([fetchOrders(true), renderBetPool(), renderPlacedBets()]);
 }
