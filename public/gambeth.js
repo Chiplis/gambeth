@@ -452,15 +452,12 @@ async function calculateCost(newBets, bids) {
 
     const limitCost = (await Promise.all(newBets
         .filter(b => b.pricePerShare !== 0)
-        .map(async ({
-                        pricePerShare,
-                        amount
-                    }) => Number(pricePerShare) / Number(await activeDecimals()) * Number(amount))))
+        .map(async ({pricePerShare, amount}) => Number(pricePerShare) / await activeDecimals() * Number(amount))))
         .reduce((a, b) => a + b, 0);
 
     const previousCost = await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals());
 
-    const newCost = Number(outcomes.map(outcome => {
+    const newCost = outcomes.map(outcome => {
         let newCost = Math.sqrt(pools
             .map((pool, o) => (
                 (pool + newBets.filter(b => b.pricePerShare === 0 && b.outcome === outcome && outcomes[o] === outcome)
@@ -471,15 +468,9 @@ async function calculateCost(newBets, bids) {
         const totalCost = Math.abs(newCost - previousCost);
         const transfer = transfers[outcomes.indexOf(outcome)];
         return bids ? totalCost : transfer > totalCost ? totalCost : transfer;
-    }).reduce((a, b) => a + b, 0));
+    }).reduce((a, b) => a + b, 0);
 
-    const payouts = outcomes
-        .map((o, i) => (
-                {
-                    [o]: newCost / (Number(newBets.filter(({outcome}) => outcome === o).map(({amount}) => amount).reduce((a, b) => a + b, 0)) * (bids ? 1 : -1) + pools[i])
-                }
-            )
-        );
+    const payouts = outcomes.map((o, i) => ({[o]: newCost / (newBets.filter(({outcome}) => outcome === o).map(({amount}) => Number(amount)).reduce((a, b) => a + b, 0) * (bids ? 1 : -1) + pools[i])}));
     return {
         payout: Object.assign({}, ...payouts),
         cost: limitCost + newCost
@@ -713,7 +704,6 @@ const fetchOrders = async (refresh) => {
         user: o[4],
         idx: o[5]
     }));
-    console.log(newOrders);
     betOrders[activeBet] = betOrders[activeBet].concat(newOrders);
     if (newOrders.length || refresh) {
         await renderOrders();
