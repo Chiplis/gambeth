@@ -759,8 +759,8 @@ setInterval(fetchOrders, 10000);
 
 async function fillOrder() {
     const newOrders = placedBets.filter(order => order.amount > 0n);
-    console.log(newOrders);
-    newOrders.sort((a, b) => a.pricePerShare - b.pricePerShare);
+    // Sells should be filled before buys
+    newOrders.sort((a, b) => a.orderPosition < b.orderPosition ? 1 : a.pricePerShare - b.pricePerShare);
     const prices = newOrders.map(o => o.pricePerShare);
     const amounts = await Promise.all(newOrders.map(o => o.amount).map(numberToToken));
     if (!newOrders.length || !amounts.length) {
