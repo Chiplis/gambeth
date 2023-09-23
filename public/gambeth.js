@@ -484,7 +484,7 @@ async function calculatePrice(result) {
 async function browseMarkets() {
     exploreMarkets.innerHTML = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))
         .map(e => [e.args[e.args.length - 4], e.args[e.args.length - 3]])
-        .map(([id, name]) => `<a href="/${id}">${name}</a>`)
+        .map(([id, name]) => `<a href="/?id=${id}">${name}</a>`)
         .join("");
 }
 
