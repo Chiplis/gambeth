@@ -818,10 +818,11 @@ async function fillOrder() {
         .filter(o => orderPosition === "BUY" ? (pricePerShare >= o.pricePerShare) : (pricePerShare <= o.pricePerShare))
         .map(o => o.idx));
     const filledOrder = await activeContract.fillOrder(finalAmounts, prices, placedBets.map(o => o.orderPosition === "BUY" ? 0n : 1n), activeBet, newOrders.map(o => o.outcome), orderIndexes);
-    await filledOrder.wait();
-    triggerSuccess(`Order placed!`, hideMessage, undefined, 2500);
     placedBets = [];
-    await Promise.all([fetchOrders(true), renderBetPool(), renderPlacedBets()]);
+    await renderPlacedBets();
+    await filledOrder.wait();
+    await Promise.all([fetchOrders(true), renderBetPool()]);
+    triggerSuccess(`Order placed!`, hideMessage, undefined, 2500);
 }
 
 async function addFreeBet() {
