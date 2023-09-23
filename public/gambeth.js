@@ -7,7 +7,7 @@ let usdc;
 let betChart = null;
 
 const numberToToken = async n => {
-    if (!activeBet) return BigInt(n);
+    if (!activeBet) return BigInt(n) * BigInt(1e6);
     let d = await activeContract.tokenDecimals(await activeContract.betTokens(activeBet));
     return BigInt(n) * BigInt(d);
 }
@@ -321,7 +321,7 @@ async function renderApprove() {
         const balance = await usdc.balanceOf(owner);
         const allowance = await usdc.allowance(owner, ooContractAddress);
         const wallet = balance > allowance ? allowance : balance;
-        approveToken.innerHTML = "$" + await tokenToNumber(wallet).then(Number);
+        approveToken.innerHTML = wallet === 0n ? "Approve" : ("$" + await tokenToNumber(wallet).then(Number));
     }
 }
 
