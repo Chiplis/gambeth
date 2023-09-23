@@ -472,11 +472,10 @@ async function calculateCost(newBets, bids) {
     let payout = Math.sqrt(pools
         .map((pool, o) => (
             (pool + newBets.filter(b => b.outcome === outcomes[o])
-                .map(({amount}) => amount)
+                .map(({amount}) => Number(amount))
                 .reduce((a, b) => a + b, 0) * (bids ? 1 : -1)) ** 2
         )).reduce((a, b) => a + b, 0)
     );
-    console.log(newCost + limitCost);
     const payouts = outcomes.map((o, i) => ({[o]: payout / (newBets.filter(({outcome}) => outcome === o).map(({amount}) => Number(amount)).reduce((a, b) => a + b, 0) * (bids ? 1 : -1) + pools[i])}));
     return {
         payout: Object.assign({}, ...payouts),
