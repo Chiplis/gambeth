@@ -672,7 +672,7 @@ async function buyBet() {
 const betOrders = {};
 const fetchOrders = async (refresh) => {
     betOrders[activeBet] = refresh ? [] : (betOrders[activeBet] || []);
-    const contractOrders = await (activeContract || {getOrders: async () => []}).getOrders(activeBet, betOrders[activeBet].length, 100);
+    const contractOrders = await (activeContract || {getOrders: async () => []}).getOrders(activeBet || "", betOrders[activeBet].length, 100);
     const newOrders = contractOrders.map((o, idx) => ({
         orderPosition: o[0] ? "SELL" : "BUY",
         pricePerShare: o[1],
