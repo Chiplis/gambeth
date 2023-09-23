@@ -476,7 +476,7 @@ async function calculateCost(newBets, bids) {
     const payouts = outcomes
         .map((o, i) => (
                 {
-                    [o]: newCost / (Number(newBets.filter(({outcome}) => outcome === o).map(({amount}) => amount).reduce((a, b) => a + b, 0n)) * (bids ? 1 : -1) + pools[i])
+                    [o]: newCost / (Number(newBets.filter(({outcome}) => outcome === o).map(({amount}) => amount).reduce((a, b) => a + b, 0)) * (bids ? 1 : -1) + pools[i])
                 }
             )
         );
