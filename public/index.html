@@ -30,7 +30,7 @@
         <input style="font-size: 1rem; max-width: 20vw; outline: 0; margin: 0" class="search" type="search" placeholder="Search Markets" id="search-bet">
     </div>
     <div style="display: flex">
-        <div class="btn link create-bet" style="color:white; border: 0" onclick="createBetBtn()">
+        <div class="btn link create-bet" style="color:white; border: 0" onclick="createMarket()">
             Create Market
         </div>
     </div>
@@ -179,7 +179,7 @@
             <div class="btn" style="color:white; background-color: #ed7b64; align-self: flex-start;"
                  onclick="renderNextCreationStep()">→
             </div>
-            <button class="btn close" onclick="closeNewBet()"
+            <button class="btn close" onclick="closeCreateMarket()"
                     style="align-self: flex-start; border-radius: 5rem; padding: 0.25rem;">
                 ✖
             </button>

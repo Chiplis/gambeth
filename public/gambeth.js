@@ -89,9 +89,8 @@ const updateOrdersBtn = document.getElementById("update-orders");
 
 const renderBetIdShare = () => betIdLabel.innerHTML = betIdMsg.replace("{BET_ID}", betId.value.trim() || "{BET_ID}");
 
-const closeNewBet = () => {
-    newBet.hideBet = newBet.style.display = 'none';
-    betContainer.style.display = newBet.hideBet ? 'none' : 'flex';
+const closeCreateMarket = () => {
+    newBet.style.display = 'none';
 }
 
 let fixedCommission = null;
@@ -99,13 +98,11 @@ let fixedCommission = null;
 let currentStep = 0;
 const steps = Array.from(document.getElementsByClassName("create-bet-step"));
 
-const createBetBtn = async () => {
-    newBet.hideBet = betContainer.style.display === 'none';
-    betContainer.style.display = 'none';
+const createMarket = async () => {
+    // betContainer.style.display = 'none';
     newBet.style.display = 'flex';
     window.scrollTo({top: 0, behavior: "smooth"})
     createBetSchema.selectedIndex = 0;
-    [betContainer.style.display, newBet.style.display] = ['none', 'flex'];
     steps[currentStep].style.position = "initial";
     steps[currentStep].style.opacity = "100%";
 }
