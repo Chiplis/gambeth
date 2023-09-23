@@ -20,7 +20,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
     mapping(bytes32 => mapping(uint256 => mapping(bytes => string))) public marketOracleRequest;
     mapping(string => address) public betRequester;
 
-    event CreatedOptimisticBet(string indexed betId, string betId, string title, string query, string request);
+    event CreatedOptimisticBet(string indexed betIdIndexed, string betId, string title, string query, string request);
 
     function createOptimisticBet(address currency, string calldata betId, uint64 deadline, uint64 schedule, uint256 commissionDenominator, uint256 commission, uint256 initialPool, string[] calldata results, uint256[] calldata ratios, string calldata title, string calldata query) public {
         require(
@@ -259,7 +259,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
         uint256[] memory shares = new uint256[](results.length);
         for (uint i = 0; i < results.length; i++) {
-            shares[i] = initialPool / 100 * ratios[i];
+            shares[i] = initialPool * ratios[i] / 100;
         }
         marketBuy(betId, sender, results, shares, false);
 

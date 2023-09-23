@@ -35,6 +35,12 @@ window.ooAbi = [
             {
                 "indexed": true,
                 "internalType": "string",
+                "name": "betIdIndexed",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
                 "name": "betId",
                 "type": "string"
             },

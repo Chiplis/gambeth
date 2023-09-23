@@ -1,5 +1,5 @@
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
-const ooContractAddress = "0x32ecA240010d18CA84Cb6115D789609174c82d6E";
+const ooContractAddress = "0x184A87F5B1fd811e894C677eaD43Dc49297375d9";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 
@@ -19,6 +19,8 @@ const tokenToNumber = async n => {
 }
 
 // TODO: Group elements into separate categories
+const createBetTotalCost = document.getElementById("create-bet-total-cost");
+const createBetMinimumPool = document.getElementById("create-bet-minimum-pool");
 const approveToken = document.getElementById("token-wallet");
 const aboutBet = document.getElementById("about-bet");
 const claimBet = document.getElementById("claim-bet");
@@ -72,7 +74,6 @@ const betSchedule = document.getElementById("bet-schedule");
 const urlSchema = document.getElementById("bet-schema");
 const schemaPath = document.getElementById("bet-path");
 const defaultMessageLocation = document.getElementById("default-message-location");
-const createBetQueryOutcome = document.getElementById("create-bet-query-outcome");
 const createBetQuery = document.getElementById("create-bet-query");
 const createBetPathLabel = document.getElementById("create-bet-path-label");
 const createBetQueryInner = document.getElementById("create-bet-query-inner");
@@ -90,7 +91,17 @@ const updateOrdersBtn = document.getElementById("update-orders");
 function renderBetIdShare() {
     betId.type = "text";
     betIdLabel.innerHTML = betIdMsg.replace("{MARKET_ID}", betId.value.trim() || "{MARKET_ID}")
-};
+}
+
+function renderCostMessages() {
+    const ratios = createdMarketOutcome.map(outcome => document.querySelector(`#create-market-${outcome}`).value).map(Number).filter(v => v);
+    const minShares = !Math.min(...ratios) ? 0 : Math.ceil(100 / Math.min(...ratios));
+    createBetMinimumPool.innerHTML = `The market must be bootstrapped with at least ${minShares} initial shares.`;
+    createBetInitialPool.value = minShares;
+    createBetTotalCost.innerHTML = (5 + Math.sqrt(
+            ratios.map(v => (createBetInitialPool.value / 100 * v) ** 2).reduce((a, b) => a + b), 0)
+    ).toFixed(2) + " USDC";
+}
 
 const closeCreateMarket = () => {
     newBet.style.display = 'none';
@@ -549,7 +560,6 @@ async function createBet() {
         betContainer.style.display = "none";
         hideMessage();
         clearTimeout();
-
         const schema = createBetSchema.value;
         const query = createBetOo.value;
         const title = createBetOoTitle.value;
@@ -560,8 +570,18 @@ async function createBet() {
         commission = commission.replace(".", "");
         let commissionDenominator = exponent ? Math.pow(10, exponent - 1) : 100;
         const odds = Array.from(createBetOdds.getElementsByTagName("input")).map(e => Number(e.value || 0));
+        activeBet = (betId.value || "").toLowerCase().trim();
+        newBetId = activeBet;
+        const initialPool = createBetInitialPool.value || "0";
+        const outcomes = createdMarketOutcome;
+        outcomes.sort((a, b) => odds[outcomes.indexOf(a)] - odds[outcomes.indexOf(b)]);
+        odds.sort((a, b) => a - b);
+        triggerProcessing("Creating market");
         if (!window.ethereum) {
             triggerError("No Ethereum provider detected", undefined, () => window.location.href = "https://metamask.io/");
+            return;
+        } else if (await usdc.allowance(owner, ooContractAddress) === 0n) {
+            triggerError(`Please approve a minimum of ${createBetTotalCost.innerHTML} USDC to create your market.`);
             return;
         } else if (!betId.value.trim()) {
             triggerError("No bet ID submitted", undefined, () => renderCreationStep(0));
@@ -585,14 +605,6 @@ async function createBet() {
             triggerError("Bet ID already exists", undefined, () => renderCreationStep(0));
             return;
         }
-        activeBet = betId.value.toLowerCase().trim();
-        newBetId = activeBet;
-        const initialPool = createBetInitialPool.value || "0";
-        triggerProcessing("Creating market", createBetQueryOutcome);
-        const outcomes = createdmarketOutcome;
-        outcomes.sort((a, b) => odds[outcomes.indexOf(a)] - odds[outcomes.indexOf(b)]);
-        odds.sort((a, b) => a - b);
-        triggerProcessing("Creating market");
         switch (schema) {
             case "bc":
                 await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, query);
@@ -607,7 +619,7 @@ async function createBet() {
         triggerError(providerErrorMsg(error), createBetQuery);
     }
 
-    createdmarketOutcome = [];
+    createdMarketOutcome = [];
 }
 
 async function renderPlacedBets() {
@@ -828,19 +840,19 @@ async function addFreeBet() {
     }
 }
 
-let createdmarketOutcome = [];
+let createdMarketOutcome = [];
 
 async function addBetChoice() {
     createBetChoice.value ||= "";
     if (!(createBetChoice.value.trim())) {
         return;
     }
-    if (!createdmarketOutcome.includes(createBetChoice.value)) {
-        createdmarketOutcome.push(createBetChoice.value);
+    if (!createdMarketOutcome.includes(createBetChoice.value)) {
+        createdMarketOutcome.push(createBetChoice.value);
     }
-    createmarketOutcomeList.innerHTML = createdmarketOutcome.map(v => `<li>${v}</li>`).join("");
-    createBetOdds.innerHTML = createdmarketOutcome.map(v => `<div><input style="width: 3rem; height: 1rem; margin: 1rem; placeholder="${v}">%</div>`).join("");
-    createBetOddsList.innerHTML = createdmarketOutcome.map(v => `<li style="display: flex; justify-content: flex-start; margin: 1rem; width: 100%">${v}</li>`).join("");
+    createmarketOutcomeList.innerHTML = createdMarketOutcome.map(v => `<li>${v}</li>`).join("");
+    createBetOdds.innerHTML = createdMarketOutcome.map(v => `<div><input oninput="renderCostMessages()" id="create-market-${v}" style="width: 3rem; height: 1rem; margin: 1rem; placeholder="${v}">%</div>`).join("");
+    createBetOddsList.innerHTML = createdMarketOutcome.map(v => `<li style="display: flex; justify-content: flex-start; margin: 1rem; width: 100%">${v}</li>`).join("");
     createBetChoice.value = "";
 }
 
