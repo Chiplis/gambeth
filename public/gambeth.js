@@ -1,5 +1,5 @@
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
-const ooContractAddress = "0x3F91877c05b77d79c71d91DF7C3Db5C66e6f300b";
+const ooContractAddress = "0x667958b0A49BeaaF5C5227FbaeB9A7EF1C4bd49F";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 
@@ -94,7 +94,7 @@ function renderBetIdShare() {
 }
 
 function renderCostMessages() {
-    const ratios = createdMarketOutcome.map(outcome => document.querySelector(`#create-market-${outcome}`).value).map(Number).filter(v => v);
+    const ratios = createdMarketOutcome.map(outcome => document.querySelector(`#create-market-${outcome.replaceAll(" ", "-")}`).value).map(Number).filter(v => v);
     const minShares = !Math.min(...ratios) ? 0 : Math.ceil(100 / Math.min(...ratios));
     createBetMinimumPool.innerHTML = `The market must be bootstrapped with at least ${minShares} initial shares.`;
     createBetInitialPool.value = minShares;
@@ -319,6 +319,7 @@ async function renderWallet() {
         try {
             awaitingApproval = true;
             await usdc.approve(ooContractAddress, balance).then(tx => tx.wait());
+            await renderWallet();
         } catch (error) {
             triggerError(error);
         }
@@ -490,13 +491,8 @@ async function searchBet(betId = activeBet) {
             return;
         }
         placedBets = [];
-        await renderPlacedBets();
-        await fetchOrders(true);
-        await resetButtons();
+        await Promise.all([renderPlacedBets(), fetchOrders(true), resetButtons()]);
         activeBet = searchBetId.value || betId;
-        // newBet.style.display = "none";
-        // betContainer.style.opacity = "0";
-        // betContainer.style.visibility = "hidden";
         const betExists = await activeContract.createdBets(activeBet);
         if (!betExists) {
             betContainer.style.display = "none";
@@ -574,8 +570,6 @@ async function createBet() {
         newBetId = activeBet;
         const initialPool = createBetInitialPool.value || "0";
         const outcomes = createdMarketOutcome;
-        outcomes.sort((a, b) => odds[outcomes.indexOf(a)] - odds[outcomes.indexOf(b)]);
-        odds.sort((a, b) => a - b);
         triggerProcessing("Creating market");
         if (!window.ethereum) {
             triggerError("No Ethereum provider detected", undefined, () => window.location.href = "https://metamask.io/");
@@ -607,19 +601,18 @@ async function createBet() {
         }
         switch (schema) {
             case "bc":
-                await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, query);
+                await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, query).then(tx => tx.wait());
                 break;
             case "oo":
-                await (await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, outcomes, odds, title, query)).wait();
+                await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, outcomes, odds, title, query).then(tx => tx.wait());
                 break;
         }
+        createdMarketOutcome = [];
     } catch (error) {
         newBetId = null;
         console.error(error);
         triggerError(providerErrorMsg(error), createBetQuery);
     }
-
-    createdMarketOutcome = [];
 }
 
 async function renderPlacedBets() {
@@ -851,7 +844,7 @@ async function addBetChoice() {
         createdMarketOutcome.push(createBetChoice.value);
     }
     createmarketOutcomeList.innerHTML = createdMarketOutcome.map(v => `<li>${v}</li>`).join("");
-    createBetOdds.innerHTML = createdMarketOutcome.map(v => `<div><input oninput="renderCostMessages()" id="create-market-${v}" style="width: 3rem; height: 1rem; margin: 1rem; placeholder="${v}">%</div>`).join("");
+    createBetOdds.innerHTML = createdMarketOutcome.map(v => `<div><input oninput="renderCostMessages()" id="create-market-${v.replaceAll(" ", "-")}" style="width: 3rem; height: 1rem; margin: 1rem; placeholder="${v}">%</div>`).join("");
     createBetOddsList.innerHTML = createdMarketOutcome.map(v => `<li style="display: flex; justify-content: flex-start; margin: 1rem; width: 100%">${v}</li>`).join("");
     createBetChoice.value = "";
 }

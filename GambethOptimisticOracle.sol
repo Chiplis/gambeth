@@ -421,7 +421,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
         token.safeTransfer(betOwners[betId], ownerFee);
     }
 
-
     uint public contractFees = 0;
 
     function withdrawUsdc(uint total) public ownerOnly {
