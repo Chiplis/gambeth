@@ -13,7 +13,7 @@ const numberToToken = async n => {
 }
 
 const tokenToNumber = async n => {
-    if (!activeBet) return BigInt(n);
+    if (!activeBet) return (Number(n) / 1e6).toFixed(3);
     let d = await activeContract.tokenDecimals(await activeContract.betTokens(activeBet));
     return (Number(n) / Number(d)).toFixed(3);
 }
@@ -263,7 +263,7 @@ async function loadProvider({
                     break;
             }
             if (betId) {
-                loadProvider();
+                await loadProvider();
             }
         }
 
@@ -288,22 +288,10 @@ async function loadProvider({
             });
             fixedCommission = await tokenToNumber(0);
             activeBet = betId;
-            fetchOrders(true);
+            await fetchOrders(true);
         }
-
+        await renderApprove();
         providerLoaded = true;
-
-        usdc = new ethers.Contract(usdcAddress, tokenAbi, provider).connect(await provider.getSigner());
-        let allowance = await usdc.allowance(owner, ooContractAddress);
-        if (allowance === 0n && !awaitingApproval) {
-            try {
-                awaitingApproval = true;
-                await usdc.approve(ooContractAddress, 999999999999);
-            } catch (error) {
-                triggerError(error);
-            }
-        }
-
         return true;
     } catch (error) {
         console.error(error);
@@ -316,6 +304,26 @@ async function loadProvider({
 loadProvider();
 
 window.onload = () => searchBet((new URL(window.location).searchParams.get("id") || "").toLowerCase().trim());
+
+async function renderApprove() {
+    usdc = new ethers.Contract(usdcAddress, tokenAbi, provider).connect(await provider.getSigner());
+    const approveToken = document.getElementById("approve-token");
+    if (!awaitingApproval) {
+        approveToken.onclick = async () => {
+            try {
+                awaitingApproval = true;
+                await usdc.approve(ooContractAddress, 999999999999).then(tx => tx.wait());
+                awaitingApproval = false;
+            } catch (error) {
+                triggerError(error);
+            }
+        }
+        const balance = await usdc.balanceOf(owner);
+        const allowance = await usdc.allowance(owner, ooContractAddress);
+        const wallet = balance > allowance ? allowance : balance;
+        approveToken.innerHTML = "Wallet: $" + await tokenToNumber(wallet).then(Number);
+    }
+}
 
 async function resetButtons() {
     placeBetInputs.style.display = "none";
@@ -512,7 +520,7 @@ async function searchBet(betId = activeBet) {
             betContainer.style.opacity = "100%";
             betContainer.style.visibility = "visible";
         });
-        fetchOrders(true);
+        await fetchOrders(true);
     } catch (error) {
         betContainer.style.display = "none";
         console.error(error);
@@ -664,10 +672,10 @@ async function buyBet() {
 const betOrders = {};
 let orderCounter = 0;
 const fetchOrders = async (refresh) => {
+    betOrders[activeBet] = refresh ? [] : (betOrders[activeBet] || []);
     if (!activeBet || !activeContract) {
         return;
     }
-    betOrders[activeBet] = refresh ? [] : (betOrders[activeBet] || []);
     orderCounter = refresh ? 0 : orderCounter;
     const contractOrders = await activeContract.getOrders(activeBet, orderCounter, 100);
     if (!contractOrders.length) {
@@ -876,7 +884,7 @@ function providerErrorMsg(error) {
 async function claimReward() {
     try {
         if (await activeBetKind() === "oo") {
-            const query = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args[3];
+            const query = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args[4];
             if (!(await activeContract.marketCreation(activeBet))) {
                 triggerProcessing("Reward will be transferred after bet's been settled.");
                 await activeContract.requestBetResolution(activeBet, query);
@@ -944,7 +952,7 @@ async function renderBetPool() {
             type: 'doughnut',
             data,
         };
-        aboutBet.innerHTML = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args[1];
+        aboutBet.innerHTML = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args[2];
         if (betChart) {
             betChart.destroy();
         }

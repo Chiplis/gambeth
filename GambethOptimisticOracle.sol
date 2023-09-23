@@ -20,7 +20,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
     mapping(bytes32 => mapping(uint256 => mapping(bytes => string))) public marketOracleRequest;
     mapping(string => address) public betRequester;
 
-    event CreatedOptimisticBet(string indexed betId, string title, string query, string request);
+    event CreatedOptimisticBet(string indexed betId, string betId, string title, string query, string request);
 
     function createOptimisticBet(address currency, string calldata betId, uint64 deadline, uint64 schedule, uint256 commissionDenominator, uint256 commission, uint256 initialPool, string[] calldata results, uint256[] calldata ratios, string calldata title, string calldata query) public {
         require(
@@ -33,7 +33,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         _createBet(BetKind.OPTIMISTIC_ORACLE, msg.sender, currency, betId, commissionDenominator, commission, deadline, schedule, initialPool, query, results, ratios);
         string memory request = performOracleRequest(betId, title, query);
         marketRequest[betId][keccak256(bytes(request))] = true;
-        emit CreatedOptimisticBet(betId, title, query, request);
+        emit CreatedOptimisticBet(betId, betId, title, query, request);
     }
 
 
