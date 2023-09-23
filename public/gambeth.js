@@ -264,9 +264,6 @@ async function loadProvider({
                     searchBet(newBetId);
                 }, undefined, 2500)
             });
-            activeContract.on("PlacedBets", async (sender) => {
-                if (sender === owner) triggerSuccess(`Bet placed!`, renderBetPool)
-            });
             activeContract.on("LostBet", async (sender) => {
                 if (sender === owner) triggerSuccess("Bet lost, better luck next time!")
             });
@@ -516,6 +513,7 @@ async function searchBet(betId = activeBet) {
         console.error(error);
         triggerError(providerErrorMsg(error));
     }
+    searchBetId.value = "";
 }
 
 function unpackQuery(u) {
@@ -611,23 +609,29 @@ async function renderPlacedBets() {
     placeBetAsksTable.style.display = placedAsks.length ? "block" : "none";
     placeBetBidsTable.style.display = placedBids.length ? "block" : "none";
 
-    placeBetBids.innerHTML = (await Promise.all(placedBids.map(async order => `
+    placeBetBids.innerHTML = (await Promise.all(placedBids.map(async order => {
+        const orderString = JSON.stringify(order).replaceAll('"', '\\"');
+        return `
     <tr style="background-color: #069b69">
-        <td style="margin: 5px; display: block" onclick='placedBets.splice(placedBets.map(p => JSON.stringify(p)).indexOf(${JSON.stringify(order)}), 1); renderPlacedBets()'>✖</td>
+        <td style="margin: 5px; display: block" onclick='placedBets.splice(placedBets.map(p => JSON.stringify(p)).indexOf("${orderString}"), 1); renderPlacedBets()'>✖</td>
         <td>${order.outcome}</td>
         <td>${order.amount}</td>
         <td>${order.pricePerShare ? (order.pricePerShare / await activeDecimals()) : "MARKET"}</td>
         <td>${'$' + totalBids.payout[order.outcome].toFixed(3)}</td>
         <td></td>
-    </tr>`))).join("");
-    placeBetAsks.innerHTML = (await Promise.all(placedAsks.map(async order => `
+    </tr>`
+    }))).join("");
+    placeBetAsks.innerHTML = (await Promise.all(placedAsks.map(async order => {
+        const orderString = JSON.stringify(order).replaceAll('"', '\\"');
+        return `
     <tr style="background-color: #ff4747">
-        <td style="margin: 5px; display: block" onclick='placedBets.splice(placedBets.map(p => JSON.stringify(p)).indexOf(${JSON.stringify(order)}), 1); renderPlacedBets()'>✖</td>
+        <td style="margin: 5px; display: block" onclick='placedBets.splice(placedBets.map(p => JSON.stringify(p)).indexOf("${orderString}"), 1); renderPlacedBets()'>✖</td>
         <td>${order.outcome}</td>
         <td>${order.amount}</td>
         <td>${order.pricePerShare ? (order.pricePerShare / await activeDecimals()) : "MARKET"}</td>
         <td></td>
-    </tr>`))).join("");
+    </tr>`
+    }))).join("");
     placeBetBids.innerHTML += totalBids ? `<tr style="background-color: #6f75e5"><td></td><td></td><td></td><td><td></td><td>${totalBids.cost.toFixed(3)}</td></tr>` : "";
     placeBetAsks.innerHTML += totalAsks ? `<tr style="background-color: #6f75e5"><td></td><td></td><td><td></td><td>${totalAsks.cost.toFixed(3)}</td></tr>` : "";
 }
