@@ -469,8 +469,15 @@ async function calculateCost(newBets, bids) {
         const transfer = transfers[outcomes.indexOf(outcome)];
         return bids ? totalCost : transfer > totalCost ? totalCost : transfer;
     }).reduce((a, b) => a + b, 0);
-
-    const payouts = outcomes.map((o, i) => ({[o]: newCost / (newBets.filter(({outcome}) => outcome === o).map(({amount}) => Number(amount)).reduce((a, b) => a + b, 0) * (bids ? 1 : -1) + pools[i])}));
+    let payout = Math.sqrt(pools
+        .map((pool, o) => (
+            (pool + newBets.filter(b => b.outcome === outcomes[o])
+                .map(({amount}) => amount)
+                .reduce((a, b) => a + b, 0) * (bids ? 1 : -1)) ** 2
+        )).reduce((a, b) => a + b, 0)
+    );
+    console.log(newCost + limitCost);
+    const payouts = outcomes.map((o, i) => ({[o]: payout / (newBets.filter(({outcome}) => outcome === o).map(({amount}) => Number(amount)).reduce((a, b) => a + b, 0) * (bids ? 1 : -1) + pools[i])}));
     return {
         payout: Object.assign({}, ...payouts),
         cost: limitCost + newCost
@@ -820,10 +827,11 @@ async function fillOrder() {
         .filter(o => orderPosition === "BUY" ? (pricePerShare >= o.pricePerShare) : (pricePerShare <= o.pricePerShare))
         .map(o => o.idx));
     const filledOrder = await activeContract.fillOrder(finalAmounts, prices, placedBets.map(o => o.orderPosition === "BUY" ? 0n : 1n), activeBet, newOrders.map(o => o.outcome), orderIndexes);
+    placedBets = [];
+    await renderPlacedBets();
     await filledOrder.wait();
     triggerSuccess(`Order placed!`, hideMessage, undefined, 2500);
-    placedBets = [];
-    await Promise.all([fetchOrders(true), renderBetPool(), renderPlacedBets()]);
+    await Promise.all([fetchOrders(true), renderBetPool()]);
 }
 
 async function addFreeBet() {
