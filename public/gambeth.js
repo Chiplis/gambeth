@@ -479,14 +479,15 @@ async function searchBet(betId = activeBet) {
         if (!(await loadProvider({betId}))) {
             return;
         }
-        await fetchOrders(true);
         placedBets = [];
+        await renderPlacedBets();
+        await fetchOrders(true);
         await resetButtons();
         triggerProcessing("Loading market");
         activeBet = searchBetId.value || betId;
-        newBet.style.display = "none";
-        betContainer.style.opacity = "0";
-        betContainer.style.visibility = "hidden";
+        // newBet.style.display = "none";
+        // betContainer.style.opacity = "0";
+        // betContainer.style.visibility = "hidden";
         const betExists = await activeContract.createdBets(activeBet);
         if (!betExists) {
             betContainer.style.display = "none";
