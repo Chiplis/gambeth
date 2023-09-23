@@ -247,42 +247,42 @@
                     </div>
                 </div>
             </div>
-            <div id="place-bet-info" style="display: none; flex-direction: row; justify-content: flex-start; width: 90%">
-                <table id="place-bet-bids-table" class="styled-table" style="width: auto">
-                    <thead>
-                    <tr>
-                        <th colspan="6" style="text-align: center;">Placed Bids</th>
-                    </tr>
-                    <tr>
-                        <th></th>
-                        <th>Outcome</th>
-                        <th>Amount</th>
-                        <th>Price</th>
-                        <th>Payout</th>
-                        <th>Max cost</th>
-                    </tr>
-                    </thead>
-                    <tbody id="place-bet-bids"></tbody>
-                </table>
-                <table id="place-bet-asks-table" class="styled-table" style="width: auto">
-                    <thead>
-                    <tr>
-                        <th colspan="5" style="text-align: center;">Placed Asks</th>
-                    </tr>
-                    <tr>
-                        <th></th>
-                        <th>Outcome</th>
-                        <th>Amount</th>
-                        <th>Price</th>
-                        <th>Market pay</th>
-                    </tr>
-                    </thead>
-                    <tbody id="place-bet-asks"></tbody>
-                </table>
-                <button class="btn link" id="place-bet" onclick="buyBet()"></button>
-            </div>
             <div id="bet-pool-container" style="justify-content: space-around; width: 90%; display: flex;">
-                <div class="msg details" id="oo-bet" style="display: flex; width: 50%; justify-content: center; align-items: center; flex-direction: column;">
+                <div class="msg details" id="oo-bet" style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
+                    <div id="place-bet-info" style="display: none; flex-direction: row; justify-content: flex-start">
+                        <table id="place-bet-bids-table" class="styled-table" style="width: auto">
+                            <thead>
+                            <tr>
+                                <th colspan="6" style="text-align: center;">Placed Bids</th>
+                            </tr>
+                            <tr>
+                                <th></th>
+                                <th>Outcome</th>
+                                <th>Amount</th>
+                                <th>Price</th>
+                                <th>Payout</th>
+                                <th>Max cost</th>
+                            </tr>
+                            </thead>
+                            <tbody id="place-bet-bids"></tbody>
+                        </table>
+                        <table id="place-bet-asks-table" class="styled-table" style="width: auto">
+                            <thead>
+                            <tr>
+                                <th colspan="5" style="text-align: center;">Placed Asks</th>
+                            </tr>
+                            <tr>
+                                <th></th>
+                                <th>Outcome</th>
+                                <th>Amount</th>
+                                <th>Price</th>
+                                <th>Market pay</th>
+                            </tr>
+                            </thead>
+                            <tbody id="place-bet-asks"></tbody>
+                        </table>
+                        <button class="btn link" id="place-bet" onclick="buyBet()"></button>
+                    </div>
                     <div style="margin-bottom: 0.25rem; font-size: 0.8rem">Terms</div>
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 0; border-radius: 0">
                         <div id="bet-oo-query"></div>
