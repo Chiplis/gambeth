@@ -442,11 +442,10 @@ async function calculateCost(newBets, bids) {
         ).reduce((a, b) => a + b)
     );
     const payouts = outcomes.map((o, i) => ({[o]: newCost / (newBets.filter(({outcome}) => outcome === o).map(({amount}) => amount).reduce((a, b) => a + b, 0) * (bids ? 1 : -1) + pools[i])}));
-    const result = {
+    return {
         payout: Object.assign({}, ...payouts),
         cost: limitCost + Math.abs(newCost - await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals()))
     };
-    return result;
 }
 
 async function calculatePrice(result) {
