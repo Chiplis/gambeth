@@ -214,11 +214,9 @@ async function loadProvider({
                                 betType = "oo"
                             } = {}) {
     try {
-        await hideMessage();
         if (window.ethereum) {
             await window.ethereum.request({method: "eth_requestAccounts"});
         } else {
-            hideMessage();
             clearTimeout();
             triggerError("No Ethereum provider detected, click to install MetaMask", undefined, () => window.location.href = "https://metamask.io/");
             providerLoaded = false;
@@ -228,7 +226,6 @@ async function loadProvider({
         provider = new ethers.BrowserProvider(window.ethereum);
         const {chainId} = await provider.getNetwork();
         if (chainId !== 5n) {
-            hideMessage();
             clearTimeout();
             triggerError("Please switch to Goerli tesnet", undefined, loadChain);
             providerLoaded = false;
@@ -476,6 +473,8 @@ async function searchBet(betId = activeBet) {
         return;
     }
     try {
+        triggerProcessing("Loading market");
+
         if (!(await loadProvider({betId}))) {
             return;
         }
@@ -483,7 +482,6 @@ async function searchBet(betId = activeBet) {
         await renderPlacedBets();
         await fetchOrders(true);
         await resetButtons();
-        triggerProcessing("Loading market");
         activeBet = searchBetId.value || betId;
         // newBet.style.display = "none";
         // betContainer.style.opacity = "0";
