@@ -654,7 +654,8 @@ async function addSingleBet(order) {
 
 async function buyBet() {
     if (await activeBetKind() === "oo") {
-        await fillOrder();
+        await fillOrder().then(tx => tx.wait());
+        triggerSuccess(`Order placed!`, undefined, undefined, 2500);
     } else {
         await addFreeBet();
     }
