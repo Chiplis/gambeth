@@ -784,8 +784,7 @@ async function fillOrder() {
     await filledOrder.wait();
     hideMessage();
     placedBets = [];
-    await fetchOrders(true);
-    await renderPlacedBets();
+    await Promise.all([fetchOrders(true), renderBetPool(), renderPlacedBets()]);
 }
 
 async function addFreeBet() {
