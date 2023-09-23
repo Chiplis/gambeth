@@ -670,29 +670,17 @@ async function buyBet() {
 }
 
 const betOrders = {};
-let orderCounter = 0;
 const fetchOrders = async (refresh) => {
     betOrders[activeBet] = refresh ? [] : (betOrders[activeBet] || []);
-    if (!activeBet || !activeContract) {
-        return;
-    }
-    orderCounter = refresh ? 0 : orderCounter;
-    const contractOrders = await activeContract.getOrders(activeBet, orderCounter, 100);
-    if (!contractOrders.length) {
-        if (refresh) {
-            await renderOrders();
-        }
-        return;
-    }
+    const contractOrders = await activeContract.getOrders(activeBet, betOrders[activeBet].length, 100);
     const newOrders = contractOrders.map((o, idx) => ({
         orderPosition: o[0] ? "SELL" : "BUY",
         pricePerShare: o[1],
         outcome: o[2],
         amount: o[3],
         user: o[4],
-        idx: orderCounter + idx
+        idx: o[5]
     }));
-    orderCounter += newOrders.length;
     betOrders[activeBet] = betOrders[activeBet].concat(newOrders);
     await renderOrders();
 }
