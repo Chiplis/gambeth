@@ -293,6 +293,7 @@ async function loadProvider({
             });
             fixedCommission = await tokenToNumber(0);
             activeBet = betId;
+            await renderBetPool();
             await fetchOrders(true);
         }
         await renderWallet();
