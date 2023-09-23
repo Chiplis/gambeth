@@ -380,7 +380,7 @@ async function renderClaimBet() {
 }
 
 async function activeBetKind() {
-    switch (await activeContract.betKinds(activeBet)) {
+    switch (await activeContract.betKinds(activeBet || "")) {
         case 0n:
             return "oo";
         case 1n:
@@ -391,7 +391,7 @@ async function activeBetKind() {
 }
 
 async function activeBetOutcomes() {
-    return await activeContract.getOutcomes(activeBet);
+    return await activeContract.getOutcomes(activeBet || "");
 }
 
 async function renderPlaceBet() {
