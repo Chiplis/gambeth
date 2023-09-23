@@ -50,7 +50,7 @@
         </div>
     </div>
     <div style="display: flex">
-        <div class="btn link" style="background-color: #6f75e5; color:white; border: 0" onclick="">
+        <div class="btn link" onclick="exploreMarkets()" style="background-color: #6f75e5; color:white; border: 0">
             Explore Markets
         </div>
     </div>
@@ -76,6 +76,8 @@
                      style="display: flex; align-items: center; justify-content: center; color: #f3f9d2"></div>
             </button>
         </div>
+        <div id="explore-markets" style="margin-bottom: 3%; display: flex; justify-content: center">
+        </div>
         <div id="new-bet"
              style="width: 70vw; margin-bottom: 3%; display: none; flex-direction: row; justify-content: space-between; align-items: center">
             <div class="btn" style="color:white; background-color: #ed7b64; align-self: flex-start;"
@@ -85,8 +87,7 @@
                 <div class="create-bet-step"
                      style="visibility: visible; opacity: 0; transition: opacity 0.5s cubic-bezier(1, 2, 3, 4); position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
                     <div class="" style="border: 0; margin: 0">Choose your market's ID</div>
-                    <input id="create-bet-id" alt="" src="" onerror="renderBetIdShare()" oninput="renderBetIdShare()"
-                           style="margin: 0.5rem;" type="image"/>
+                    <input id="create-bet-id" alt="" src="" onerror="renderBetIdShare()" style="margin: 0.5rem;" type="image"/>
                     <label id="create-bet-id-label" for="create-bet-id"></label>
                 </div>
                 <div class="create-bet-step"

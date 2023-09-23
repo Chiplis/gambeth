@@ -480,6 +480,13 @@ async function calculatePrice(result) {
     return Number(await activeContract.resultPools(activeBet, result)) / Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals()));
 }
 
+async function exploreMarkets() {
+    document.getElementById("explore-markets").innerHTML = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))
+        .map(e => [e.args[e.args.length - 4], e.args[e.args.length - 3]])
+        .map(([id, name]) => `<a href="/${id}">${name}</a>`)
+        .join("");
+}
+
 async function searchBet(betId = activeBet) {
     if (!betId) {
         return;
