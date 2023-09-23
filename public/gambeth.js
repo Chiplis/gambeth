@@ -486,6 +486,7 @@ async function browseMarkets() {
         .map(e => [e.args[e.args.length - 4], e.args[e.args.length - 3]])
         .map(([id, name]) => `<a href="/?id=${id}">${name}</a>`)
         .join("");
+    window.scrollTo({top: 0, behavior: "smooth"});
 }
 
 async function searchBet(betId = activeBet) {
