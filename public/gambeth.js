@@ -19,6 +19,7 @@ const tokenToNumber = async n => {
 }
 
 // TODO: Group elements into separate categories
+const exploreMarkets = document.getElementById("explore-markets");
 const createBetTotalCost = document.getElementById("create-bet-total-cost");
 const createBetMinimumPool = document.getElementById("create-bet-minimum-pool");
 const approveToken = document.getElementById("token-wallet");
@@ -480,8 +481,8 @@ async function calculatePrice(result) {
     return Number(await activeContract.resultPools(activeBet, result)) / Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals()));
 }
 
-async function exploreMarkets() {
-    document.getElementById("explore-markets").innerHTML = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))
+async function browseMarkets() {
+    exploreMarkets.innerHTML = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))
         .map(e => [e.args[e.args.length - 4], e.args[e.args.length - 3]])
         .map(([id, name]) => `<a href="/${id}">${name}</a>`)
         .join("");
