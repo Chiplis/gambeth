@@ -327,17 +327,17 @@ contract GambethOptimisticOracle is OptimisticRequester {
         }
 
         // Turn remaining pool into shares with no owner, increasing price of remaining outcomes
-        if (resultPools[betId][result] == 0 && sale != resultTransfers[betId][result]) {
-            uint mintedShares = calculateSharesForCost(betId, result, resultTransfers[betId][result] - sale);
+        resultTransfers[betId][result] -= sale;
+        if (resultPools[betId][result] == 0 && resultTransfers[betId][result] != 0) {
+            uint mintedShares = calculateSharesForCost(betId, result, resultTransfers[betId][result]);
             resultPools[betId][result] += mintedShares;
             betPools[betId] += mintedShares;
+            resultTransfers[betId][result] = 0;
         }
 
         userPools[betId][sender] -= amount;
         betPools[betId] -= amount;
         userBets[betId][sender][result] -= amount;
-
-        resultTransfers[betId][result] -= sale;
         userTransfers[betId][sender][result] -= int(sale);
         total += sale;
 
