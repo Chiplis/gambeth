@@ -18,6 +18,8 @@ const tokenToNumber = async n => {
     return (Number(n) / Number(d)).toFixed(3);
 }
 
+// TODO: Group elements into separate categories
+const approveToken = document.getElementById("token-wallet");
 const aboutBet = document.getElementById("about-bet");
 const claimBet = document.getElementById("claim-bet");
 const placeBetInputs = document.getElementById("place-bet-inputs");
@@ -40,32 +42,25 @@ const createBetOo = document.getElementById("create-bet-oo");
 const createBetOoTitle = document.getElementById("create-bet-oo-title");
 const createBetPath = document.getElementById("create-bet-path");
 const marketPrices = document.getElementById("market-prices");
-
 const betPool = document.getElementById("bet-pool");
-
 const userBuyOrdersEntries = document.getElementById("user-buy-orders-entries");
 const userSellOrdersEntries = document.getElementById("user-sell-orders-entries");
 const poolBuyOrdersEntries = document.getElementById("pool-buy-orders-entries");
 const poolSellOrdersEntries = document.getElementById("pool-sell-orders-entries");
-
 const searchBetId = document.getElementById("search-bet");
 const message = document.getElementById("message");
 const betContainer = document.getElementById("bet-container");
 const createmarketOutcomeList = document.getElementById("create-bet-choices-list");
 const queueBuyOrder = document.getElementById("queue-buy-order");
-
 const placeBetDataContainer = document.getElementById("place-bet-data-container");
 const placeBetChoiceContainer = document.getElementById("place-bet-choice-container");
 const placeBetPositionContainer = document.getElementById("place-bet-position-container");
-
 const createBetInitialPool = document.getElementById("create-bet-initial-pool");
 const createBetCommission = document.getElementById("create-bet-commission");
 const createmarketOutcome = document.getElementById("create-bet-choices");
 const createBetChoice = document.getElementById("create-bet-choice");
-
 const createBetOdds = document.getElementById("create-bet-odds");
 const createBetOddsList = document.getElementById("create-bet-odds-list");
-
 const placeBetInfo = document.getElementById("place-bet-info");
 const placeBetBids = document.getElementById("place-bet-bids");
 const placeBetBidsTable = document.getElementById("place-bet-bids-table");
@@ -84,17 +79,15 @@ const createBetQueryInner = document.getElementById("create-bet-query-inner");
 const innerMessage = document.getElementById("inner-message");
 const closeMessage = document.getElementById("close-message");
 const newBet = document.getElementById("new-bet");
-
 const urlBet = document.getElementById("url-bet");
 const ooBet = document.getElementById("oo-bet");
 const betInnerCommission = document.getElementById("bet-commission");
 const betQuery = document.getElementById("bet-query");
 const betOoQuery = document.getElementById("bet-oo-query");
 const betInnerOutcome = document.getElementById("bet-inner-outcome");
-
 const updateOrdersBtn = document.getElementById("update-orders");
 
-const betIdChanged = () => betIdLabel.innerHTML = betIdMsg.replace("{BET_ID}", betId.value.trim());
+const renderBetIdShare = () => betIdLabel.innerHTML = betIdMsg.replace("{BET_ID}", betId.value.trim() || "{BET_ID}");
 
 const closeNewBet = () => {
     newBet.hideBet = newBet.style.display = 'none';
@@ -290,7 +283,7 @@ async function loadProvider({
             activeBet = betId;
             await fetchOrders(true);
         }
-        await renderApprove();
+        await renderWallet();
         providerLoaded = true;
         return true;
     } catch (error) {
@@ -305,24 +298,24 @@ loadProvider();
 
 window.onload = () => searchBet((new URL(window.location).searchParams.get("id") || "").toLowerCase().trim());
 
-async function renderApprove() {
+async function renderWallet() {
     usdc = new ethers.Contract(usdcAddress, tokenAbi, provider).connect(await provider.getSigner());
-    const approveToken = document.getElementById("approve-token");
-    if (!awaitingApproval) {
-        approveToken.onclick = async () => {
-            try {
-                awaitingApproval = true;
-                await usdc.approve(ooContractAddress, 999999999999).then(tx => tx.wait());
-                awaitingApproval = false;
-            } catch (error) {
-                triggerError(error);
-            }
+    const balance = await usdc.balanceOf(owner);
+    approveToken.onclick = async () => {
+        if (awaitingApproval) {
+            return;
         }
-        const balance = await usdc.balanceOf(owner);
-        const allowance = await usdc.allowance(owner, ooContractAddress);
-        const wallet = balance > allowance ? allowance : balance;
-        approveToken.innerHTML = wallet === 0n ? "Approve" : ("$" + await tokenToNumber(wallet).then(Number));
+        try {
+            awaitingApproval = true;
+            await usdc.approve(ooContractAddress, balance).then(tx => tx.wait());
+        } catch (error) {
+            triggerError(error);
+        }
+        awaitingApproval = false;
     }
+    const allowance = await usdc.allowance(owner, ooContractAddress);
+    const wallet = balance > allowance ? allowance : balance;
+    approveToken.innerHTML = wallet === 0n ? "Approve" : ("$" + await tokenToNumber(wallet).then(Number));
 }
 
 async function resetButtons() {
@@ -801,7 +794,7 @@ async function addFreeBet() {
             await addSingleBet({
                 amount: Number(placeBetAmount.value),
                 outcome: placeBetOutcome.value || chooseBetInputs.value,
-                orderPosition: document.getElementById("choose-bet-position").value.toUpperCase()
+                orderPosition: chooseBetPosition.value.toUpperCase()
             });
         }
         await placeContractBet();

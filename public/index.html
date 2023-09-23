@@ -40,7 +40,7 @@
         </div>
     </div>
     <div style="display: flex">
-        <div class="btn link" id="approve-token" style="background-color: #069b69; color:white; border: 0">
+        <div class="btn link" id="token-wallet" style="background-color: #069b69; color:white; border: 0">
             Approve
         </div>
     </div>
@@ -70,7 +70,7 @@
                 <div class="create-bet-step"
                      style="visibility: visible; opacity: 0; transition: opacity 0.5s cubic-bezier(1, 2, 3, 4); position: absolute; top: 5em; display: flex;flex-direction: column; justify-content: center; align-items: center">
                     <div class="" style="border: 0; margin: 0">Pick a name</div>
-                    <input id="create-bet-id" oninput="betIdChanged()"
+                    <input id="create-bet-id" onload="renderBetIdShare()" oninput="renderBetIdShare()"
                            style="margin: 0.5rem;" type="text"/>
                     <label id="create-bet-id-label" for="create-bet-id"></label>
                 </div>
