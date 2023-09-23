@@ -910,7 +910,7 @@ async function renderBetPool() {
                 const pay = (await payout(marketOutcome[i])).toFixed(3);
                 const owned = await activeContract.userBets(activeBet, owner, outcome);
                 const avgPrice = await activeContract.userTransfers(activeBet, owner, outcome).then(async a => Math.round((Number(a) / await activeDecimals()) / Number(owned) * 1000) / 1000);
-                return `<tr><td>${outcome}</td><td>${owned || "-"}</td><td>${odds}%</td><td>$${mktPrice}</td><td>${Number.isNaN(avgPrice) ? "-" : ("$" + avgPrice)}</td><td>$${pay}</td></tr>`
+                return `<tr><td>${outcome}</td><td>${owned || "-"}</td><td>${odds}%</td><td>$${mktPrice}</td><td>${(Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? "-" : ("$" + avgPrice)}</td><td>$${pay}</td></tr>`
             });
             marketPrices.innerHTML = (await Promise.all(prices)).join("");
         }
