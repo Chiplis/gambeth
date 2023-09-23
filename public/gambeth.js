@@ -30,7 +30,7 @@ const scheduleDate = document.getElementById("schedule-date");
 const deadlineDate = document.getElementById("deadline-date");
 const betId = document.getElementById("create-bet-id");
 const betIdLabel = document.getElementById("create-bet-id-label");
-const betIdMsg = "Your bet's name is a unique identifier which lets other users search for it. https://gambeth.com/?id={BET_ID} is a quick way to share your bet with the world!";
+const betIdMsg = "Your market's ID is a unique identifier which allows other users to search for it. <br><br> https://gambeth.com/?id={MARKET_ID}";
 const decideBetOutcome = document.getElementById("decide-bet-outcome");
 const betDecision = document.getElementById("bet-decision");
 const createBetUrl = document.getElementById("create-bet-url");
@@ -87,7 +87,10 @@ const betOoQuery = document.getElementById("bet-oo-query");
 const betInnerOutcome = document.getElementById("bet-inner-outcome");
 const updateOrdersBtn = document.getElementById("update-orders");
 
-const renderBetIdShare = () => betIdLabel.innerHTML = betIdMsg.replace("{BET_ID}", betId.value.trim() || "{BET_ID}");
+function renderBetIdShare() {
+    betId.type = "text";
+    betIdLabel.innerHTML = betIdMsg.replace("{MARKET_ID}", betId.value.trim() || "{MARKET_ID}")
+};
 
 const closeCreateMarket = () => {
     newBet.style.display = 'none';
@@ -167,6 +170,12 @@ function triggerMessage(msg, add, remove, after = defaultMessageLocation, click,
     message.style.display = "flex";
     message.style.opacity = "100%";
     innerMessage.innerHTML = msg;
+}
+
+function addIntervalText(elm, innerHtmlText, interval) {
+    return setInterval(() => {
+        elm.innerHTML = innerHtmlText(elm.innerHTML);
+    });
 }
 
 function triggerError(msg, after = defaultMessageLocation, click) {
@@ -326,7 +335,7 @@ function renderPlaceSingleBet() {
         addSingleBet({
             amount: Number(placeBetAmount.value),
             outcome: placeBetOutcome.value || chooseBetInputs.value,
-            orderPosition: chooseBetPosition.value.toUpperCase()
+            orderPosition: (Array.from(chooseBetPosition.querySelectorAll(".choose-bet-position-option")).filter(e => e.checked)[0] || {value: ""}).value.toUpperCase()
         });
         renderPlaceSingleBet();
     } : "";
