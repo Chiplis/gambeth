@@ -25,14 +25,22 @@
         <div style="font-size: 250%; font-family: Saira, sans-serif; text-transform: lowercase">Gambeth</div>
     </div>
     <label for="search-bet" hidden></label>
-    <input style="max-width: 20vw; outline: 0; margin: 0" class="msg search" type="search" placeholder="Search" id="search-bet">
+    <div style="display: flex; justify-content: center; align-items: center">
+        <div onclick="searchBet(searchBetId.value)">🔎</div>
+        <input style="max-width: 20vw; outline: 0; margin: 0" class="search" type="search" placeholder="Search Markets" id="search-bet">
+    </div>
     <div style="display: flex">
         <div class="btn link create-bet" style="color:white; border: 0" onclick="createBetBtn()">
             Create Market
         </div>
     </div>
     <div style="display: flex">
-        <div class="btn link create-bet" id="approve-token" style="color:white; border: 0">
+        <div class="btn link create-bet" style="background-color: #6f75e5; color:white; border: 0" onclick="createBetBtn()">
+            Explore Markets
+        </div>
+    </div>
+    <div style="display: flex">
+        <div class="btn link create-bet" id="approve-token" style="background-color: #069b69; color:white; border: 0">
             Approve
         </div>
     </div>

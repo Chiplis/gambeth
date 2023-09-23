@@ -92,7 +92,7 @@ span {
 .search {
     color: #f3f9d2;
     border: 0;
-    background-color: #6f75e5;
+    background-color: transparent;
 }
 
 .search::placeholder {

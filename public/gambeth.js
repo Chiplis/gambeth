@@ -321,7 +321,7 @@ async function renderApprove() {
         const balance = await usdc.balanceOf(owner);
         const allowance = await usdc.allowance(owner, ooContractAddress);
         const wallet = balance > allowance ? allowance : balance;
-        approveToken.innerHTML = "Wallet: $" + await tokenToNumber(wallet).then(Number);
+        approveToken.innerHTML = "$" + await tokenToNumber(wallet).then(Number);
     }
 }
 
@@ -872,7 +872,8 @@ function providerErrorMsg(error) {
 async function claimReward() {
     try {
         if (await activeBetKind() === "oo") {
-            const query = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args[4];
+            const filter = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args;
+            const query = filter[filter.length - 1];
             if (!(await activeContract.marketCreation(activeBet))) {
                 triggerProcessing("Reward will be transferred after bet's been settled.");
                 await activeContract.requestBetResolution(activeBet, query);
@@ -940,7 +941,8 @@ async function renderBetPool() {
             type: 'doughnut',
             data,
         };
-        aboutBet.innerHTML = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args[2];
+        const filter = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args;
+        aboutBet.innerHTML = filter[filter.length - 3];
         if (betChart) {
             betChart.destroy();
         }
