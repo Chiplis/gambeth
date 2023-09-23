@@ -583,7 +583,7 @@ async function createBet() {
             triggerError("No Ethereum provider detected", undefined, () => window.location.href = "https://metamask.io/");
             return;
         } else if (await usdc.allowance(owner, ooContractAddress) === 0n) {
-            triggerError(`Please approve a minimum of ${createBetTotalCost.innerHTML} USDC to create your market.`);
+            triggerError(`Please approve a minimum of ${createBetTotalCost.innerHTML || "0 USDC"}  to create your market.`, undefined, async () => await usdc.approve(Number(createBetTotalCost.innerHTML.split(" USDC")[0]) || await usdc.balanceOf(owner)));
             return;
         } else if (!betId.value.trim()) {
             triggerError("No bet ID submitted", undefined, () => renderCreationStep(0));
@@ -791,6 +791,9 @@ async function fillOrder() {
     const amounts = await Promise.all(newOrders.map(o => o.amount).map(numberToToken));
     if (!newOrders.length || !amounts.length) {
         triggerError("No bets have been placed, make sure outcome and amount fields are not empty.")
+        return;
+    } else if (await usdc.allowance(owner, ooContractAddress) === 0n) {
+        triggerError(`Please approve Gambeth to use some of your funds before placing a bet.`, undefined, async () => await usdc.approve(await usdc.balanceOf(owner)));
         return;
     }
 
