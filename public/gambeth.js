@@ -433,27 +433,37 @@ async function renderPlaceBet() {
 
 async function calculateCost(newBets, bids) {
     if (!newBets.length) {
-        return "";
+        return null;
     }
 
     const outcomes = await activeBetOutcomes();
     const pools = await Promise.all(outcomes.map(o => activeContract.resultPools(activeBet, o).then(Number)));
+    const transfers = await Promise.all(outcomes.map(o => activeContract.resultTransfers(activeBet, o).then(tokenToNumber).then(Number)));
+
     const limitCost = (await Promise.all(newBets
         .filter(b => b.pricePerShare !== 0)
         .map(async ({pricePerShare, amount}) => pricePerShare / await activeDecimals() * amount)))
         .reduce((a, b) => a + b, 0);
 
-    const newCost = Math.sqrt(pools
-        .map((pool, o) =>
-            ((pool + newBets.filter(b => b.pricePerShare === 0 && b.outcome === outcomes[o])
-                .map(({amount}) => amount)
-                .reduce((a, b) => a + b, 0) * (bids ? 1 : -1)) ** 2)
-        ).reduce((a, b) => a + b)
-    );
+    const previousCost = await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals());
+
+    const newCost = outcomes.map(outcome => {
+        let newCost = Math.sqrt(pools
+            .map((pool, o) => (
+                (pool + newBets.filter(b => b.pricePerShare === 0 && b.outcome === outcome && outcomes[o] === outcome)
+                    .map(({amount}) => amount)
+                    .reduce((a, b) => a + b, 0) * (bids ? 1 : -1)) ** 2
+            )).reduce((a, b) => a + b, 0)
+        );
+        const totalCost = Math.abs(newCost - previousCost);
+        const transfer = transfers[outcomes.indexOf(outcome)];
+        return bids ? totalCost : transfer > totalCost ? totalCost : transfer;
+    }).reduce((a, b) => a + b, 0);
+
     const payouts = outcomes.map((o, i) => ({[o]: newCost / (newBets.filter(({outcome}) => outcome === o).map(({amount}) => amount).reduce((a, b) => a + b, 0) * (bids ? 1 : -1) + pools[i])}));
     return {
         payout: Object.assign({}, ...payouts),
-        cost: limitCost + Math.abs(newCost - await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals()))
+        cost: limitCost + newCost
     };
 }
 
@@ -696,6 +706,10 @@ function groupOrders(orders) {
             grouped.push(o);
         }
     });
+    grouped.sort((a, b) => a.orderPosition < b.orderPosition ? 1 : a.orderPosition === "SELL"
+        ? (calculateCost([a], false) - calculateCost([b], false))
+        : (calculateCost([b], false) - calculateCost([a], true))
+    );
     return grouped;
 }
 
