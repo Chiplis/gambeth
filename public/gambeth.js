@@ -45,6 +45,7 @@ const createBetOo = document.getElementById("create-bet-oo");
 const createBetOoTitle = document.getElementById("create-bet-oo-title");
 const createBetPath = document.getElementById("create-bet-path");
 const marketPrices = document.getElementById("market-prices");
+const marketPricesTable = document.getElementById("market-prices-table");
 const betPool = document.getElementById("bet-pool");
 const userBuyOrdersEntries = document.getElementById("user-buy-orders-entries");
 const userSellOrdersEntries = document.getElementById("user-sell-orders-entries");
@@ -948,6 +949,7 @@ async function renderBetPool() {
         const placedBets = await activeContract.queryFilter(activeContract.filters.PlacedBets(null, activeBet));
         const contractPrices = await activeContract.betPools(activeBet);
         marketPrices.innerHTML = ``;
+        marketPricesTable.style.opacity = "0";
         if (contractPrices) {
             const marketOutcome = await activeBetOutcomes();
             const payout = async outcome => (Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals())) / Number(await activeContract.resultPools(activeBet, outcome)));
@@ -962,6 +964,7 @@ async function renderBetPool() {
                 return `<tr><td>${outcome}</td><td>${owned || "-"}</td><td>${odds}%</td><td>$${mktPrice}</td><td>${(Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? "-" : ("$" + avgPrice)}</td><td>$${pay}</td></tr>`
             });
             marketPrices.innerHTML = (await Promise.all(prices)).join("");
+            marketPricesTable.style.opacity = "100%";
         }
         const betOutcomes = {};
         (await activeBetOutcomes()).forEach(o => betOutcomes[o] = 0);

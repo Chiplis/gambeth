@@ -221,7 +221,7 @@
             <div id="bet-operations"
                  style="display: flex; flex-direction: row; justify-content: space-around; width: 100%">
                 <div style="display: flex; width: 100%; justify-content: space-around">
-                    <table class="styled-table" style="box-shadow: none; width: auto">
+                    <table id="market-prices-table" class="styled-table" style="box-shadow: none; width: auto; transition: all 1s linear">
                         <thead>
                         <tr>
                             <th>Outcome</th>
@@ -296,7 +296,7 @@
                     </div>
                 </div>
             </div>
-            <div id="bet-pool-container" style="justify-content: space-around; width: 90%; display: flex;">
+            <div id="bet-pool-container" style="justify-content: space-around; margin: 1rem; display: flex;">
                 <div class="msg details" id="oo-bet"
                      style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
                     <div id="place-bet-info" style="display: none; flex-direction: row; justify-content: flex-start">
@@ -385,8 +385,8 @@
                                 </tr>
                                 <tr>
                                     <th>Outcome</th>
-                                    <th>#</th>
-                                    <th>$</th>
+                                    <th>Amount</th>
+                                    <th>Price</th>
                                 </tr>
                                 </thead>
                                 <tbody id="user-buy-orders-entries"></tbody>
@@ -399,8 +399,8 @@
                                 </tr>
                                 <tr>
                                     <th>Outcome</th>
-                                    <th>#</th>
-                                    <th>$</th>
+                                    <th>Amount</th>
+                                    <th>Price</th>
                                 </tr>
                                 </thead>
                                 <tbody id="user-sell-orders-entries"></tbody>
@@ -421,8 +421,8 @@
                                 </tr>
                                 <tr>
                                     <th>Outcome</th>
-                                    <th>#</th>
-                                    <th>$</th>
+                                    <th>Amount</th>
+                                    <th>Price</th>
                                 </tr>
                                 </thead>
                                 <tbody id="pool-buy-orders-entries"></tbody>
@@ -435,8 +435,8 @@
                                 </tr>
                                 <tr>
                                     <th>Outcome</th>
-                                    <th>#</th>
-                                    <th>$</th>
+                                    <th>Amount</th>
+                                    <th>Price</th>
                                 </tr>
                                 </thead>
                                 <tbody id="pool-sell-orders-entries"></tbody>
