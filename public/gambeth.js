@@ -736,21 +736,35 @@ function groupOrders(orders) {
     return grouped;
 }
 
+function prepareOrder(outcome, orderPosition, amount, price) {
+    placeBetAmount.value = amount;
+    placeBetPrice.value = price;
+    chooseBetInputs.value = outcome;
+    // debugger;
+    document.getElementById(`place-bet-position-${orderPosition.toLowerCase()}`).checked = true;
+    window.scrollTo({top: 0, behavior: "smooth"})
+}
+
 async function renderOrders() {
-    const toRow = async ({idx, outcome, amount, pricePerShare}) => {
-        return (`<tr><td>${outcome}</td><td>${amount}</td><td>${(Number(pricePerShare) / await activeDecimals()).toFixed(3)}</td><td style="display: none">${idx}</td></tr>`)
-    };
+    const toRow = async ({idx, outcome, orderPosition, amount, pricePerShare}) => `
+    <tr onclick="prepareOrder(\`${outcome}\`, '${orderPosition}', ${amount}, ${Number(pricePerShare) / await activeDecimals()})">
+        <td>${outcome}</td>
+        <td>${amount}</td>
+        <td>${(Number(pricePerShare) / await activeDecimals()).toFixed(3)}</td>
+        <td style="display: none">${idx}</td>
+    </tr>`;
 
     const outcomes = await activeBetOutcomes();
 
     const toEditableRow = async ({idx, outcome, amount, pricePerShare}) => {
         const price = (Number(pricePerShare) / await activeDecimals()).toFixed(3);
-        return (`<tr>
-                    <td><select onchange="updateOrdersBtn.style.display = 'flex'" style="color: #f3f9d2">${outcomes.map(o => `<option ${o === outcome ? 'selected' : ''} value="${o}">${o}</option>`).join("")}</select></td>
-                    <td><input onchange="updateOrdersBtn.style.display = 'flex'" style="color: #f3f9d2; background-color: rgba(0,0,0,0)" type="number" value="${amount}" size="${amount.toString().length + 3}" oninput="this.size = this.value.length + 3" min="0" step="1"></td>
-                    <td><input onchange="updateOrdersBtn.style.display = 'flex'" style="color: #f3f9d2; background-color: rgba(0,0,0,0)" type="number" value="${price}" size="${price.toString().length + 3}" oninput="this.size = this.value.length + 3" min="0" step="0.001"></td>
-                    <td style="display: none">${idx}</td>
-                    </tr>`)
+        return `
+            <tr>
+                <td><select onchange="updateOrdersBtn.style.display = 'flex'" style="color: #f3f9d2">${outcomes.map(o => `<option ${o === outcome ? 'selected' : ''} value="${o}">${o}</option>`).join("")}</select></td>
+                <td><input onchange="updateOrdersBtn.style.display = 'flex'" style="color: #f3f9d2; background-color: rgba(0,0,0,0)" type="number" value="${amount}" size="${amount.toString().length + 3}" oninput="this.size = this.value.length + 3" min="0" step="1"></td>
+                <td><input onchange="updateOrdersBtn.style.display = 'flex'" style="color: #f3f9d2; background-color: rgba(0,0,0,0)" type="number" value="${price}" size="${price.toString().length + 3}" oninput="this.size = this.value.length + 3" min="0" step="0.001"></td>
+                <td style="display: none">${idx}</td>
+            </tr>`;
     };
 
     const userBuys = betOrders[activeBet].filter(b => b.amount > 0n && b.user === owner).filter(o => o.orderPosition === "BUY");
