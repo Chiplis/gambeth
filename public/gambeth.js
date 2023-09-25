@@ -712,6 +712,7 @@ const fetchOrders = async (refresh) => {
         idx: o[5]
     }));
     betOrders[activeBet] = betOrders[activeBet].concat(newOrders);
+    betOrders[activeBet].sort((a, b) => a.orderPosition < b.orderPosition ? 1 : (Number(a.pricePerShare) - Number(b.pricePerShare)))
     if (newOrders.length || refresh) {
         await renderOrders();
     }
