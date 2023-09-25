@@ -293,7 +293,7 @@ async function loadProvider({
             });
             fixedCommission = await tokenToNumber(0);
             activeBet = betId;
-            await Promise.all([activeBet ? renderBetPool() : () => {}, fetchOrders(true)]);
+            await Promise.all([activeBet ? renderBetPool(), fetchOrders(true)]);
         }
         await renderWallet();
         providerLoaded = true;
@@ -942,6 +942,9 @@ async function decideBet() {
 
 async function renderBetPool() {
     try {
+        if (!activeContract || !activeBet) {
+            return;
+        }
         const placedBets = await activeContract.queryFilter(activeContract.filters.PlacedBets(null, activeBet));
         const contractPrices = await activeContract.betPools(activeBet);
         marketPrices.innerHTML = ``;
