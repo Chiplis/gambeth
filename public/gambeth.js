@@ -740,7 +740,8 @@ function prepareOrder(outcome, orderPosition, amount, price) {
     placeBetAmount.value = amount;
     placeBetPrice.value = price;
     chooseBetInputs.value = outcome;
-    // debugger;
+    queueBuyOrder.style.display = "flex";
+    queueBuyOrder.style.opacity = "1";
     document.getElementById(`place-bet-position-${orderPosition.toLowerCase()}`).checked = true;
     window.scrollTo({top: 0, behavior: "smooth"})
 }
