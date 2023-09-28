@@ -1,5 +1,5 @@
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
-const ooContractAddress = "0x35ed1fd7760de0a07D7ec4B9ADD882ffD8f5538F";
+const ooContractAddress = "0x2B52BF438ea985cc277001064ecab322eD3b2477";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 
@@ -90,7 +90,7 @@ const betOoQuery = document.getElementById("bet-oo-query");
 const betInnerOutcome = document.getElementById("bet-inner-outcome");
 const updateOrdersBtn = document.getElementById("update-orders");
 
-function renderBetIdShare() {
+const renderBetIdShare = () => {
     betId.type = "text";
     betIdLabel.innerHTML = betIdMsg.replace("{MARKET_ID}", betId.value.trim() || "{MARKET_ID}")
 }
@@ -591,7 +591,7 @@ async function createBet() {
             triggerError("No Ethereum provider detected", undefined, () => window.location.href = "https://metamask.io/");
             return;
         } else if (await usdc.allowance(owner, ooContractAddress) === 0n) {
-            triggerError(`Please approve a minimum of ${createBetTotalCost.innerHTML || "0 USDC"}  to create your market.`, undefined, async () => await usdc.approve(Number(createBetTotalCost.innerHTML.split(" USDC")[0]) || await usdc.balanceOf(owner)));
+            triggerError(`Please approve a minimum of ${createBetTotalCost.innerHTML || "0 USDC"}  to create your market.`, undefined, async () => await usdc.approve(ooContractAddress, Number(createBetTotalCost.innerHTML.split(" USDC")[0]) || await usdc.balanceOf(owner)));
             return;
         } else if (!betId.value.trim()) {
             triggerError("No bet ID submitted", undefined, () => renderCreationStep(0));
@@ -819,7 +819,7 @@ async function fillOrder() {
         triggerError("No bets have been placed, make sure outcome and amount fields are not empty.")
         return;
     } else if (await usdc.allowance(owner, ooContractAddress) === 0n) {
-        triggerError(`Please approve Gambeth to use some of your funds before placing a bet.`, undefined, async () => await usdc.approve(await usdc.balanceOf(owner)));
+        triggerError(`Please approve Gambeth to use some of your funds before placing a bet.`, undefined, async () => await usdc.approve(ooContractAddress, await usdc.balanceOf(owner)));
         return;
     }
 

@@ -258,7 +258,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         emit CreatedBet(betId, initialPool, query);
     }
 
-    function sqrt(uint y) public view returns (uint z) {
+    function sqrt(uint y) public pure returns (uint z) {
         if (y > 3) {
             z = y;
             uint x = y / 2 + 1;
@@ -284,13 +284,12 @@ contract GambethOptimisticOracle is OptimisticRequester {
     }
 
     function calculateSharesForPricePerShare(string calldata betId, string memory result, uint256 p) internal view returns (uint) {
-        uint s = resultPools[betId][result];
         uint r = 0;
         string[] memory outcomes = getOutcomes(betId);
         for (uint i = 0; i < outcomes.length; i++) {
             r += (Strings.equal(outcomes[i], result) ? 0 : resultPools[betId][outcomes[i]]) ** 2;
         }
-        return sqrt(r) * p / sqrt(1 * tokenDecimals[address(betTokens[betId])] ** 2 - p ** 2);
+        return sqrt(r) * p / sqrt(1 * tokenDecimals[address(betTokens[betId])] ** 2 - p ** 2) - resultPools[betId][result];
     }
 
     function marketSell(string calldata betId, address sender, string memory result, uint256 amount) private returns (bool) {
