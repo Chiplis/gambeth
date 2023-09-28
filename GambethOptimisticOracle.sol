@@ -290,16 +290,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         for (uint i = 0; i < outcomes.length; i++) {
             r += (Strings.equal(outcomes[i], result) ? 0 : resultPools[betId][outcomes[i]]) ** 2;
         }
-        uint decimals = tokenDecimals[address(betTokens[betId])];
-        uint sqa = (p ** 2 - p ** 4 / decimals ** 2);
-        uint sq = r * (sqa / decimals);
-        uint root = sqrt(sq);
-        int a = int(p ** 2 / (decimals * sqrt(decimals))) * - int(s) - int(root) + int(s * sqrt(decimals));
-        int q = int(p ** 2 / decimals) - int(decimals);
-        if (a < 0 && q > 0 || q < 0 && a > 0) {
-            a = int(p ** 2 / decimals * sqrt(decimals)) * - int(s) + int(root) + int(s * sqrt(decimals));
-        }
-        return uint(a / (q / 1000));
+        return sqrt(r) * p / sqrt(1 * tokenDecimals[address(betTokens[betId])] ** 2 - p ** 2);
     }
 
     function marketSell(string calldata betId, address sender, string memory result, uint256 amount) private returns (bool) {
