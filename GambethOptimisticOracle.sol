@@ -366,14 +366,20 @@ contract GambethOptimisticOracle is OptimisticRequester {
         }
 
         uint total = calculateCost(betId) - previousCost;
-
+        uint sellTotal = 0;
+        uint[] transfers = new uint[](results.length);
         for (uint i = 0; i < results.length; i++) {
             uint transfer = calculateCost(betId);
             resultPools[betId][results[i]] -= amounts[i];
             transfer -= calculateCost(betId);
             resultPools[betId][results[i]] += amounts[i];
-            userTransfers[betId][sender][results[i]] += int(transfer);
-            resultTransfers[betId][results[i]] += transfer;
+            sellTotal += transfer;
+            transfers[i] += transfer;
+        }
+        for (uint i = 0; i < results.length; i++) {
+            uint transfer = transfers[i];
+            userTransfers[betId][sender][results[i]] += int(transfer) * total / sellTotal;
+            resultTransfers[betId][results[i]] += int(transfer) * total / sellTotal;
         }
 
         if (!skipTransfer) {
