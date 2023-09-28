@@ -84,7 +84,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             query,
             '"'
         );
-        // Now, make the price request to the Optimistic oracle and set the liveness to 30 so it will settle quickly.
+
         bytes memory requestBytes = bytes(request);
         oo.requestPrice(PRICE_ID, marketCreation[betId], requestBytes, bondCurrency, reward);
         oo.setBond(PRICE_ID, marketCreation[betId], requestBytes, 1750 * 1e6);
@@ -122,11 +122,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
     }
 
     function priceDisputed(bytes32 identifier, uint256 timestamp, bytes calldata data, uint256 refund) public {
-    }
-
-    modifier validateClaimedBet(string calldata betId) {
-        require(createdBets[betId], "Invalid bet state while claiming reward.");
-        _;
     }
 
     function approveToken(address token) ownerOnly public {
@@ -195,9 +190,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
     mapping(string => address) public betOwners;
     mapping(string => uint256) public betCommissions;
 
-    // For each bet, how much each has each user put into that bet's pool?
-    mapping(string => mapping(address => uint256)) public userPools;
-
     // What is the total pooled per bet?
     mapping(string => uint256) public betPools;
 
@@ -209,7 +201,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
     mapping(string => mapping(string => uint256)) public resultPools;
 
     // For each bet, track how much each user has put into each result
-    mapping(string => mapping(address => mapping(string => uint256))) public userBets;
+    mapping(string => mapping(address => mapping(string => uint256))) public userPools;
 
     // Track token transfers
     mapping(string => mapping(address => mapping(string => int256))) public userTransfers;
@@ -335,9 +327,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
             resultTransfers[betId][result] = 0;
         }
 
-        userPools[betId][sender] -= amount;
         betPools[betId] -= amount;
-        userBets[betId][sender][result] -= amount;
+        userPools[betId][sender][result] -= amount;
         userTransfers[betId][sender][result] -= int(sale);
         total += sale;
 
@@ -361,25 +352,28 @@ contract GambethOptimisticOracle is OptimisticRequester {
         );
 
 
-        uint total = 0;
+        uint previousCost = calculateCost(betId);
         IERC20 token = betTokens[betId];
         for (uint i = 0; i < results.length; i++) {
 
             // By not allowing anyone to bet on an empty string bets can be refunded if an error happens.
-            require(bytes(results[i]).length > 0 && amounts[i] > 0,
-                "Attempted to place invalid bet, check amounts and results"
-            );
+            require(bytes(results[i]).length > 0 && amounts[i] > 0, "Attempted to place invalid bet, check amounts and results");
 
             // Update all required state
-            uint previousCost = calculateCost(betId);
             resultPools[betId][results[i]] += amounts[i];
-            uint transfer = calculateCost(betId) - previousCost;
-            userPools[betId][sender] += amounts[i];
             betPools[betId] += amounts[i];
-            userBets[betId][sender][results[i]] += amounts[i];
+            userPools[betId][sender][results[i]] += amounts[i];
+        }
+
+        uint total = calculateCost(betId) - previousCost;
+
+        for (uint i = 0; i < results.length; i++) {
+            uint transfer = calculateCost(betId);
+            resultPools[betId][results[i]] -= amounts[i];
+            transfer -= calculateCost(betId);
+            resultPools[betId][results[i]] += amounts[i];
             userTransfers[betId][sender][results[i]] += int(transfer);
             resultTransfers[betId][results[i]] += transfer;
-            total += transfer;
         }
 
         if (!skipTransfer) {
@@ -396,7 +390,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         betTokens[betId].safeTransfer(sender, pending);
 
         // Did the user bet on the correct result?
-        uint256 userBet = userBets[betId][sender][result];
+        uint256 userBet = userPools[betId][sender][result];
 
         // How much did everyone pool into the correct result?
         uint256 winnerPool = resultPools[betId][result];
@@ -498,7 +492,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             betTokens[betId].safeTransferFrom(sender, address(this), transferAmount);
         } else if (order.orderPosition == OrderPosition.SELL) {
             pendingSells[betId][sender][order.result] += order.amount;
-            require(pendingSells[betId][sender][order.result] <= userBets[betId][sender][order.result], "Exceeded valid sell amount when adding order");
+            require(pendingSells[betId][sender][order.result] <= userPools[betId][sender][order.result], "Exceeded valid sell amount when adding order");
         }
 
         orders[betId].push(order);
@@ -527,7 +521,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             } else if (order.orderPosition == OrderPosition.SELL) {
                 pendingSells[betId][sender][order.result] -= order.amount;
                 pendingSells[betId][sender][results[i]] += orderAmounts[i];
-                require(pendingSells[betId][sender][results[i]] <= userBets[betId][sender][results[i]], "Exceeded valid sell amount when changing order");
+                require(pendingSells[betId][sender][results[i]] <= userPools[betId][sender][results[i]], "Exceeded valid sell amount when changing order");
             }
             order.result = results[i];
             order.amount = orderAmounts[i];
@@ -602,11 +596,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
                 uint transferAmount = shareAmount * pricePerShare;
 
-                userPools[betId][buyer] += shareAmount;
-                userBets[betId][buyer][result] += shareAmount;
-
-                userPools[betId][seller] -= shareAmount;
-                userBets[betId][seller][result] -= shareAmount;
+                userPools[betId][buyer][result] += shareAmount;
+                userPools[betId][seller][result] -= shareAmount;
 
                 userTransfers[betId][seller][result] -= int(transferAmount);
                 userTransfers[betId][buyer][result] += int(transferAmount);

@@ -1,5 +1,5 @@
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
-const ooContractAddress = "0x667958b0A49BeaaF5C5227FbaeB9A7EF1C4bd49F";
+const ooContractAddress = "0x75759B711E2f878fA34D031A804361a7Fd06A86f";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 
@@ -363,7 +363,7 @@ async function renderClaimBet() {
     const resolutionRequested = BigInt(await activeContract.betRequester(activeBet)) !== 0n;
     const scheduleReached = await activeContract.marketDeadline(activeBet) * BigInt(1000) < BigInt(new Date().getTime());
     let showClaim = finishedBet || (!resolutionRequested && scheduleReached) || (resolutionRequested && !finishedBet);
-    showClaim &&= !outcome.length ? true : await activeContract.userBets(activeBet, addr, outcome) !== 0n;
+    showClaim &&= !outcome.length ? true : await activeContract.userPools(activeBet, addr, outcome) !== 0n;
     if (!showClaim) {
         claimBet.style.display = "none";
         claimBet.style.visibility = "hidden";
@@ -825,7 +825,7 @@ async function fillOrder() {
 
     for (let order of placedBets) {
         const pendingSells = await activeContract.pendingSells(activeBet, owner, order.outcome);
-        const userBet = await activeContract.userBets(activeBet, owner, order.outcome);
+        const userBet = await activeContract.userPools(activeBet, owner, order.outcome);
         const orderAmount = BigInt(order.amount);
         if (order.orderPosition === "SELL" && pendingSells + orderAmount > userBet) {
             triggerError(`You don't have enough '${order.outcome}' shares to place sell order`)
@@ -975,7 +975,7 @@ async function renderBetPool() {
                 const mktPrice = Math.round(p * 1000) / 1000;
                 const odds = (Math.pow(p, 2) * 100).toFixed(2);
                 const pay = (await payout(marketOutcome[i])).toFixed(3);
-                const owned = await activeContract.userBets(activeBet, owner, outcome);
+                const owned = await activeContract.userPools(activeBet, owner, outcome);
                 const avgPrice = await activeContract.userTransfers(activeBet, owner, outcome).then(async a => Math.round((Number(a) / await activeDecimals()) / Number(owned) * 1000) / 1000);
                 return `<tr><td>${outcome}</td><td>${owned || "-"}</td><td>${odds}%</td><td>$${mktPrice}</td><td>${(Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? "-" : ("$" + avgPrice)}</td><td>$${pay}</td></tr>`
             });

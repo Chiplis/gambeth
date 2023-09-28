@@ -922,7 +922,7 @@ window.gambethStateAbi = [
                 "type": "string"
             }
         ],
-        "name": "userBets",
+        "name": "userPools",
         "outputs": [
             {
                 "internalType": "uint256",
