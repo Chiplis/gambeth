@@ -977,7 +977,14 @@ async function renderBetPool() {
                 const pay = (await payout(marketOutcome[i])).toFixed(3);
                 const owned = await activeContract.userPools(activeBet, owner, outcome);
                 const avgPrice = await activeContract.userTransfers(activeBet, owner, outcome).then(async a => Math.round((Number(a) / await activeDecimals()) / Number(owned) * 1000) / 1000);
-                return `<tr><td>${outcome}</td><td>${owned || "-"}</td><td>${odds}%</td><td>$${mktPrice}</td><td>${(Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? "-" : ("$" + avgPrice)}</td><td>$${pay}</td></tr>`
+                const multiple = (Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? "-" : (pay / avgPrice);
+                return `<tr>
+                    <td>${outcome}</td>
+                    <td>${owned || "-"}</td>
+                    <td>${odds}%</td><td>$${mktPrice}</td>
+                    <td>${(Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? "-" : ("$" + avgPrice)}</td>
+                    <td>$${pay} - ${multiple.toFixed(2)}x</td>
+                </tr>`
             });
             marketPrices.innerHTML = (await Promise.all(prices)).join("");
             marketPricesTable.style.opacity = "100%";
