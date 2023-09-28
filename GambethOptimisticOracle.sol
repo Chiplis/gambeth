@@ -318,15 +318,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
             return false;
         }
 
-        // Turn remaining pool into shares with no owner, increasing price of remaining outcomes
-        resultTransfers[betId][result] -= sale;
-        if (resultPools[betId][result] == 0 && resultTransfers[betId][result] != 0) {
-            uint mintedShares = calculateSharesForCost(betId, result, resultTransfers[betId][result]);
-            resultPools[betId][result] += mintedShares;
-            betPools[betId] += mintedShares;
-            resultTransfers[betId][result] = 0;
-        }
-
         betPools[betId] -= amount;
         userPools[betId][sender][result] -= amount;
         userTransfers[betId][sender][result] -= int(sale);
@@ -367,7 +358,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
         uint total = calculateCost(betId) - previousCost;
         uint sellTotal = 0;
-        uint[] transfers = new uint[](results.length);
+        uint[] memory transfers = new uint[](results.length);
         for (uint i = 0; i < results.length; i++) {
             uint transfer = calculateCost(betId);
             resultPools[betId][results[i]] -= amounts[i];
@@ -378,8 +369,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
         }
         for (uint i = 0; i < results.length; i++) {
             uint transfer = transfers[i];
-            userTransfers[betId][sender][results[i]] += int(transfer) * total / sellTotal;
-            resultTransfers[betId][results[i]] += int(transfer) * total / sellTotal;
+            userTransfers[betId][sender][results[i]] += int(transfer * total / sellTotal);
+            resultTransfers[betId][results[i]] += transfer * total / sellTotal;
         }
 
         if (!skipTransfer) {
