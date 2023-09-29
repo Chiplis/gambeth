@@ -975,12 +975,14 @@ async function renderBetPool() {
                 const mktPrice = Math.round(p * 1000) / 1000;
                 const odds = (Math.pow(p, 2) * 100).toFixed(2);
                 const pay = (await payout(marketOutcome[i])).toFixed(3);
+                const total = await activeContract.resultPools(activeBet, outcome);
                 const owned = await activeContract.userPools(activeBet, owner, outcome);
                 const avgPrice = await activeContract.userTransfers(activeBet, owner, outcome).then(async a => Math.round((Number(a) / await activeDecimals()) / Number(owned) * 1000) / 1000);
                 const multiple = (Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? null : (pay / avgPrice).toFixed(2);
                 return `<tr>
                     <td>${outcome}</td>
-                    <td>${owned || "-"}</td>
+                    <td>${owned}</td>
+                    <td>${total}</td>
                     <td>${odds}%</td><td>$${mktPrice}</td>
                     <td>${(Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? "-" : ("$" + avgPrice)}</td>
                     <td>$${pay} ${multiple ? (" -" + multiple + "x") : ""}</td>
