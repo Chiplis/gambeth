@@ -1,5 +1,5 @@
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
-const ooContractAddress = "0x2B52BF438ea985cc277001064ecab322eD3b2477";
+const ooContractAddress = "0x23F7d4552675424C6D39A7007e68066686E091ad";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 
@@ -836,11 +836,11 @@ async function fillOrder() {
     triggerProcessing(`Placing order${newOrders.length > 1 ? "s" : ""}`);
     const finalAmounts = await Promise.all(amounts.map(async a => a.toString() / await activeDecimals()));
     const orders = betOrders[activeBet];
-    const orderIndexes = placedBets.map(({orderPosition, outcome, pricePerShare}) => pricePerShare === 0 ? [] : orders
+    const orderIndexes = placedBets.map(({orderPosition, outcome, pricePerShare}) => orders
         .filter(o => o.amount)
         .filter(o => o.outcome === outcome)
         .filter(o => o.orderPosition !== orderPosition)
-        .filter(o => orderPosition === "BUY" ? (pricePerShare >= o.pricePerShare) : (pricePerShare <= o.pricePerShare))
+        .filter(o => pricePerShare === 0 || (orderPosition === "BUY" ? (pricePerShare >= o.pricePerShare) : (pricePerShare <= o.pricePerShare)))
         .map(o => o.idx));
     const filledOrder = await activeContract.fillOrder(finalAmounts, prices, placedBets.map(o => o.orderPosition === "BUY" ? 0n : 1n), activeBet, newOrders.map(o => o.outcome), orderIndexes);
     placedBets = [];
@@ -977,13 +977,13 @@ async function renderBetPool() {
                 const pay = (await payout(marketOutcome[i])).toFixed(3);
                 const owned = await activeContract.userPools(activeBet, owner, outcome);
                 const avgPrice = await activeContract.userTransfers(activeBet, owner, outcome).then(async a => Math.round((Number(a) / await activeDecimals()) / Number(owned) * 1000) / 1000);
-                const multiple = (Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? "-" : (pay / avgPrice);
+                const multiple = (Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? null : (pay / avgPrice).toFixed(2);
                 return `<tr>
                     <td>${outcome}</td>
                     <td>${owned || "-"}</td>
                     <td>${odds}%</td><td>$${mktPrice}</td>
                     <td>${(Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? "-" : ("$" + avgPrice)}</td>
-                    <td>$${pay} - ${multiple.toFixed(2)}x</td>
+                    <td>$${pay} ${multiple ? (" -" + multiple + "x") : ""}</td>
                 </tr>`
             });
             marketPrices.innerHTML = (await Promise.all(prices)).join("");

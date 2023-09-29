@@ -283,13 +283,13 @@ contract GambethOptimisticOracle is OptimisticRequester {
         return (sqrt(2 * p * calculateCost(betId) + resultPools[betId][result] ** 2 + p ** 2) - resultPools[betId][result]) / tokenDecimals[address(betTokens[betId])];
     }
 
-    function calculateSharesForPricePerShare(string calldata betId, string memory result, uint256 p) internal view returns (uint) {
+    function calculateSharesForPricePerShare(string calldata betId, string memory result, uint256 p) internal view returns (int) {
         uint r = 0;
         string[] memory outcomes = getOutcomes(betId);
         for (uint i = 0; i < outcomes.length; i++) {
             r += (Strings.equal(outcomes[i], result) ? 0 : resultPools[betId][outcomes[i]]) ** 2;
         }
-        return sqrt(r) * p / sqrt(1 * tokenDecimals[address(betTokens[betId])] ** 2 - p ** 2) - resultPools[betId][result];
+        return int(sqrt(r) * p / sqrt(1 * tokenDecimals[address(betTokens[betId])] ** 2 - p ** 2) - resultPools[betId][result]);
     }
 
     function marketSell(string calldata betId, address sender, string memory result, uint256 amount) private returns (bool) {
@@ -434,7 +434,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
     mapping(string => mapping(address => uint256)) public pendingBuys;
     mapping(string => mapping(address => mapping(string => uint256))) public pendingSells;
 
-    function placeOrder(address sender, string calldata betId, Order memory order) private {
+    function placeOrder(address sender, string calldata betId, Order memory order, bool pushOrder) private {
         require(order.amount != 0, "Invalid placed order state");
         bool fromMarket = order.pricePerShare == 0;
         bool newOrder = order.index == orders[betId].length;
@@ -445,7 +445,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             string[] memory results = new string[](1);
             if (order.orderPosition == OrderPosition.BUY && (order.pricePerShare > calculatePrice(betId, order.result) || fromMarket)) {
                 results[0] = order.result;
-                amounts[0] = order.pricePerShare == 0 ? order.amount : calculateSharesForPricePerShare(betId, order.result, order.pricePerShare);
+                amounts[0] = order.pricePerShare == 0 ? order.amount : calculateSharesForPricePerShare(betId, order.result, order.pricePerShare) < 0 ? 0 : uint(calculateSharesForPricePerShare(betId, order.result, order.pricePerShare));
                 amounts[0] = amounts[0] > order.amount ? order.amount : amounts[0];
                 if (newOrder) {
                     order.amount -= amounts[0];
@@ -482,7 +482,9 @@ contract GambethOptimisticOracle is OptimisticRequester {
             require(pendingSells[betId][sender][order.result] <= userPools[betId][sender][order.result], "Exceeded valid sell amount when adding order");
         }
 
-        orders[betId].push(order);
+        if (pushOrder) {
+            orders[betId].push(order);
+        }
     }
 
     function calculatePrice(string calldata betId, string memory result) public view returns (uint256) {
@@ -514,7 +516,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             order.amount = orderAmounts[i];
             order.pricePerShare = prices[i];
             if (order.amount != 0) {
-                placeOrder(sender, betId, order);
+                placeOrder(sender, betId, order, true);
             }
         }
     }
@@ -538,13 +540,17 @@ contract GambethOptimisticOracle is OptimisticRequester {
     function fillOrder(address sender, uint[] calldata orderAmounts, uint[] calldata prices, OrderPosition[] calldata orderPositions, string calldata betId, string[] calldata results, uint[][] calldata idxs) private {
 
         for (uint r = 0; r < results.length; r++) {
-            string calldata result = results[r];
-            uint orderAmount = orderAmounts[r];
-            uint pricePerShare = prices[r];
             uint[] calldata indexes = idxs[r];
-            OrderPosition orderPosition = orderPositions[r];
-            for (uint i = 0; i < indexes.length && orderAmount != 0; i++) {
-
+            Order memory newOrder = Order({
+                orderPosition: orderPositions[r],
+                pricePerShare: prices[r],
+                result: results[r],
+                amount: orderAmounts[r],
+                user: sender,
+                index: orders[betId].length
+            });
+            bool ammOrder = newOrder.pricePerShare == 0;
+            for (uint i = 0; i < indexes.length && newOrder.amount != 0; i++) {
                 uint index = indexes[i];
                 Order storage matchedOrder = orders[betId][index];
 
@@ -553,62 +559,49 @@ contract GambethOptimisticOracle is OptimisticRequester {
                 }
 
                 require(
-                    matchedOrder.orderPosition != orderPosition
-                    && orderPosition == OrderPosition.BUY
-                        ? pricePerShare >= matchedOrder.pricePerShare
-                        : pricePerShare <= matchedOrder.pricePerShare
-                    && keccak256(bytes(matchedOrder.result)) == keccak256(bytes(result)),
+                    matchedOrder.orderPosition != newOrder.orderPosition
+                    && (ammOrder || (newOrder.orderPosition == OrderPosition.BUY
+                        ? newOrder.pricePerShare >= matchedOrder.pricePerShare
+                        : newOrder.pricePerShare <= matchedOrder.pricePerShare))
+                    && keccak256(bytes(matchedOrder.result)) == keccak256(bytes(newOrder.result)),
                     "Invalid matching order state"
                 );
-            }
-        }
 
-        for (uint r = 0; r < results.length; r++) {
-            string calldata result = results[r];
-            uint orderAmount = orderAmounts[r];
-            uint pricePerShare = prices[r];
-            uint[] calldata indexes = idxs[r];
-            OrderPosition orderPosition = orderPositions[r];
-            for (uint i = 0; i < indexes.length && orderAmount != 0; i++) {
-                uint index = indexes[i];
-                Order storage matchedOrder = orders[betId][index];
+                if (ammOrder) {
+                    newOrder.pricePerShare = matchedOrder.pricePerShare;
+                }
 
-                uint shareAmount = matchedOrder.amount < orderAmount ? matchedOrder.amount : orderAmount;
+                // placeOrder(sender, betId, newOrder, false);
 
-                orderAmount -= shareAmount;
+                uint shareAmount = matchedOrder.amount < newOrder.amount ? matchedOrder.amount : newOrder.amount;
+
+                newOrder.amount -= shareAmount;
                 matchedOrder.amount -= shareAmount;
 
-                address seller = orderPosition == OrderPosition.BUY ? matchedOrder.user : sender;
-                address buyer = orderPosition == OrderPosition.BUY ? sender : matchedOrder.user;
+                address seller = newOrder.orderPosition == OrderPosition.BUY ? matchedOrder.user : sender;
+                address buyer = newOrder.orderPosition == OrderPosition.BUY ? sender : matchedOrder.user;
 
-                uint transferAmount = shareAmount * pricePerShare;
+                uint transferAmount = shareAmount * newOrder.pricePerShare;
 
-                userPools[betId][buyer][result] += shareAmount;
-                userPools[betId][seller][result] -= shareAmount;
+                userPools[betId][buyer][newOrder.result] += shareAmount;
+                userPools[betId][seller][newOrder.result] -= shareAmount;
 
-                userTransfers[betId][seller][result] -= int(transferAmount);
-                userTransfers[betId][buyer][result] += int(transferAmount);
+                userTransfers[betId][seller][newOrder.result] -= int(transferAmount);
+                userTransfers[betId][buyer][newOrder.result] += int(transferAmount);
 
-                if (orderPosition == OrderPosition.BUY) {
-                    require(pendingSells[betId][seller][result] >= shareAmount, "Seller does not have enough shares to complete buy order");
+                if (newOrder.orderPosition == OrderPosition.BUY) {
+                    require(pendingSells[betId][seller][newOrder.result] >= shareAmount, "Seller does not have enough shares to complete buy order");
                     betTokens[betId].safeTransferFrom(buyer, address(this), transferAmount);
-                    pendingSells[betId][seller][result] -= shareAmount;
-                } else if (orderPosition == OrderPosition.SELL) {
+                    pendingSells[betId][seller][newOrder.result] -= shareAmount;
+                } else if (newOrder.orderPosition == OrderPosition.SELL) {
                     require(pendingBuys[betId][buyer] >= transferAmount, "Buyer does not have enough tokens to complete sell order");
                     pendingBuys[betId][buyer] -= transferAmount;
                 }
                 betTokens[betId].safeTransfer(seller, transferAmount);
             }
-            if (orderAmount != 0) {
-                Order memory newOrder = Order({
-                    orderPosition: orderPosition,
-                    pricePerShare: pricePerShare,
-                    result: result,
-                    amount: orderAmount,
-                    user: sender,
-                    index: orders[betId].length
-                });
-                placeOrder(sender, betId, newOrder);
+            if (newOrder.amount != 0) {
+                newOrder.pricePerShare = ammOrder ? 0 : newOrder.pricePerShare;
+                placeOrder(sender, betId, newOrder, true);
             }
         }
     }
