@@ -445,7 +445,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             string[] memory results = new string[](1);
             if (order.orderPosition == OrderPosition.BUY && (order.pricePerShare > calculatePrice(betId, order.result) || fromMarket)) {
                 results[0] = order.result;
-                amounts[0] = order.pricePerShare == 0 ? order.amount : calculateSharesForPricePerShare(betId, order.result, order.pricePerShare) < 0 ? 0 : uint(calculateSharesForPricePerShare(betId, order.result, order.pricePerShare));
+                amounts[0] = fromMarket ? order.amount : calculateSharesForPricePerShare(betId, order.result, order.pricePerShare) < 0 ? 0 : uint(calculateSharesForPricePerShare(betId, order.result, order.pricePerShare));
                 amounts[0] = amounts[0] > order.amount ? order.amount : amounts[0];
                 if (newOrder) {
                     order.amount -= amounts[0];
@@ -571,7 +571,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
                     newOrder.pricePerShare = matchedOrder.pricePerShare;
                 }
 
-                // placeOrder(sender, betId, newOrder, false);
+                placeOrder(sender, betId, newOrder, false);
 
                 uint shareAmount = matchedOrder.amount < newOrder.amount ? matchedOrder.amount : newOrder.amount;
 

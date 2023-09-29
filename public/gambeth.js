@@ -1,5 +1,5 @@
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
-const ooContractAddress = "0x23F7d4552675424C6D39A7007e68066686E091ad";
+const ooContractAddress = "0x231eB985f4b63289cD79aABf4564c073Bd7Fb177";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 
@@ -532,10 +532,10 @@ async function searchBet(betId = activeBet) {
         schemaPath.innerHTML = path || "Unknown";
         let deadline = await activeContract.marketLockout(activeBet) * BigInt(1000);
         deadline = new Date(Number(deadline.toString()));
-        betDeadline.innerHTML = deadline.toISOString().replace("T", " ").split(".")[0].slice(0, -3) + " UTC";
+        betDeadline.innerHTML = deadline.toISOString().replace("T", " ").split(".")[0].slice(0, -3).replace(" ", "~") + " UTC";
         let schedule = await activeContract.marketDeadline(activeBet) * BigInt(1000);
         schedule = new Date(Number(schedule.toString()));
-        betSchedule.innerHTML = schedule.toISOString().replace("T", " ").split(".")[0].slice(0, -3) + " UTC";
+        betSchedule.innerHTML = schedule.toISOString().replace("T", " ").split(".")[0].slice(0, -3).replace(" ", "~") + " UTC";
         let outcome = await activeContract.getResult(activeBet);
         const innerCommission = Number(await activeContract.betCommissions(activeBet)) / Number(await activeContract.betCommissionDenominator(activeBet)) * 100;
         betInnerCommission.innerHTML = Number.parseFloat(innerCommission) + "%";
