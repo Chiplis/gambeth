@@ -8,19 +8,101 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
     using SafeERC20 for IERC20;
 
-    address public contractOwner;
+    constructor() {
+        contractCreator = msg.sender;
+        approvedTokens[USDC] = true;
+        IERC20(USDC).approve(OO_ADDRESS, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+        tokenDecimals[USDC] = 1e6;
+        tokenFees[USDC] = 5e6;
+    }
 
-    address public constant OO_ADDRESS = 0xA5B9d8a0B0Fa04Ba71BDD68069661ED5C0848884;
-    OptimisticOracleV2Interface public oo = OptimisticOracleV2Interface(OO_ADDRESS);
-    bytes32 public PRICE_ID = bytes32("NUMERICAL");
+    modifier ownerOnly() {
+        require(msg.sender == contractCreator);
+        _;
+    }
 
+    struct Order {
+        OrderPosition orderPosition;
+        uint pricePerShare;
+        string result;
+        uint amount;
+        address user;
+        uint index;
+    }
+
+    enum OrderPosition {BUY, SELL}
+    enum OrderType{MARKET, LIMIT}
+    enum OrderStatus {FILLED, UNFILLED}
+    enum BetKind { OPTIMISTIC_ORACLE, HUMAN}
+
+    // If the user wins the bet, let them know along with the reward amount.
+    event WonBet(address indexed winner, uint256 won);
+    // If the user lost no funds are claimable.
+    event LostBet(address indexed loser);
+    /* If no one wins the bet the funds can be refunded to the user,
+    after the bet's creator takes their cut. */
+    event UnwonBet(address indexed refunded);
+    /* Contains all the information that does not need to be saved as a state variable,
+    but which can prove useful to people taking a look at the bet in the frontend. */
+    event CreatedBet(string indexed _id, uint256 initialPool, string description);
+    event CreatedOptimisticBet(string indexed betIdIndexed, string betId, string title, string query, string request);
+    // The table representing each bet's pool is populated according to these events.
+    event PlacedBets(address indexed user, string indexed _id, string id, string[] results);
+
+    /* If the oracle service's scheduled callback was not executed after 5 days,
+    a user can reclaim his funds after the bet's execution threshold has passed. */
+    uint64 constant public BET_THRESHOLD = 5 * 24 * 60 * 60;
+
+    mapping(string => Order[]) public orders;
+    mapping(string => mapping(address => uint256)) public pendingBuys;
+    mapping(string => mapping(address => mapping(string => uint256))) public pendingSells;
     mapping(string => uint256) public marketCreation;
     mapping(string => bool) public finishedBets;
     mapping(string => uint256) public marketOutcome;
     mapping(bytes32 => mapping(uint256 => mapping(bytes => string))) public marketOracleRequest;
     mapping(string => address) public betRequester;
+    mapping(string => BetKind) public betKinds;
+    mapping(address => uint256) public tokenDecimals;
+    mapping(address => uint256) public tokenFees;
+    // For each bet, track which users have already claimed their potential reward
+    mapping(string => mapping(address => bool)) public claimedBets;
+    mapping(string => uint256) public betCommissionDenominator;
+    mapping(address => bool) public approvedTokens;
+    mapping(string => IERC20) public betTokens;
+    /* There are two different dates associated with each created bet:
+    one for the deadline where a user can no longer place new bets,
+    and another one that tells the smart oracle contract when to actually
+    run. */
+    mapping(string => uint64) public marketLockout;
+    mapping(string => uint64) public marketDeadline;
+    // Keep track of all createdBets to prevent duplicates
+    mapping(string => bool) public createdBets;
+    // Keep track of all owners to handle commission fees
+    mapping(string => address) public betOwners;
+    mapping(string => uint256) public betCommissions;
+    // What is the total pooled per bet?
+    mapping(string => uint256) public betPools;
+    // For each bet, how much is the total pooled per result?
+    mapping(string => mapping(string => uint256)) public resultPools;
+    // For each bet, track how much each user has put into each result
+    mapping(string => mapping(address => mapping(string => uint256))) public userPools;
+    // Track token transfers
+    mapping(string => mapping(address => mapping(string => int256))) public userTransfers;
+    mapping(string => mapping(string => uint256)) public resultTransfers;
+    mapping(string => string[]) public betResults;
+    mapping(string => mapping(bytes32 => bool)) public marketRequest;
 
-    event CreatedOptimisticBet(string indexed betIdIndexed, string betId, string title, string query, string request);
+    address contractCreator;
+
+    uint public contractFees = 0;
+
+    address public constant OO_ADDRESS = 0xA5B9d8a0B0Fa04Ba71BDD68069661ED5C0848884;
+    OptimisticOracleV2Interface public oo = OptimisticOracleV2Interface(OO_ADDRESS);
+    bytes32 public PRICE_ID = bytes32("NUMERICAL");
+
+    string oracleTitleHeader = "q: title: ";
+    string oracleDescriptionHeader = ", description: ";
+    string oracleDescriptionIntro = '"This is a Gambeth multiple choice market. It should only resolve to one of the following outcomes, propose the number corresponding to it: ';
 
     function createOptimisticBet(address currency, string calldata betId, uint64 deadline, uint64 schedule, uint256 commissionDenominator, uint256 commission, uint256 initialPool, string[] calldata results, uint256[] calldata ratios, string calldata title, string calldata query) public {
         require(
@@ -36,8 +118,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         emit CreatedOptimisticBet(betId, betId, title, query, request);
     }
 
-
-    mapping(string => mapping(bytes32 => bool)) public marketRequest;
+    address USDC = 0x07865c6E87B9F70255377e024ace6630C1Eaa37F;
 
     function claimBet(string calldata betId, string calldata request) public {
         require(marketRequest[betId][keccak256(bytes(request))], "Invalid query for bet");
@@ -50,11 +131,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
         _claimBet(betId, msg.sender, getResult(betId));
     }
-
-
-    string oracleTitleHeader = "q: title: ";
-    string oracleDescriptionHeader = ", description: ";
-    string oracleDescriptionIntro = '"This is a Gambeth multiple choice market. It should only resolve to one of the following outcomes, propose the number corresponding to it: ';
 
     // Submit a data request to the Optimistic oracle.
     function performOracleRequest(string calldata betId, string calldata title, string calldata query) private returns (string memory) {
@@ -127,90 +203,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
     function approveToken(address token) ownerOnly public {
         IERC20(token).approve(OO_ADDRESS, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
     }
-
-    modifier ownerOnly() {
-        require(msg.sender == contractOwner);
-        _;
-    }
-
-    address USDC = 0x07865c6E87B9F70255377e024ace6630C1Eaa37F;
-
-    constructor() {
-        contractCreator = msg.sender;
-        approvedTokens[USDC] = true;
-        IERC20(USDC).approve(OO_ADDRESS, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
-        tokenDecimals[USDC] = 1e6;
-        tokenFees[USDC] = 5e6;
-    }
-
-    enum BetKind {
-        OPTIMISTIC_ORACLE,
-        HUMAN
-    }
-
-    mapping(string => BetKind) public betKinds;
-    address contractCreator;
-    mapping(address => uint256) public tokenDecimals;
-    mapping(address => uint256) public tokenFees;
-    // For each bet, track which users have already claimed their potential reward
-    mapping(string => mapping(address => bool)) public claimedBets;
-
-    mapping(string => uint256) public betCommissionDenominator;
-
-    /* If the oracle service's scheduled callback was not executed after 5 days,
-    a user can reclaim his funds after the bet's execution threshold has passed.
-    Note that even if the callback execution is delayed,
-    Provable's oracle should've extracted the result at the originally scheduled time. */
-    uint64 constant public BET_THRESHOLD = 5 * 24 * 60 * 60;
-
-    // If the user wins the bet, let them know along with the reward amount.
-    event WonBet(address indexed winner, uint256 won);
-
-    // If the user lost no funds are claimable.
-    event LostBet(address indexed loser);
-
-    /* If no one wins the bet the funds can be refunded to the user,
-    after the bet's creator takes their cut. */
-    event UnwonBet(address indexed refunded);
-
-    mapping(address => bool) public approvedTokens;
-    mapping(string => IERC20) public betTokens;
-
-    /* There are two different dates associated with each created bet:
-    one for the deadline where a user can no longer place new bets,
-    and another one that tells the smart oracle contract when to actually
-    run. */
-    mapping(string => uint64) public marketLockout;
-    mapping(string => uint64) public marketDeadline;
-
-    // Keep track of all createdBets to prevent duplicates
-    mapping(string => bool) public createdBets;
-
-    // Keep track of all owners to handle commission fees
-    mapping(string => address) public betOwners;
-    mapping(string => uint256) public betCommissions;
-
-    // What is the total pooled per bet?
-    mapping(string => uint256) public betPools;
-
-    /* Contains all the information that does not need to be saved as a state variable,
-    but which can prove useful to people taking a look at the bet in the frontend. */
-    event CreatedBet(string indexed _id, uint256 initialPool, string description);
-
-    // For each bet, how much is the total pooled per result?
-    mapping(string => mapping(string => uint256)) public resultPools;
-
-    // For each bet, track how much each user has put into each result
-    mapping(string => mapping(address => mapping(string => uint256))) public userPools;
-
-    // Track token transfers
-    mapping(string => mapping(address => mapping(string => int256))) public userTransfers;
-    mapping(string => mapping(string => uint256)) public resultTransfers;
-
-    mapping(string => string[]) public betResults;
-
-    // The table representing each bet's pool is populated according to these events.
-    event PlacedBets(address indexed user, string indexed _id, string id, string[] results);
 
     function manageToken(address token, uint256 decimals, bool approved) ownerOnly public {
         approvedTokens[token] = approved;
@@ -402,7 +394,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         token.safeTransfer(betOwners[betId], ownerFee);
     }
 
-    uint public contractFees = 0;
+
 
     function withdrawUsdc(uint total) public ownerOnly {
         withdraw(total, USDC);
@@ -417,22 +409,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
     function calculateContractCommission(uint256, string[] calldata, uint256[] calldata) pure public returns (uint256) {
         return 0;
     }
-
-    struct Order {
-        OrderPosition orderPosition;
-        uint pricePerShare;
-        string result;
-        uint amount;
-        address user;
-        uint index;
-    }
-    enum OrderPosition {BUY, SELL}
-    enum OrderType{MARKET, LIMIT}
-    enum OrderStatus {FILLED, UNFILLED}
-
-    mapping(string => Order[]) public orders;
-    mapping(string => mapping(address => uint256)) public pendingBuys;
-    mapping(string => mapping(address => mapping(string => uint256))) public pendingSells;
 
     function placeOrder(address sender, string calldata betId, Order memory order, bool pushOrder) private {
         require(order.amount != 0, "Invalid placed order state");
