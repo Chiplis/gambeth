@@ -480,12 +480,12 @@ async function calculateCost(newBets, bids) {
     const payouts = outcomes.map((o, i) => ({[o]: payout / (newBets.filter(({outcome}) => outcome === o).map(({amount}) => Number(amount)).reduce((a, b) => a + b, 0) * (bids ? 1 : -1) + pools[i])}));
     return {
         payout: Object.assign({}, ...payouts),
-        cost: limitCost + newCost
+        cost: limitCost + newCost,
     };
 }
 
 async function calculatePrice(result) {
-    return (Number(await activeContract.resultPools(activeBet, result)) || 0.5) / Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals()));
+    return Number(await activeContract.resultPools(activeBet, result)) / Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals()));
 }
 
 async function browseMarkets() {
@@ -969,16 +969,17 @@ async function renderBetPool() {
         if (contractPrices) {
             const marketOutcome = await activeBetOutcomes();
             const payout = async outcome => (Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals())) / Number(await activeContract.resultPools(activeBet, outcome) || 1));
-            const calcPrices = await Promise.all(marketOutcome.map(calculatePrice));
+            const calcPrices = await Promise.all(marketOutcome.map(async outcome => await calculateCost([{outcome, pricePerShare: 0, amount: Math.min(1, Number(await activeContract.resultPools(activeBet, outcome)))}], true).then(a => a.cost)));
             const prices = calcPrices.map(async (p, i) => {
                 const outcome = marketOutcome[i];
                 const mktPrice = Math.round(p * 1000) / 1000;
+                console.log(p);
                 const odds = (Math.pow(p, 2) * 100).toFixed(2);
                 const pay = (await payout(marketOutcome[i])).toFixed(3);
                 const total = await activeContract.resultPools(activeBet, outcome);
                 const owned = await activeContract.userPools(activeBet, owner, outcome);
                 const avgPrice = await activeContract.userTransfers(activeBet, owner, outcome).then(async a => Math.round((Number(a) / await activeDecimals()) / Number(owned) * 1000) / 1000);
-                // const multiple = (Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? null : (pay / avgPrice).toFixed(2);
+                const multiple = (Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? null : (pay / avgPrice).toFixed(2);
                 return `<tr>
                     <td>${outcome}</td>
                     <td>${owned}</td>
