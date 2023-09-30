@@ -338,7 +338,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         for (uint i = 0; i < results.length; i++) {
 
             // By not allowing anyone to bet on an empty string bets can be refunded if an error happens.
-            require(bytes(results[i]).length > 0 && amounts[i] > 0, "Attempted to place invalid bet, check amounts and results");
+            require(bytes(results[i]).length > 0, "Attempted to place invalid bet, check amounts and results");
 
             // Update all required state
             resultPools[betId][results[i]] += amounts[i];

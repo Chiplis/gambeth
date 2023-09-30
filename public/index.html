@@ -168,7 +168,7 @@
                     <div style="display: flex; flex-direction: column; justify-content: center; align-items: center">
                         <div class="" style="border: 0; margin: 0">Initial pool</div>
                         <div style="display: flex; align-items: center">
-                            <input id="create-bet-initial-pool" oninput="renderCostMessages()" inputmode="decimal" style="margin: 0.5rem;"/>
+                            <input id="create-bet-initial-pool" oninput="renderCostMessages(true)" inputmode="decimal" style="margin: 0.5rem;"/>
                             <div class="info" style="color: #f3f9d2; background-color: transparent">Shares</div>
                         </div>
                     </div>
@@ -228,9 +228,9 @@
                             <th>Owned</th>
                             <th>Total</th>
                             <th>Odds</th>
-                            <th>Mkt. Price</th>
-                            <th>Avg. Price</th>
-                            <th>Payout</th>
+                            <th>Market price</th>
+                            <th>Average price</th>
+                            <th>Share payout</th>
                         </tr>
                         </thead>
                         <tbody id="market-prices"></tbody>

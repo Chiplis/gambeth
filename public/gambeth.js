@@ -1,5 +1,5 @@
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
-const ooContractAddress = "0x231eB985f4b63289cD79aABf4564c073Bd7Fb177";
+const ooContractAddress = "0x44d1576e1a9b22d806C9A97442fF4Baed06E834c";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 
@@ -95,11 +95,11 @@ const renderBetIdShare = () => {
     betIdLabel.innerHTML = betIdMsg.replace("{MARKET_ID}", betId.value.trim() || "{MARKET_ID}")
 }
 
-function renderCostMessages() {
+function renderCostMessages(changePool) {
     const ratios = createdMarketOutcome.map(outcome => document.querySelector(`#create-market-${outcome.replaceAll(" ", "-")}`).value).map(Number).filter(v => v);
     const minShares = !Math.min(...ratios) ? 0 : Math.ceil(100 / Math.min(...ratios));
     createBetMinimumPool.innerHTML = `The market must be bootstrapped with at least ${minShares} initial shares.`;
-    createBetInitialPool.value = minShares;
+    createBetInitialPool.value = changePool ? createBetInitialPool.value : minShares;
     createBetTotalCost.innerHTML = (5 + Math.sqrt(
             ratios.map(v => (createBetInitialPool.value / 100 * v) ** 2).reduce((a, b) => a + b), 0)
     ).toFixed(2) + " USDC";
@@ -485,7 +485,7 @@ async function calculateCost(newBets, bids) {
 }
 
 async function calculatePrice(result) {
-    return Number(await activeContract.resultPools(activeBet, result)) / Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals()));
+    return (Number(await activeContract.resultPools(activeBet, result)) || 0.5) / Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals()));
 }
 
 async function browseMarkets() {
@@ -882,7 +882,7 @@ async function addBetChoice() {
         createdMarketOutcome.push(createBetChoice.value);
     }
     createmarketOutcomeList.innerHTML = createdMarketOutcome.map(v => `<li>${v}</li>`).join("");
-    createBetOdds.innerHTML = createdMarketOutcome.map(v => `<div><input oninput="renderCostMessages()" id="create-market-${v.replaceAll(" ", "-")}" style="width: 3rem; height: 1rem; margin: 1rem; placeholder="${v}">%</div>`).join("");
+    createBetOdds.innerHTML = createdMarketOutcome.map(v => `<div><input oninput="renderCostMessages(false)" id="create-market-${v.replaceAll(" ", "-")}" style="width: 3rem; height: 1rem; margin: 1rem; placeholder="${v}">%</div>`).join("");
     createBetOddsList.innerHTML = createdMarketOutcome.map(v => `<li style="display: flex; justify-content: flex-start; margin: 1rem; width: 100%">${v}</li>`).join("");
     createBetChoice.value = "";
 }
@@ -968,7 +968,7 @@ async function renderBetPool() {
         marketPricesTable.style.opacity = "0";
         if (contractPrices) {
             const marketOutcome = await activeBetOutcomes();
-            const payout = async outcome => (Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals())) / Number(await activeContract.resultPools(activeBet, outcome)));
+            const payout = async outcome => (Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals())) / Number(await activeContract.resultPools(activeBet, outcome) || 1));
             const calcPrices = await Promise.all(marketOutcome.map(calculatePrice));
             const prices = calcPrices.map(async (p, i) => {
                 const outcome = marketOutcome[i];
@@ -978,14 +978,14 @@ async function renderBetPool() {
                 const total = await activeContract.resultPools(activeBet, outcome);
                 const owned = await activeContract.userPools(activeBet, owner, outcome);
                 const avgPrice = await activeContract.userTransfers(activeBet, owner, outcome).then(async a => Math.round((Number(a) / await activeDecimals()) / Number(owned) * 1000) / 1000);
-                const multiple = (Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? null : (pay / avgPrice).toFixed(2);
+                // const multiple = (Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? null : (pay / avgPrice).toFixed(2);
                 return `<tr>
                     <td>${outcome}</td>
                     <td>${owned}</td>
                     <td>${total}</td>
                     <td>${odds}%</td><td>$${mktPrice}</td>
                     <td>${(Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? "-" : ("$" + avgPrice)}</td>
-                    <td>$${pay} ${multiple ? (" -" + multiple + "x") : ""}</td>
+                    <td>$${pay}</td>
                 </tr>`
             });
             marketPrices.innerHTML = (await Promise.all(prices)).join("");
