@@ -30,9 +30,9 @@ const chooseBetPosition = document.getElementById("choose-bet-position");
 const placeBet = document.getElementById("place-bet");
 const scheduleDate = document.getElementById("schedule-date");
 const deadlineDate = document.getElementById("deadline-date");
-const betId = document.getElementById("create-bet-id");
-const betIdLabel = document.getElementById("create-bet-id-label");
-const betIdMsg = "Your market's ID is a unique identifier which allows other users to search for it. <br><br> https://gambeth.com/?id={MARKET_ID}";
+const marketId = document.getElementById("create-bet-id");
+const marketIdLabel = document.getElementById("create-bet-id-label");
+const marketIdMsg = "Your market's ID is a unique identifier which allows other users to search for it. <br><br> https://gambeth.com/?id={MARKET_ID}";
 const decideBetOutcome = document.getElementById("decide-bet-outcome");
 const betDecision = document.getElementById("bet-decision");
 const createBetUrl = document.getElementById("create-bet-url");
@@ -50,7 +50,7 @@ const userBuyOrdersEntries = document.getElementById("user-buy-orders-entries");
 const userSellOrdersEntries = document.getElementById("user-sell-orders-entries");
 const poolBuyOrdersEntries = document.getElementById("pool-buy-orders-entries");
 const poolSellOrdersEntries = document.getElementById("pool-sell-orders-entries");
-const searchBetId = document.getElementById("search-bet");
+const searchmarketId = document.getElementById("search-bet");
 const message = document.getElementById("message");
 const betContainer = document.getElementById("bet-container");
 const createoutcomeIndexList = document.getElementById("create-bet-choices-list");
@@ -89,9 +89,9 @@ const betOoQuery = document.getElementById("bet-oo-query");
 const betInnerOutcome = document.getElementById("bet-inner-outcome");
 const updateOrdersBtn = document.getElementById("update-orders");
 
-const renderBetIdShare = () => {
-    betId.type = "text";
-    betIdLabel.innerHTML = betIdMsg.replace("{MARKET_ID}", betId.value.trim() || "{MARKET_ID}")
+const rendermarketIdShare = () => {
+    marketId.type = "text";
+    marketIdLabel.innerHTML = marketIdMsg.replace("{MARKET_ID}", marketId.value.trim() || "{MARKET_ID}")
 }
 
 function renderCostMessages(changePool) {
@@ -145,15 +145,15 @@ const renderNextCreationStep = () => {
     renderCreationStep((currentStep + 1) % steps.length);
 }
 
-searchBetId.onkeydown = searchTriggered;
+searchmarketId.onkeydown = searchTriggered;
 let activeMarketId = null;
 let activeMarket = {};
 let placedBets = [];
-let newBetId = null;
+let newmarketId = null;
 
 function searchTriggered(e) {
     if (e.keyCode === 13) {
-        searchBet(searchBetId.value);
+        searchBet(searchmarketId.value);
     }
 }
 
@@ -223,7 +223,7 @@ loadChain();
 
 
 async function loadProvider({
-                                betId = activeMarketId || new URL(window.location).searchParams.get("id"),
+                                marketId = activeMarketId || new URL(window.location).searchParams.get("id"),
                                 betType = "oo"
                             } = {}) {
     try {
@@ -247,8 +247,8 @@ async function loadProvider({
         signer = await provider.getSigner();
         if (!gambethStateAbi) throw "ABI not loaded";
 
-        if (betId && activeContract) {
-            const betKind = (await getMarket(betId)).kind;
+        if (marketId && activeContract) {
+            const betKind = (await getMarket(marketId)).kind;
             switch (betKind) {
                 case 0n:
                     activeContract = new ethers.Contract(ooContractAddress, ooAbi, provider).connect(signer);
@@ -271,16 +271,16 @@ async function loadProvider({
                     activeContract = new ethers.Contract(provableContractAddress, provableOracleAbi, provider).connect(signer);
                     break;
             }
-            if (betId) {
+            if (marketId) {
                 await loadProvider();
             }
         }
 
         if (activeContract) {
             owner = await signer.getAddress();
-            activeContract.on("CreatedBet", async hashedBetId => {
-                if (hashedBetId.hash === ethers.id(newBetId || "")) triggerSuccess(`Market created!`, () => {
-                    searchBet(newBetId);
+            activeContract.on("CreatedBet", async hashedmarketId => {
+                if (hashedmarketId.hash === ethers.id(newmarketId || "")) triggerSuccess(`Market created!`, () => {
+                    searchBet(newmarketId);
                 }, undefined, 2500)
             });
             activeContract.on("LostBet", async (sender) => {
@@ -293,9 +293,9 @@ async function loadProvider({
                 if (sender === owner) triggerSuccess(`Bet won! ${await tokenToNumber(amount.toString())} USDC transferred to account`)
             });
             fixedCommission = await tokenToNumber(0);
-            if (betId) {
-                activeMarketId = betId;
-                activeMarket = await getMarket(betId);
+            if (marketId) {
+                activeMarketId = marketId;
+                activeMarket = await getMarket(marketId);
                 // await Promise.all([renderBetPool(), fetchOrders(true)]);
             }
         }
@@ -389,8 +389,8 @@ async function renderClaimBet() {
     claimBet.style.cursor = claimBet.disabled ? "initial" : "pointer";
 }
 
-async function activeBetKind() {
-    switch (activeMarket.kind) {
+async function marketKind(marketId = activeMarketId) {
+    switch ((await getMarket(marketId)).kind) {
         case 0n:
             return "oo";
         case 1n:
@@ -410,7 +410,7 @@ async function renderPlaceBet() {
     const lockedPool = deadline <= Math.round(new Date().getTime());
     const schedule = activeMarket.deadline * 1000;
     const scheduleReached = schedule <= Math.round(new Date().getTime());
-    const betKind = await activeBetKind();
+    const betKind = await marketKind();
 
     betDecision.style.display = betKind === "human"
         ? ((lockedPool && activeMarket.owner === owner) ? "block" : "none")
@@ -496,9 +496,9 @@ async function browseMarkets() {
     exploreMarkets.innerHTML = "<div style='width: 100%; flex-wrap: wrap; display: flex; justify-content: space-around'>" + (await Promise.all((await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet()))
         .map(e => [e.args[1], e.args[2]])
         .map(async ([id, name]) => [await getMarket(id), name])))
-        .map(([{betId, totalShares}, name]) => `
-            <div onclick="searchBet('${betId}')" style="margin: 1rem; display: flex; flex-direction: column; justify-content: center; align-items: center">
-                <div style="min-width: 10vw; max-width: 10vw;"><canvas id="${betId}">${renderBetChart(betId, betId, false)}</canvas></div>
+        .map(([{marketId, totalShares}, name]) => `
+            <div onclick="searchBet('${marketId}')" style="margin: 1rem; display: flex; flex-direction: column; justify-content: center; align-items: center">
+                <div style="min-width: 10vw; max-width: 10vw;"><canvas id="${marketId}">${renderBetChart(marketId, marketId, false)}</canvas></div>
                 <div>${name}</div>
                 <div>Liquidity: ${totalShares} shares</div>
             </div>        
@@ -509,9 +509,10 @@ async function browseMarkets() {
     window.scrollTo({top: 0, behavior: "smooth"});
 }
 
-async function getMarket(betId) {
-    return await activeContract.markets(betId).then(([betId, created, finished, creation, outcomeIndex, kind, requester, lockout, deadline, owner, commission, totalShares, commissionDenominator]) => ({
-        betId,
+const marketCache = {};
+async function getMarket(marketId) {
+    return marketCache[marketId] || await activeContract.markets(marketId).then(([marketId, created, finished, creation, outcomeIndex, kind, requester, lockout, deadline, owner, commission, totalShares, commissionDenominator]) => marketCache[marketId] = {
+        marketId,
         created,
         finished,
         creation: Number(creation),
@@ -524,21 +525,21 @@ async function getMarket(betId) {
         commission: Number(commission),
         totalShares: Number(totalShares),
         commissionDenominator: Number(commissionDenominator),
-    }))
+    });
 }
 
-async function searchBet(betId = activeMarketId) {
-    if (!betId) {
+async function searchBet(marketId = activeMarketId) {
+    if (!marketId) {
         return;
     }
     try {
         triggerProcessing("Loading market");
 
-        if (!(await loadProvider({betId}))) {
+        if (!(await loadProvider({marketId: marketId}))) {
             return;
         }
         placedBets = [];
-        activeMarketId = searchBetId.value || betId;
+        activeMarketId = searchmarketId.value || marketId;
         const betExists = activeMarket.created;
         if (!betExists) {
             betContainer.style.display = "none";
@@ -585,7 +586,7 @@ async function searchBet(betId = activeMarketId) {
         console.error(error);
         triggerError(providerErrorMsg(error));
     }
-    searchBetId.value = "";
+    searchmarketId.value = "";
 }
 
 function unpackQuery(u) {
@@ -616,8 +617,8 @@ async function createBet() {
         commission = commission.replace(".", "");
         let commissionDenominator = exponent ? Math.pow(10, exponent - 1) : 100;
         const odds = Array.from(createBetOdds.getElementsByTagName("input")).map(e => Number(e.value || 0));
-        activeMarketId = (betId.value || "").toLowerCase().trim();
-        newBetId = activeMarketId;
+        activeMarketId = (marketId.value || "").toLowerCase().trim();
+        newmarketId = activeMarketId;
         const initialPool = createBetInitialPool.value || "0";
         const outcomes = createdoutcomeIndex;
         triggerProcessing("Creating market");
@@ -627,7 +628,7 @@ async function createBet() {
         } else if (await usdc.allowance(owner, ooContractAddress) === 0n) {
             triggerError(`Please approve a minimum of ${createBetTotalCost.innerHTML || "0 USDC"}  to create your market.`, undefined, async () => await usdc.approve(ooContractAddress, Number(createBetTotalCost.innerHTML.split(" USDC")[0] * 1e6) || await usdc.balanceOf(owner)));
             return;
-        } else if (!betId.value.trim()) {
+        } else if (!marketId.value.trim()) {
             triggerError("No bet ID submitted", undefined, () => renderCreationStep(0));
             return;
         } else if (!deadline || !schedule) {
@@ -645,7 +646,7 @@ async function createBet() {
         } else if (isNaN(Number.parseFloat(commission)) || commission > 50) {
             triggerError("Commission should be a number between 0 and 50", undefined, () => renderCreationStep(4));
             return;
-        } else if ((await getMarket(betId.value)).created) {
+        } else if ((await getMarket(marketId.value)).created) {
             triggerError("Bet ID already exists", undefined, () => renderCreationStep(0));
             return;
         }
@@ -659,7 +660,7 @@ async function createBet() {
         }
         createdoutcomeIndex = [];
     } catch (error) {
-        newBetId = null;
+        newmarketId = null;
         console.error(error);
         triggerError(providerErrorMsg(error), createBetQuery);
     }
@@ -726,7 +727,7 @@ async function addSingleBet(order) {
 }
 
 async function buyBet() {
-    if (await activeBetKind() === "oo") {
+    if (await Kind() === "oo") {
         await fillOrder();
     } else {
         await addFreeBet();
@@ -960,7 +961,7 @@ function providerErrorMsg(error) {
 
 async function claimReward() {
     try {
-        if (await activeBetKind() === "oo") {
+        if (await marketKind() === "oo") {
             const filter = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeMarketId)))[0].args;
             const query = filter[filter.length - 1];
             if (!(activeMarket.creation(activeMarketId))) {
