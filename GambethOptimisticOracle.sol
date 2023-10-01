@@ -171,7 +171,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
         oo.setCustomLiveness(PRICE_ID, market.creation, requestBytes, 1);
         oo.setCallbacks(PRICE_ID, market.creation, requestBytes, false, false, true);
         marketOracleRequest[PRICE_ID][market.creation][requestBytes] = betId;
-        market.requester = msg.sender;
         return request;
     }
 
