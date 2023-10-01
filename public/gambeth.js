@@ -727,7 +727,7 @@ async function addSingleBet(order) {
 }
 
 async function buyBet() {
-    if (await Kind() === "oo") {
+    if (await marketKind() === "oo") {
         await fillOrder();
     } else {
         await addFreeBet();
