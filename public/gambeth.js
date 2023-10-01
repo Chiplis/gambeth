@@ -499,7 +499,7 @@ async function browseMarkets() {
             <div onclick="searchBet('${marketId}').then(() => betContainer.scrollIntoView(false))" style="margin: 1rem; display: flex; flex-direction: column; justify-content: center; align-items: center">
                 <div style="min-width: 10vw; max-width: 10vw;"><canvas id="${marketId}">${renderBetChart(marketId, marketId, false)}</canvas></div>
                 <div>${name}</div>
-                <div>Liquidity: ${totalShares} shares</div>
+                <div>${totalShares} shares</div>
             </div>        
         `)
         .join("") + `<div style="color: #f3f9d2; margin-left: auto; margin-bottom: 0.25em; align-self: flex-start" onclick="exploreMarkets.style.display = 'none'">✖</div>`
