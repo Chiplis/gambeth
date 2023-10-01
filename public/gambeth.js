@@ -1,5 +1,5 @@
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
-const ooContractAddress = "0x44d1576e1a9b22d806C9A97442fF4Baed06E834c";
+const ooContractAddress = "0x123f161E39Bdf2A4ED66B5F280eE0254424137A5";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 
@@ -54,14 +54,14 @@ const poolSellOrdersEntries = document.getElementById("pool-sell-orders-entries"
 const searchBetId = document.getElementById("search-bet");
 const message = document.getElementById("message");
 const betContainer = document.getElementById("bet-container");
-const createmarketOutcomeList = document.getElementById("create-bet-choices-list");
+const createoutcomeIndexList = document.getElementById("create-bet-choices-list");
 const queueBuyOrder = document.getElementById("queue-buy-order");
 const placeBetDataContainer = document.getElementById("place-bet-data-container");
 const placeBetChoiceContainer = document.getElementById("place-bet-choice-container");
 const placeBetPositionContainer = document.getElementById("place-bet-position-container");
 const createBetInitialPool = document.getElementById("create-bet-initial-pool");
 const createBetCommission = document.getElementById("create-bet-commission");
-const createmarketOutcome = document.getElementById("create-bet-choices");
+const createoutcomeIndex = document.getElementById("create-bet-choices");
 const createBetChoice = document.getElementById("create-bet-choice");
 const createBetOdds = document.getElementById("create-bet-odds");
 const createBetOddsList = document.getElementById("create-bet-odds-list");
@@ -96,7 +96,7 @@ const renderBetIdShare = () => {
 }
 
 function renderCostMessages(changePool) {
-    const ratios = createdMarketOutcome.map(outcome => document.querySelector(`#create-market-${outcome.replaceAll(" ", "-")}`).value).map(Number).filter(v => v);
+    const ratios = createdoutcomeIndex.map(outcome => document.querySelector(`#create-market-${outcome.replaceAll(" ", "-")}`).value).map(Number).filter(v => v);
     const minShares = !Math.min(...ratios) ? 0 : Math.ceil(100 / Math.min(...ratios));
     createBetMinimumPool.innerHTML = `The market must be bootstrapped with at least ${minShares} initial shares.`;
     createBetInitialPool.value = changePool ? createBetInitialPool.value : minShares;
@@ -148,6 +148,7 @@ const renderNextCreationStep = () => {
 
 searchBetId.onkeydown = searchTriggered;
 let activeBet = null;
+let activeMarket = {};
 let placedBets = [];
 let newBetId = null;
 
@@ -248,7 +249,7 @@ async function loadProvider({
         if (!gambethStateAbi) throw "ABI not loaded";
 
         if (betId && activeContract) {
-            const betKind = await activeContract.betKinds(betId);
+            const betKind = (await getMarket(betId)).kind;
             switch (betKind) {
                 case 0n:
                     activeContract = new ethers.Contract(ooContractAddress, ooAbi, provider).connect(signer);
@@ -293,8 +294,11 @@ async function loadProvider({
                 if (sender === owner) triggerSuccess(`Bet won! ${await tokenToNumber(amount.toString())} USDC transferred to account`)
             });
             fixedCommission = await tokenToNumber(0);
-            activeBet = betId;
-            await Promise.all([renderBetPool(), fetchOrders(true)]);
+            if (betId) {
+                activeBet = betId;
+                activeMarket = await getMarket(betId);
+                await Promise.all([renderBetPool(), fetchOrders(true)]);
+            }
         }
         await renderWallet();
         providerLoaded = true;
@@ -358,10 +362,10 @@ renderPlaceSingleBet();
 
 async function renderClaimBet() {
     const addr = await signer.getAddress();
-    const finishedBet = await activeContract.finishedBets(activeBet);
+    const finishedBet = activeMarket.finished;
     const outcome = await activeContract.getResult(activeBet);
-    const resolutionRequested = BigInt(await activeContract.betRequester(activeBet)) !== 0n;
-    const scheduleReached = await activeContract.marketDeadline(activeBet) * BigInt(1000) < BigInt(new Date().getTime());
+    const resolutionRequested = BigInt(activeMarket.requester) !== 0n;
+    const scheduleReached = activeContract.deadline * 1000 < new Date().getTime();
     let showClaim = finishedBet || (!resolutionRequested && scheduleReached) || (resolutionRequested && !finishedBet);
     showClaim &&= !outcome.length ? true : await activeContract.userPools(activeBet, addr, outcome) !== 0n;
     if (!showClaim) {
@@ -387,7 +391,7 @@ async function renderClaimBet() {
 }
 
 async function activeBetKind() {
-    switch (await activeContract.betKinds(activeBet || "")) {
+    switch (activeMarket.kind) {
         case 0n:
             return "oo";
         case 1n:
@@ -403,14 +407,14 @@ async function activeBetOutcomes() {
 
 async function renderPlaceBet() {
 
-    const deadline = await activeContract.marketLockout(activeBet) * BigInt(1000);
+    const deadline = activeMarket.lockout * 1000;
     const lockedPool = deadline <= Math.round(new Date().getTime());
-    const schedule = await activeContract.marketDeadline(activeBet) * BigInt(1000);
+    const schedule = activeMarket.deadline * 1000;
     const scheduleReached = schedule <= Math.round(new Date().getTime());
     const betKind = await activeBetKind();
 
     betDecision.style.display = betKind === "human"
-        ? ((lockedPool && await activeContract.betOwners(activeBet) === owner) ? "block" : "none")
+        ? ((lockedPool && activeMarket.owner === owner) ? "block" : "none")
         : "none";
 
     placeBet.style.visibility = "visible";
@@ -496,6 +500,24 @@ async function browseMarkets() {
     window.scrollTo({top: 0, behavior: "smooth"});
 }
 
+async function getMarket(betId) {
+    return await activeContract.markets(betId).then(([betId, created, finished, creation, outcomeIndex, kind, requester, lockout, deadline, owner, commission, totalShares, commissionDenominator]) => ({
+        betId,
+        created,
+        finished,
+        creation: Number(creation),
+        outcomeIndex,
+        kind,
+        requester,
+        lockout: Number(lockout),
+        deadline: Number(deadline),
+        owner,
+        commission: Number(commission),
+        totalShares: Number(totalShares),
+        commissionDenominator: Number(commissionDenominator),
+    }))
+}
+
 async function searchBet(betId = activeBet) {
     if (!betId) {
         return;
@@ -509,7 +531,7 @@ async function searchBet(betId = activeBet) {
         placedBets = [];
         await Promise.all([renderPlacedBets(), fetchOrders(true), resetButtons()]);
         activeBet = searchBetId.value || betId;
-        const betExists = await activeContract.createdBets(activeBet);
+        const betExists = activeMarket.created;
         if (!betExists) {
             betContainer.style.display = "none";
             triggerError("Invalid Bet ID");
@@ -530,14 +552,14 @@ async function searchBet(betId = activeBet) {
         urlSchema.innerHTML = schema || "Unknown";
         betUrl.innerHTML = url || query;
         schemaPath.innerHTML = path || "Unknown";
-        let deadline = await activeContract.marketLockout(activeBet) * BigInt(1000);
+        let deadline = activeMarket.lockout * 1000;
         deadline = new Date(Number(deadline.toString()));
         betDeadline.innerHTML = deadline.toISOString().replace("T", " ").split(".")[0].slice(0, -3).replace(" ", "~") + " UTC";
-        let schedule = await activeContract.marketDeadline(activeBet) * BigInt(1000);
+        let schedule = activeMarket.deadline * 1000;
         schedule = new Date(Number(schedule.toString()));
         betSchedule.innerHTML = schedule.toISOString().replace("T", " ").split(".")[0].slice(0, -3).replace(" ", "~") + " UTC";
         let outcome = await activeContract.getResult(activeBet);
-        const innerCommission = Number(await activeContract.betCommissions(activeBet)) / Number(await activeContract.betCommissionDenominator(activeBet)) * 100;
+        const innerCommission = activeMarket.commission / activeMarket.commissionDenominator * 100;
         betInnerCommission.innerHTML = Number.parseFloat(innerCommission) + "%";
         betInnerOutcome.innerHTML = outcome || "Unresolved";
         Promise.all([renderPlaceBet(), renderClaimBet(), renderBetPool()]).then(() => {
@@ -585,13 +607,13 @@ async function createBet() {
         activeBet = (betId.value || "").toLowerCase().trim();
         newBetId = activeBet;
         const initialPool = createBetInitialPool.value || "0";
-        const outcomes = createdMarketOutcome;
+        const outcomes = createdoutcomeIndex;
         triggerProcessing("Creating market");
         if (!window.ethereum) {
             triggerError("No Ethereum provider detected", undefined, () => window.location.href = "https://metamask.io/");
             return;
         } else if (await usdc.allowance(owner, ooContractAddress) === 0n) {
-            triggerError(`Please approve a minimum of ${createBetTotalCost.innerHTML || "0 USDC"}  to create your market.`, undefined, async () => await usdc.approve(ooContractAddress, Number(createBetTotalCost.innerHTML.split(" USDC")[0]) || await usdc.balanceOf(owner)));
+            triggerError(`Please approve a minimum of ${createBetTotalCost.innerHTML || "0 USDC"}  to create your market.`, undefined, async () => await usdc.approve(ooContractAddress, Number(createBetTotalCost.innerHTML.split(" USDC")[0] * 1e6) || await usdc.balanceOf(owner)));
             return;
         } else if (!betId.value.trim()) {
             triggerError("No bet ID submitted", undefined, () => renderCreationStep(0));
@@ -611,7 +633,7 @@ async function createBet() {
         } else if (isNaN(Number.parseFloat(commission)) || commission > 50) {
             triggerError("Commission should be a number between 0 and 50", undefined, () => renderCreationStep(4));
             return;
-        } else if (await activeContract.createdBets(betId.value)) {
+        } else if ((await getMarket(betId.value)).created) {
             triggerError("Bet ID already exists", undefined, () => renderCreationStep(0));
             return;
         }
@@ -623,7 +645,7 @@ async function createBet() {
                 await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeBet, deadline, schedule, commissionDenominator, commission, initialPool, outcomes, odds, title, query).then(tx => tx.wait());
                 break;
         }
-        createdMarketOutcome = [];
+        createdoutcomeIndex = [];
     } catch (error) {
         newBetId = null;
         console.error(error);
@@ -871,26 +893,26 @@ async function addFreeBet() {
     }
 }
 
-let createdMarketOutcome = [];
+let createdoutcomeIndex = [];
 
 async function addBetChoice() {
     createBetChoice.value ||= "";
     if (!(createBetChoice.value.trim())) {
         return;
     }
-    if (!createdMarketOutcome.includes(createBetChoice.value)) {
-        createdMarketOutcome.push(createBetChoice.value);
+    if (!createdoutcomeIndex.includes(createBetChoice.value)) {
+        createdoutcomeIndex.push(createBetChoice.value);
     }
-    createmarketOutcomeList.innerHTML = createdMarketOutcome.map(v => `<li>${v}</li>`).join("");
-    createBetOdds.innerHTML = createdMarketOutcome.map(v => `<div><input oninput="renderCostMessages(false)" id="create-market-${v.replaceAll(" ", "-")}" style="width: 3rem; height: 1rem; margin: 1rem; placeholder="${v}">%</div>`).join("");
-    createBetOddsList.innerHTML = createdMarketOutcome.map(v => `<li style="display: flex; justify-content: flex-start; margin: 1rem; width: 100%">${v}</li>`).join("");
+    createoutcomeIndexList.innerHTML = createdoutcomeIndex.map(v => `<li>${v}</li>`).join("");
+    createBetOdds.innerHTML = createdoutcomeIndex.map(v => `<div><input oninput="renderCostMessages(false)" id="create-market-${v.replaceAll(" ", "-")}" style="width: 3rem; height: 1rem; margin: 1rem; placeholder="${v}">%</div>`).join("");
+    createBetOddsList.innerHTML = createdoutcomeIndex.map(v => `<li style="display: flex; justify-content: flex-start; margin: 1rem; width: 100%">${v}</li>`).join("");
     createBetChoice.value = "";
 }
 
 async function changeBetType() {
 
     const betType = createBetSchema.value;
-    createmarketOutcome.style.display = betType === "oo" ? "flex" : "none";
+    createoutcomeIndex.style.display = betType === "oo" ? "flex" : "none";
 
     createBetOo.style.display = ["bc", "oo"].includes(betType) ? "block" : "none";
 
@@ -929,7 +951,7 @@ async function claimReward() {
         if (await activeBetKind() === "oo") {
             const filter = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeBet)))[0].args;
             const query = filter[filter.length - 1];
-            if (!(await activeContract.marketCreation(activeBet))) {
+            if (!(activeMarket.creation(activeBet))) {
                 triggerProcessing("Reward will be transferred after bet's been settled.");
                 await activeContract.requestBetResolution(activeBet, query);
             } else {
@@ -959,28 +981,30 @@ async function decideBet() {
 
 async function renderBetPool() {
     try {
-        if (!activeContract || !activeBet) {
+        if (!activeContract || !activeBet || !activeMarket.created) {
             return;
         }
         const placedBets = await activeContract.queryFilter(activeContract.filters.PlacedBets(null, activeBet));
-        const contractPrices = await activeContract.betPools(activeBet);
         marketPrices.innerHTML = ``;
         marketPricesTable.style.opacity = "0";
-        if (contractPrices) {
-            const marketOutcome = await activeBetOutcomes();
-            const payout = async outcome => (Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals())) / Number(await activeContract.resultPools(activeBet, outcome) || 1));
-            const calcPrices = await Promise.all(marketOutcome.map(async outcome => await calculateCost([{outcome, pricePerShare: 0, amount: Math.min(1, Number(await activeContract.resultPools(activeBet, outcome)))}], true).then(a => a.cost)));
-            const prices = calcPrices.map(async (p, i) => {
-                const outcome = marketOutcome[i];
-                const mktPrice = Math.round(p * 1000) / 1000;
-                console.log(p);
-                const odds = (Math.pow(p, 2) * 100).toFixed(2);
-                const pay = (await payout(marketOutcome[i])).toFixed(3);
-                const total = await activeContract.resultPools(activeBet, outcome);
-                const owned = await activeContract.userPools(activeBet, owner, outcome);
-                const avgPrice = await activeContract.userTransfers(activeBet, owner, outcome).then(async a => Math.round((Number(a) / await activeDecimals()) / Number(owned) * 1000) / 1000);
-                const multiple = (Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? null : (pay / avgPrice).toFixed(2);
-                return `<tr>
+        const outcomeIndex = await activeBetOutcomes();
+        const payout = async outcome => (Number(await activeContract.calculateCost(activeBet).then(async a => Number(a) / await activeDecimals())) / Number(await activeContract.resultPools(activeBet, outcome) || 1));
+        const calcPrices = await Promise.all(outcomeIndex.map(async outcome => await calculateCost([{
+            outcome,
+            pricePerShare: 0,
+            amount: Math.min(1, Number(await activeContract.resultPools(activeBet, outcome))) || 1,
+        }], true).then(a => a.cost)));
+        const prices = calcPrices.map(async (p, i) => {
+            const outcome = outcomeIndex[i];
+            const mktPrice = Math.round(p * 1000) / 1000;
+            console.log(p);
+            const odds = (Math.pow(p, 2) * 100).toFixed(2);
+            const pay = (await payout(outcomeIndex[i])).toFixed(3);
+            const total = await activeContract.resultPools(activeBet, outcome);
+            const owned = await activeContract.userPools(activeBet, owner, outcome);
+            const avgPrice = await activeContract.userTransfers(activeBet, owner, outcome).then(async a => Math.round((Number(a) / await activeDecimals()) / Number(owned) * 1000) / 1000);
+            // const multiple = (Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? null : (pay / avgPrice).toFixed(2);
+            return `<tr>
                     <td>${outcome}</td>
                     <td>${owned}</td>
                     <td>${total}</td>
@@ -988,10 +1012,9 @@ async function renderBetPool() {
                     <td>${(Number.isNaN(avgPrice) || !Number.isFinite(avgPrice)) ? "-" : ("$" + avgPrice)}</td>
                     <td>$${pay}</td>
                 </tr>`
-            });
-            marketPrices.innerHTML = (await Promise.all(prices)).join("");
-            marketPricesTable.style.opacity = "100%";
-        }
+        });
+        marketPrices.innerHTML = (await Promise.all(prices)).join("");
+        marketPricesTable.style.opacity = "100%";
         const betOutcomes = {};
         (await activeBetOutcomes()).forEach(o => betOutcomes[o] = 0);
         placedBets.forEach(pb => pb.args[3].forEach(outcome => betOutcomes[outcome] += 1));

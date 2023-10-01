@@ -221,7 +221,7 @@ window.provableOracleAbi = [
                 "type": "bytes32"
             }
         ],
-        "name": "finishedBets",
+        "name": "finished",
         "outputs": [
             {
                 "internalType": "bool",

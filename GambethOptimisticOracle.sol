@@ -56,32 +56,34 @@ contract GambethOptimisticOracle is OptimisticRequester {
     mapping(string => Order[]) public orders;
     mapping(string => mapping(address => uint256)) public pendingBuys;
     mapping(string => mapping(address => mapping(string => uint256))) public pendingSells;
-    mapping(string => uint256) public marketCreation;
-    mapping(string => bool) public finishedBets;
-    mapping(string => uint256) public marketOutcome;
     mapping(bytes32 => mapping(uint256 => mapping(bytes => string))) public marketOracleRequest;
-    mapping(string => address) public betRequester;
-    mapping(string => BetKind) public betKinds;
+
+    struct Market {
+        string betId;
+        bool created;
+        bool finished;
+        uint256 creation;
+        uint256 outcomeIndex;
+        BetKind kind;
+        address requester;
+        uint64 lockout;
+        uint64 deadline;
+        address owner;
+        uint256 commission;
+        uint256 totalShares;
+        uint256 commissionDenominator;
+    }
+
+    mapping(string => Market) public markets;
+
     mapping(address => uint256) public tokenDecimals;
     mapping(address => uint256) public tokenFees;
+
     // For each bet, track which users have already claimed their potential reward
     mapping(string => mapping(address => bool)) public claimedBets;
-    mapping(string => uint256) public betCommissionDenominator;
     mapping(address => bool) public approvedTokens;
-    mapping(string => IERC20) public betTokens;
-    /* There are two different dates associated with each created bet:
-    one for the deadline where a user can no longer place new bets,
-    and another one that tells the smart oracle contract when to actually
-    run. */
-    mapping(string => uint64) public marketLockout;
-    mapping(string => uint64) public marketDeadline;
-    // Keep track of all createdBets to prevent duplicates
-    mapping(string => bool) public createdBets;
-    // Keep track of all owners to handle commission fees
-    mapping(string => address) public betOwners;
-    mapping(string => uint256) public betCommissions;
-    // What is the total pooled per bet?
-    mapping(string => uint256) public betPools;
+    mapping(string => address) public betTokens;
+
     // For each bet, how much is the total pooled per result?
     mapping(string => mapping(string => uint256)) public resultPools;
     // For each bet, track how much each user has put into each result
@@ -105,11 +107,12 @@ contract GambethOptimisticOracle is OptimisticRequester {
     string oracleDescriptionIntro = '"This is a Gambeth multiple choice market. It should only resolve to one of the following outcomes, propose the number corresponding to it: ';
 
     function createOptimisticBet(address currency, string calldata betId, uint64 deadline, uint64 schedule, uint256 commissionDenominator, uint256 commission, uint256 initialPool, string[] calldata results, uint256[] calldata ratios, string calldata title, string calldata query) public {
+        Market storage market = markets[betId];
         require(
             bytes(betId).length != 0
             && deadline > block.timestamp // Bet can't be set in the past
             && deadline <= schedule // Users should only be able to place bets before it is actually executed
-            && !createdBets[betId], // Can't have duplicate bets
+            && !market.created, // Can't have duplicate bets
             "Unable to Create market, check arguments."
         );
         _createBet(BetKind.OPTIMISTIC_ORACLE, msg.sender, currency, betId, commissionDenominator, commission, deadline, schedule, initialPool, query, results, ratios);
@@ -121,9 +124,10 @@ contract GambethOptimisticOracle is OptimisticRequester {
     address USDC = 0x07865c6E87B9F70255377e024ace6630C1Eaa37F;
 
     function claimBet(string calldata betId, string calldata request) public {
+        Market storage market = markets[betId];
         require(marketRequest[betId][keccak256(bytes(request))], "Invalid query for bet");
-        bool hasPrice = oo.hasPrice(address(this), PRICE_ID, marketCreation[betId], bytes(request));
-        bool betExpired = marketDeadline[betId] + BET_THRESHOLD < block.timestamp;
+        bool hasPrice = oo.hasPrice(address(this), PRICE_ID, market.creation, bytes(request));
+        bool betExpired = market.deadline + BET_THRESHOLD < block.timestamp;
 
         if (!hasPrice) {
             require(betExpired, "Bet result not yet settled");
@@ -134,10 +138,11 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
     // Submit a data request to the Optimistic oracle.
     function performOracleRequest(string calldata betId, string calldata title, string calldata query) private returns (string memory) {
-        // require(marketDeadline[betId] <= block.timestamp, "Bet still not scheduled to run");
-        marketCreation[betId] = block.timestamp; // Set the request time to the current block time.
-        IERC20 bondCurrency = betTokens[betId];
-        uint256 reward = tokenFees[address(betTokens[betId])];
+        Market storage market = markets[betId];
+        // require(market.deadline <= block.timestamp, "Bet still not scheduled to run");
+        market.creation = block.timestamp; // Set the request time to the current block time.
+        IERC20 bondCurrency = IERC20(betTokens[betId]);
+        uint256 reward = tokenFees[betTokens[betId]];
         string memory description = "";
         for (uint i = 0; i < betResults[betId].length; i++) {
             description = string.concat(description, "Propose ", Strings.toString(i), " for ", betResults[betId][i], ". ");
@@ -147,7 +152,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             "Propose ",
             Strings.toString(betResults[betId].length),
             " if none of the previous options are a valid outcome by the following date (UNIX timestamp): ",
-            Strings.toString(marketLockout[betId]),
+            Strings.toString(market.lockout),
             ". "
         );
 
@@ -162,28 +167,30 @@ contract GambethOptimisticOracle is OptimisticRequester {
         );
 
         bytes memory requestBytes = bytes(request);
-        oo.requestPrice(PRICE_ID, marketCreation[betId], requestBytes, bondCurrency, reward);
-        oo.setBond(PRICE_ID, marketCreation[betId], requestBytes, 1750 * 1e6);
-        oo.setEventBased(PRICE_ID, marketCreation[betId], requestBytes);
-        oo.setCustomLiveness(PRICE_ID, marketCreation[betId], requestBytes, 1);
-        oo.setCallbacks(PRICE_ID, marketCreation[betId], requestBytes, false, false, true);
-        marketOracleRequest[PRICE_ID][marketCreation[betId]][requestBytes] = betId;
-        betRequester[betId] = msg.sender;
+        oo.requestPrice(PRICE_ID, market.creation, requestBytes, bondCurrency, reward);
+        oo.setBond(PRICE_ID, market.creation, requestBytes, 1750 * 1e6);
+        oo.setEventBased(PRICE_ID, market.creation, requestBytes);
+        oo.setCustomLiveness(PRICE_ID, market.creation, requestBytes, 1);
+        oo.setCallbacks(PRICE_ID, market.creation, requestBytes, false, false, true);
+        marketOracleRequest[PRICE_ID][market.creation][requestBytes] = betId;
+        market.requester = msg.sender;
         return request;
     }
 
     function getResult(string memory betId) public view returns (string memory) {
-        if (!finishedBets[betId]) {
+        Market storage market = markets[betId];
+        if (!market.finished) {
             return "";
         }
-        return betResults[betId][marketOutcome[betId]];
+        return betResults[betId][market.outcomeIndex];
     }
 
     function priceSettled(bytes32 identifier, uint256 timestamp, bytes calldata query, int256 price) public {
         require(msg.sender == OO_ADDRESS);
         string memory betId = marketOracleRequest[identifier][timestamp][query];
-        marketOutcome[betId] = uint(price) / 1e18;
-        finishedBets[betId] = true;
+        Market storage market = markets[betId];
+        market.outcomeIndex = uint(price) / 1e18;
+        market.finished = true;
     }
 
     function changeOrder(uint[] calldata orderAmounts, uint[] calldata prices, string calldata betId, string[] calldata results, uint256[] calldata ids) public {
@@ -218,7 +225,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
     }
 
     function _createBet(BetKind kind, address sender, address token, string calldata betId, uint256 commissionDenominator, uint256 commission, uint64 deadline, uint64 schedule, uint256 initialPool, string calldata query, string[] calldata results, uint256[] calldata ratios) internal {
-        require(approvedTokens[token] && !createdBets[betId], "Unapproved token for creating bets.");
+        Market storage market = markets[betId];
+        require(approvedTokens[token] && !market.created, "Unapproved token for creating bets.");
         require(commissionDenominator > 0, "Invalid commission denominator.");
         require(results.length == ratios.length, "Each outcome should have a corresponding ratio to split initial pool.");
         uint totalRatio = 0;
@@ -229,17 +237,18 @@ contract GambethOptimisticOracle is OptimisticRequester {
         IERC20(token).safeTransferFrom(sender, address(this), tokenFees[token]);
 
         // Nothing fancy going on here, just boring old state updates
-        betKinds[betId] = kind;
-        betOwners[betId] = sender;
-        betTokens[betId] = IERC20(token);
-        betCommissions[betId] = commission;
-        betCommissionDenominator[betId] = commissionDenominator;
-        marketLockout[betId] = deadline;
-        marketDeadline[betId] = schedule;
+        market.kind = kind;
+        market.owner = sender;
+        betTokens[betId] = token;
+        market.commission = commission;
+        market.commissionDenominator = commissionDenominator;
+        market.lockout = deadline;
+        market.deadline = schedule;
+        market.betId = betId;
         betResults[betId] = results;
 
         // Bet creation should succeed from this point onward
-        createdBets[betId] = true;
+        market.created = true;
 
         uint256[] memory shares = new uint256[](results.length);
         for (uint i = 0; i < results.length; i++) {
@@ -266,13 +275,13 @@ contract GambethOptimisticOracle is OptimisticRequester {
     function calculateCost(string memory betId) public view returns (uint256) {
         uint cost = 0;
         for (uint i = 0; i < betResults[betId].length; i++) {
-            cost += (resultPools[betId][betResults[betId][i]] * tokenDecimals[address(betTokens[betId])]) ** 2;
+            cost += (resultPools[betId][betResults[betId][i]] * tokenDecimals[betTokens[betId]]) ** 2;
         }
         return sqrt(cost);
     }
 
     function calculateSharesForCost(string calldata betId, string memory result, uint p) internal view returns (uint) {
-        return (sqrt(2 * p * calculateCost(betId) + resultPools[betId][result] ** 2 + p ** 2) - resultPools[betId][result]) / tokenDecimals[address(betTokens[betId])];
+        return (sqrt(2 * p * calculateCost(betId) + resultPools[betId][result] ** 2 + p ** 2) - resultPools[betId][result]) / tokenDecimals[betTokens[betId]];
     }
 
     function calculateSharesForPricePerShare(string calldata betId, string memory result, uint256 p) internal view returns (int) {
@@ -281,10 +290,11 @@ contract GambethOptimisticOracle is OptimisticRequester {
         for (uint i = 0; i < outcomes.length; i++) {
             r += (Strings.equal(outcomes[i], result) ? 0 : resultPools[betId][outcomes[i]]) ** 2;
         }
-        return int(sqrt(r) * p / sqrt(1 * tokenDecimals[address(betTokens[betId])] ** 2 - p ** 2) - resultPools[betId][result]);
+        return int(sqrt(r) * p / sqrt(1 * tokenDecimals[betTokens[betId]] ** 2 - p ** 2) - resultPools[betId][result]);
     }
 
     function marketSell(string calldata betId, address sender, string memory result, uint256 amount) private returns (bool) {
+        Market storage market = markets[betId];
         uint total = 0;
 
         // Update all required state
@@ -300,33 +310,35 @@ contract GambethOptimisticOracle is OptimisticRequester {
             return false;
         }
 
-        betPools[betId] -= amount;
+        market.totalShares -= amount;
         userPools[betId][sender][result] -= amount;
         userTransfers[betId][sender][result] -= int(sale);
         total += sale;
 
-        uint256 ownerFee = (total / betCommissionDenominator[betId]) * betCommissions[betId];
+        uint256 ownerFee = (total / market.commissionDenominator) * market.commission;
         total -= ownerFee;
         emit WonBet(sender, total);
         contractFees += ownerFee /= 2;
-        betTokens[betId].safeTransfer(betOwners[betId], ownerFee);
-        betTokens[betId].safeTransfer(sender, total);
+        IERC20(betTokens[betId]).safeTransfer(market.owner, ownerFee);
+        IERC20(betTokens[betId]).safeTransfer(sender, total);
 
         return true;
     }
 
     function marketBuy(string calldata betId, address sender, string[] memory results, uint256[] memory amounts, bool skipTransfer) private {
+        Market storage market = markets[betId];
+
         require(
             results.length > 0
             && results.length == amounts.length
-            && createdBets[betId]
-            && marketLockout[betId] >= block.timestamp,
+            && market.created
+            && market.lockout >= block.timestamp,
             "Unable to place bets, check arguments."
         );
 
 
         uint previousCost = calculateCost(betId);
-        IERC20 token = betTokens[betId];
+        IERC20 token = IERC20(betTokens[betId]);
         for (uint i = 0; i < results.length; i++) {
 
             // By not allowing anyone to bet on an empty string bets can be refunded if an error happens.
@@ -334,7 +346,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
             // Update all required state
             resultPools[betId][results[i]] += amounts[i];
-            betPools[betId] += amounts[i];
+            market.totalShares += amounts[i];
             userPools[betId][sender][results[i]] += amounts[i];
         }
 
@@ -363,10 +375,11 @@ contract GambethOptimisticOracle is OptimisticRequester {
     }
 
     function _claimBet(string memory betId, address sender, string memory result) private {
+        Market storage market = markets[betId];
         // Does the user have any pending buys?
         uint256 pending = pendingBuys[betId][sender];
         pendingBuys[betId][sender] = 0;
-        betTokens[betId].safeTransfer(sender, pending);
+        IERC20(betTokens[betId]).safeTransfer(sender, pending);
 
         // Did the user bet on the correct result?
         uint256 userBet = userPools[betId][sender][result];
@@ -384,14 +397,14 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
         // Bet owner gets their commission
         int256 totalTransfers = userTransfers[betId][sender][result];
-        uint256 ownerFee = ((reward - uint(totalTransfers <= 0 ? int(0) : totalTransfers)) / betCommissionDenominator[betId]) * betCommissions[betId];
+        uint256 ownerFee = ((reward - uint(totalTransfers <= 0 ? int(0) : totalTransfers)) / market.commissionDenominator) * market.commission;
         reward -= ownerFee;
         emit WonBet(sender, reward);
 
-        IERC20 token = betTokens[betId];
+        IERC20 token = IERC20(betTokens[betId]);
         token.safeTransfer(sender, reward);
         contractFees += ownerFee /= 2;
-        token.safeTransfer(betOwners[betId], ownerFee);
+        token.safeTransfer(market.owner, ownerFee);
     }
 
 
@@ -411,12 +424,13 @@ contract GambethOptimisticOracle is OptimisticRequester {
     }
 
     function placeOrder(address sender, string calldata betId, Order memory order, bool pushOrder) private {
+        Market storage market = markets[betId];
         require(order.amount != 0, "Invalid placed order state");
         bool fromMarket = order.pricePerShare == 0;
         bool newOrder = order.index == orders[betId].length;
 
         // If before pool lockout, should always be able to buy from market
-        if (marketLockout[betId] >= block.timestamp) {
+        if (market.lockout >= block.timestamp) {
             uint[] memory amounts = new uint[](1);
             string[] memory results = new string[](1);
             if (order.orderPosition == OrderPosition.BUY && (order.pricePerShare > calculatePrice(betId, order.result) || fromMarket)) {
@@ -452,7 +466,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         if (order.orderPosition == OrderPosition.BUY) {
             uint transferAmount = order.amount * order.pricePerShare;
             pendingBuys[betId][sender] += transferAmount;
-            betTokens[betId].safeTransferFrom(sender, address(this), transferAmount);
+            IERC20(betTokens[betId]).safeTransferFrom(sender, address(this), transferAmount);
         } else if (order.orderPosition == OrderPosition.SELL) {
             pendingSells[betId][sender][order.result] += order.amount;
             require(pendingSells[betId][sender][order.result] <= userPools[betId][sender][order.result], "Exceeded valid sell amount when adding order");
@@ -464,7 +478,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
     }
 
     function calculatePrice(string calldata betId, string memory result) public view returns (uint256) {
-        return resultPools[betId][result] * tokenDecimals[address(betTokens[betId])] ** 2 / calculateCost(betId);
+        return resultPools[betId][result] * tokenDecimals[betTokens[betId]] ** 2 / calculateCost(betId);
     }
 
     function _changeOrder(address sender, uint[] calldata orderAmounts, uint[] calldata prices, string calldata betId, string[] calldata results, uint256[] calldata ids) private {
@@ -479,9 +493,9 @@ contract GambethOptimisticOracle is OptimisticRequester {
                 pendingBuys[betId][sender] -= previousCost;
                 pendingBuys[betId][sender] += newCost;
                 if (newCost > previousCost) {
-                    betTokens[betId].safeTransferFrom(sender, address(this), newCost - previousCost);
+                    IERC20(betTokens[betId]).safeTransferFrom(sender, address(this), newCost - previousCost);
                 } else if (newCost < previousCost) {
-                    betTokens[betId].safeTransfer(sender, previousCost - newCost);
+                    IERC20(betTokens[betId]).safeTransfer(sender, previousCost - newCost);
                 }
             } else if (order.orderPosition == OrderPosition.SELL) {
                 pendingSells[betId][sender][order.result] -= order.amount;
@@ -567,13 +581,13 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
                 if (newOrder.orderPosition == OrderPosition.BUY) {
                     require(pendingSells[betId][seller][newOrder.result] >= shareAmount, "Seller does not have enough shares to complete buy order");
-                    betTokens[betId].safeTransferFrom(buyer, address(this), transferAmount);
+                    IERC20(betTokens[betId]).safeTransferFrom(buyer, address(this), transferAmount);
                     pendingSells[betId][seller][newOrder.result] -= shareAmount;
                 } else if (newOrder.orderPosition == OrderPosition.SELL) {
                     require(pendingBuys[betId][buyer] >= transferAmount, "Buyer does not have enough tokens to complete sell order");
                     pendingBuys[betId][buyer] -= transferAmount;
                 }
-                betTokens[betId].safeTransfer(seller, transferAmount);
+                IERC20(betTokens[betId]).safeTransfer(seller, transferAmount);
             }
             if (newOrder.amount != 0) {
                 newOrder.pricePerShare = ammOrder ? 0 : newOrder.pricePerShare;

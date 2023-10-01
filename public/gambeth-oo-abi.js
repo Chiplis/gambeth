@@ -219,120 +219,6 @@ window.ooAbi = [
                 "internalType": "string",
                 "name": "",
                 "type": "string"
-            }
-        ],
-        "name": "betCommissionDenominator",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "betCommissions",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "betKinds",
-        "outputs": [
-            {
-                "internalType": "enum GambethOptimisticOracle.BetKind",
-                "name": "",
-                "type": "uint8"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "betOwners",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "betPools",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "betRequester",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
             },
             {
                 "internalType": "uint256",
@@ -362,7 +248,7 @@ window.ooAbi = [
         "name": "betTokens",
         "outputs": [
             {
-                "internalType": "contract IERC20",
+                "internalType": "address",
                 "name": "",
                 "type": "address"
             }
@@ -531,19 +417,6 @@ window.ooAbi = [
         "type": "function"
     },
     {
-        "inputs": [],
-        "name": "contractOwner",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
         "inputs": [
             {
                 "internalType": "address",
@@ -609,25 +482,6 @@ window.ooAbi = [
     {
         "inputs": [
             {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "createdBets",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
                 "internalType": "uint256[]",
                 "name": "orderAmounts",
                 "type": "uint256[]"
@@ -661,25 +515,6 @@ window.ooAbi = [
         "name": "fillOrder",
         "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "finishedBets",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -807,63 +642,6 @@ window.ooAbi = [
     {
         "inputs": [
             {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "marketCreation",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "marketDeadline",
-        "outputs": [
-            {
-                "internalType": "uint64",
-                "name": "",
-                "type": "uint64"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "name": "marketLockout",
-        "outputs": [
-            {
-                "internalType": "uint64",
-                "name": "",
-                "type": "uint64"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
                 "internalType": "bytes32",
                 "name": "",
                 "type": "bytes32"
@@ -896,25 +674,6 @@ window.ooAbi = [
                 "internalType": "string",
                 "name": "",
                 "type": "string"
-            }
-        ],
-        "name": "marketOutcome",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
             },
             {
                 "internalType": "bytes32",
@@ -928,6 +687,85 @@ window.ooAbi = [
                 "internalType": "bool",
                 "name": "",
                 "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "name": "markets",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "betId",
+                "type": "string"
+            },
+            {
+                "internalType": "bool",
+                "name": "created",
+                "type": "bool"
+            },
+            {
+                "internalType": "bool",
+                "name": "finished",
+                "type": "bool"
+            },
+            {
+                "internalType": "uint256",
+                "name": "creation",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "outcomeIndex",
+                "type": "uint256"
+            },
+            {
+                "internalType": "enum GambethOptimisticOracle.BetKind",
+                "name": "kind",
+                "type": "uint8"
+            },
+            {
+                "internalType": "address",
+                "name": "requester",
+                "type": "address"
+            },
+            {
+                "internalType": "uint64",
+                "name": "lockout",
+                "type": "uint64"
+            },
+            {
+                "internalType": "uint64",
+                "name": "deadline",
+                "type": "uint64"
+            },
+            {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "commission",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "totalShares",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "commissionDenominator",
+                "type": "uint256"
             }
         ],
         "stateMutability": "view",
@@ -1191,7 +1029,7 @@ window.ooAbi = [
                 "type": "uint256"
             }
         ],
-        "stateMutability": "view",
+        "stateMutability": "pure",
         "type": "function"
     },
     {

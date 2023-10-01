@@ -410,7 +410,7 @@ window.gambethStateAbi = [
                 "type": "string"
             }
         ],
-        "name": "betCommissionDenominator",
+        "name": "commissionDenominator",
         "outputs": [
             {
                 "internalType": "uint256",
@@ -429,7 +429,7 @@ window.gambethStateAbi = [
                 "type": "string"
             }
         ],
-        "name": "betCommissions",
+        "name": "commission",
         "outputs": [
             {
                 "internalType": "uint256",
@@ -448,7 +448,7 @@ window.gambethStateAbi = [
                 "type": "string"
             }
         ],
-        "name": "marketLockout",
+        "name": "lockout",
         "outputs": [
             {
                 "internalType": "uint64",
@@ -467,7 +467,7 @@ window.gambethStateAbi = [
                 "type": "string"
             }
         ],
-        "name": "betKinds",
+        "name": "kind",
         "outputs": [
             {
                 "internalType": "enum GambethState.BetKind",
@@ -486,7 +486,7 @@ window.gambethStateAbi = [
                 "type": "string"
             }
         ],
-        "name": "betOwners",
+        "name": "owner",
         "outputs": [
             {
                 "internalType": "address",
@@ -505,7 +505,7 @@ window.gambethStateAbi = [
                 "type": "string"
             }
         ],
-        "name": "betPools",
+        "name": "totalShares",
         "outputs": [
             {
                 "internalType": "uint256",
@@ -548,7 +548,7 @@ window.gambethStateAbi = [
                 "type": "string"
             }
         ],
-        "name": "marketDeadline",
+        "name": "deadline",
         "outputs": [
             {
                 "internalType": "uint64",
@@ -687,7 +687,7 @@ window.gambethStateAbi = [
                 "type": "string"
             }
         ],
-        "name": "createdBets",
+        "name": "created",
         "outputs": [
             {
                 "internalType": "bool",
