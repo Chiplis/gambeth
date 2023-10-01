@@ -188,7 +188,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
     }
 
     function fillOrder(uint[] calldata orderAmounts, uint[] calldata prices, OrderPosition[] calldata orderPositions, string calldata betId, string[] calldata results, uint[][] calldata idxs) public {
-        require(!markets[betId].finished && markets[betId].created, "Tried to change order for finished market");
+        require(!markets[betId].finished && markets[betId].created && markets[betId].deadline < block.timestamp, "Tried to change order for finished market");
         _fillOrder(msg.sender, orderAmounts, prices, orderPositions, betId, results, idxs);
     }
 
@@ -454,7 +454,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             }
         }
 
-        if (order.amount == 0 || !newOrder) {
+        if (order.amount == 0 || !newOrder || order.pricePerShare == 0) {
             return;
         }
 
