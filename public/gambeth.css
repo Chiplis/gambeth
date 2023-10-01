@@ -86,7 +86,7 @@ span {
     font-weight: 700;
     color: #f3f9d2;
     -webkit-appearance: none;
-    transition: opacity 200ms linear, visibility 200ms linear, background-color 300ms ease-in-out, box-shadow 300ms ease-in-out, color 300ms ease-in-out;
+    transition: opacity 200ms linear, background-color 300ms ease-in-out, box-shadow 300ms ease-in-out, color 300ms ease-in-out;
 }
 
 .search {

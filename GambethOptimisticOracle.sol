@@ -478,7 +478,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
     }
 
     function calculatePrice(string calldata betId, string memory result) public view returns (uint256) {
-        return resultPools[betId][result] * tokenDecimals[betTokens[betId]] ** 2 / calculateCost(betId);
+        uint256 cost = calculateCost(betId);
+        return resultPools[betId][result] * tokenDecimals[betTokens[betId]] ** 2 / (cost == 0 ? 1 : cost);
     }
 
     function _changeOrder(address sender, uint[] calldata orderAmounts, uint[] calldata prices, string calldata betId, string[] calldata results, uint256[] calldata ids) private {
