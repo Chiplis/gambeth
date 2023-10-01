@@ -556,7 +556,9 @@ async function searchBet(betId = activeMarketId) {
         const createdFilter = bets[0];
         const query = createdFilter.args.slice(1).map(arg => arg.toString())[1];
         const {url, schema, path} = unpackQuery(query);
+        const filter = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(marketId)))[0].args;
 
+        aboutBet.innerHTML = filter[filter.length - 3];
         ooBet.style.display = schema ? "none" : "flex";
         urlBet.style.display = schema ? "flex" : "none";
         (schema ? betQuery : betOoQuery).innerHTML = query;
@@ -1049,8 +1051,7 @@ async function renderBetChart(marketId = activeMarketId, elmId = betPool.id, sho
         type: 'doughnut',
         data,
     };
-    const filter = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(marketId)))[0].args;
-    aboutBet.innerHTML = filter[filter.length - 3];
+
     if (betCharts[elmId]) {
         betCharts[elmId].destroy();
     }
