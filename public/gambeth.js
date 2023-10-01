@@ -89,7 +89,7 @@ const betOoQuery = document.getElementById("bet-oo-query");
 const betInnerOutcome = document.getElementById("bet-inner-outcome");
 const updateOrdersBtn = document.getElementById("update-orders");
 
-const rendermarketIdShare = () => {
+const renderMarketShareMessage = () => {
     marketId.type = "text";
     marketIdLabel.innerHTML = marketIdMsg.replace("{MARKET_ID}", marketId.value.trim() || "{MARKET_ID}")
 }
