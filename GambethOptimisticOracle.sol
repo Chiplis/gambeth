@@ -105,6 +105,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
     string oracleDescriptionHeader = ", description: ";
     string oracleDescriptionIntro = '"This is a Gambeth multiple choice market. It should only resolve to one of the following outcomes, propose the number corresponding to it: ';
 
+    address USDC = 0x07865c6E87B9F70255377e024ace6630C1Eaa37F;
+
     function createOptimisticBet(address currency, string calldata betId, uint64 deadline, uint64 schedule, uint256 commissionDenominator, uint256 commission, uint256 initialPool, string[] calldata results, uint256[] calldata ratios, string calldata title, string calldata query) public {
         Market storage market = markets[betId];
         require(
@@ -119,8 +121,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
         marketRequest[betId][keccak256(bytes(request))] = true;
         emit CreatedOptimisticBet(betId, betId, title, query, request);
     }
-
-    address USDC = 0x07865c6E87B9F70255377e024ace6630C1Eaa37F;
 
     function claimBet(string calldata betId, string calldata request) public {
         Market storage market = markets[betId];
@@ -184,20 +184,22 @@ contract GambethOptimisticOracle is OptimisticRequester {
         return betResults[betId][market.outcomeIndex];
     }
 
+    function changeOrder(uint[] calldata orderAmounts, uint[] calldata prices, string calldata betId, string[] calldata results, uint256[] calldata ids) public {
+        require(!markets[betId].finished && markets[betId].created, "Tried to fill order for finished market");
+        _changeOrder(msg.sender, orderAmounts, prices, betId, results, ids);
+    }
+
+    function fillOrder(uint[] calldata orderAmounts, uint[] calldata prices, OrderPosition[] calldata orderPositions, string calldata betId, string[] calldata results, uint[][] calldata idxs) public {
+        require(!markets[betId].finished && markets[betId].created, "Tried to change order for finished market");
+        _fillOrder(msg.sender, orderAmounts, prices, orderPositions, betId, results, idxs);
+    }
+
     function priceSettled(bytes32 identifier, uint256 timestamp, bytes calldata query, int256 price) public {
         require(msg.sender == OO_ADDRESS);
         string memory betId = marketOracleRequest[identifier][timestamp][query];
         Market storage market = markets[betId];
         market.outcomeIndex = uint(price) / 1e18;
         market.finished = true;
-    }
-
-    function changeOrder(uint[] calldata orderAmounts, uint[] calldata prices, string calldata betId, string[] calldata results, uint256[] calldata ids) public {
-        _changeOrder(msg.sender, orderAmounts, prices, betId, results, ids);
-    }
-
-    function fillOrder(uint[] calldata orderAmounts, uint[] calldata prices, OrderPosition[] calldata orderPositions, string calldata betId, string[] calldata results, uint[][] calldata idxs) public {
-        fillOrder(msg.sender, orderAmounts, prices, orderPositions, betId, results, idxs);
     }
 
     function priceProposed(bytes32 identifier, uint256 timestamp, bytes calldata query) public {
@@ -527,8 +529,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         return list;
     }
 
-    function fillOrder(address sender, uint[] calldata orderAmounts, uint[] calldata prices, OrderPosition[] calldata orderPositions, string calldata betId, string[] calldata results, uint[][] calldata idxs) private {
-
+    function _fillOrder(address sender, uint[] calldata orderAmounts, uint[] calldata prices, OrderPosition[] calldata orderPositions, string calldata betId, string[] calldata results, uint[][] calldata idxs) private {
         for (uint r = 0; r < results.length; r++) {
             uint[] calldata indexes = idxs[r];
             Order memory newOrder = Order({
