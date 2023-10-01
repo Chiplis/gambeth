@@ -493,7 +493,7 @@ async function calculatePrice(result) {
 }
 
 async function browseMarkets() {
-    exploreMarkets.innerHTML = "<div style='width: 100%; display: flex; justify-content: space-around'>" + (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet()))
+    exploreMarkets.innerHTML = "<div style='width: 100%; flex-wrap: wrap; display: flex; justify-content: space-around'>" + (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet()))
         .map(e => [e.args[e.args.length - 4], e.args[e.args.length - 3]])
         .map(([id, name]) => `<a style="margin: 1rem" href="/?id=${id}">${name}</a>`)
         .join("") + "</div>";
