@@ -44,7 +44,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
     event UnwonBet(address indexed refunded);
     /* Contains all the information that does not need to be saved as a state variable,
     but which can prove useful to people taking a look at the bet in the frontend. */
-    event CreatedBet(string indexed _id, uint256 initialPool, string description);
     event CreatedOptimisticBet(string indexed betIdIndexed, string betId, string title, string query, string request);
     // The table representing each bet's pool is populated according to these events.
     event PlacedBets(address indexed user, string indexed _id, string id, string[] results);
@@ -256,8 +255,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
             shares[i] = initialPool * ratios[i] / 100;
         }
         marketBuy(betId, sender, results, shares, false);
-
-        emit CreatedBet(betId, initialPool, query);
     }
 
     function sqrt(uint y) public pure returns (uint z) {
@@ -407,8 +404,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
         contractFees += ownerFee /= 2;
         token.safeTransfer(market.owner, ownerFee);
     }
-
-
 
     function withdrawUsdc(uint total) public ownerOnly {
         withdraw(total, USDC);

@@ -275,8 +275,8 @@ async function loadProvider({
 
         if (activeContract) {
             owner = await signer.getAddress();
-            activeContract.on("CreatedBet", async hashedmarketId => {
-                if (hashedmarketId.hash === ethers.id(newmarketId || "")) triggerSuccess(`Market created!`, () => {
+            activeContract.on("CreatedOptimisticBet", async hashedMarketId => {
+                if (hashedMarketId.hash === ethers.id(newmarketId || "")) triggerSuccess(`Market created!`, () => {
                     searchBet(newmarketId);
                 }, undefined, 2500)
             });
