@@ -497,7 +497,7 @@ async function browseMarkets() {
         .map(e => [e.args[1], e.args[2]])
         .map(async ([id, name]) => [await getMarket(id), name])))
         .map(([{marketId, totalShares}, name]) => `
-            <div onclick="searchBet('${marketId}')" style="margin: 1rem; display: flex; flex-direction: column; justify-content: center; align-items: center">
+            <div onclick="searchBet('${marketId}'); betContainer.scrollIntoView()" style="margin: 1rem; display: flex; flex-direction: column; justify-content: center; align-items: center">
                 <div style="min-width: 10vw; max-width: 10vw;"><canvas id="${marketId}">${renderBetChart(marketId, marketId, false)}</canvas></div>
                 <div>${name}</div>
                 <div>Liquidity: ${totalShares} shares</div>
