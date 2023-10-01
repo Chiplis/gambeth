@@ -79,7 +79,11 @@
         <div id="explore-markets" style="width: 80%; margin-bottom: 3%; display: none; justify-content: center">
         </div>
         <div id="new-bet"
-             style="width: 70vw; margin-bottom: 3%; display: none; flex-direction: row; justify-content: space-between; align-items: center">
+             style="width: 80%; margin-bottom: 3%; display: none; flex-direction: row; justify-content: space-between; align-items: center">
+            <button class="btn close" onclick="closeCreateMarket()"
+                    style="font-size: 2rem; align-self: flex-start; border-radius: 5rem; padding: 0.25rem;">
+                ✖
+            </button>
             <div class="btn" style="color:white; background-color: #ed7b64; align-self: flex-start;"
                  onclick="renderPreviousCreationStep()">←
             </div>
@@ -209,10 +213,6 @@
             <div class="btn" style="color:white; background-color: #ed7b64; align-self: flex-start;"
                  onclick="renderNextCreationStep()">→
             </div>
-            <button class="btn close" onclick="closeCreateMarket()"
-                    style="font-size: 2rem; align-self: flex-start; border-radius: 5rem; padding: 0.25rem;">
-                ✖
-            </button>
         </div>
         <div id="bet-container" style="visibility: visible; width: 100%; display: none">
             <div style="display: flex; justify-content: space-around; width: 100%">
