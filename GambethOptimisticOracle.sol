@@ -65,7 +65,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
         uint256 creation;
         uint256 outcomeIndex;
         BetKind kind;
-        address requester;
         uint64 lockout;
         uint64 deadline;
         address owner;

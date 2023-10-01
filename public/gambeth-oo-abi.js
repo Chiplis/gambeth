@@ -733,11 +733,6 @@ window.ooAbi = [
                 "type": "uint8"
             },
             {
-                "internalType": "address",
-                "name": "requester",
-                "type": "address"
-            },
-            {
                 "internalType": "uint64",
                 "name": "lockout",
                 "type": "uint64"

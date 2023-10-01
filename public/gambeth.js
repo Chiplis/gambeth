@@ -1,5 +1,5 @@
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
-const ooContractAddress = "0x7e11c5195929053A113dd79E47e28E2154543878";
+const ooContractAddress = "0x20Db4254c897fcBf79123F8891f80450d6C14c61";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 
@@ -94,13 +94,11 @@ const renderMarketShareMessage = () => {
 }
 
 function renderCostMessages(changePool) {
-    const ratios = createdoutcomeIndex.map(outcome => document.querySelector(`#create-market-${outcome.replaceAll(" ", "-")}`).value).map(Number).filter(v => v);
+    const ratios = createdOutcomes.map(outcome => document.querySelector(`#create-market-${outcome.replaceAll(" ", "-")}`).value).map(Number).filter(v => v);
     const minShares = !Math.min(...ratios) ? 0 : Math.ceil(100 / Math.min(...ratios));
     createBetMinimumPool.innerHTML = `The market must be bootstrapped with at least ${minShares} initial shares.`;
     createBetInitialPool.value = changePool ? createBetInitialPool.value : minShares;
-    createBetTotalCost.innerHTML = (5 + Math.sqrt(
-            ratios.map(v => (createBetInitialPool.value / 100 * v) ** 2).reduce((a, b) => a + b, 0)
-    ).toFixed(2)) + " USDC";
+    createBetTotalCost.innerHTML = (5 + Math.sqrt(ratios.map(v => (createBetInitialPool.value / 100 * v) ** 2).reduce((a, b) => a + b, 0))).toFixed(2) + " USDC";
 }
 
 const closeCreateMarket = () => {
@@ -362,9 +360,8 @@ async function renderClaimBet() {
     const addr = await signer.getAddress();
     const finishedBet = activeMarket.finished;
     const outcome = await activeContract.getResult(activeMarketId);
-    const resolutionRequested = BigInt(activeMarket.requester) !== 0n;
-    const scheduleReached = activeContract.deadline * 1000 < new Date().getTime();
-    let showClaim = finishedBet || (!resolutionRequested && scheduleReached) || (resolutionRequested && !finishedBet);
+    const scheduleReached = activeContract.deadline < new Date().getTime() / 1000 + Number(await activeContract.BET_THRESHOLD());
+    let showClaim = finishedBet || scheduleReached;
     showClaim &&= !outcome.length ? true : await activeContract.userPools(activeMarketId, addr, outcome) !== 0n;
     if (!showClaim) {
         claimBet.style.display = "none";
@@ -376,11 +373,7 @@ async function renderClaimBet() {
         claimBet.style.opacity = "100%";
     }
     const claimedBet = await activeContract.claimedBets(activeMarketId, addr);
-    claimBet.innerHTML = claimedBet
-        ? "Claimed"
-        : resolutionRequested
-            ? (finishedBet ? "Claim" : "")
-            : "Settle";
+    claimBet.innerHTML = claimedBet ? "Claimed" : finishedBet ? "Claim" : "";
     const disableLink = ["Claimed", ""].includes(claimBet.innerHTML);
     claimBet.classList.remove(disableLink ? "link" : null);
     claimBet.classList.add(!disableLink ? "link" : null);
@@ -405,10 +398,10 @@ async function getOutcomes(marketId = activeMarketId) {
 
 async function renderPlaceBet() {
 
-    const deadline = activeMarket.lockout * 1000;
-    const lockedPool = deadline <= Math.round(new Date().getTime());
-    const schedule = activeMarket.deadline * 1000;
-    const scheduleReached = schedule <= Math.round(new Date().getTime());
+    const lockout = activeMarket.lockout * 1000;
+    const lockedPool = lockout <= Math.round(new Date().getTime());
+    const deadline = activeMarket.deadline * 1000;
+    const scheduleReached = deadline <= new Date().getTime() + Number(await activeContract.BET_THRESHOLD() * 1000n);
     const betKind = await marketKind();
 
     betDecision.style.display = betKind === "human"
@@ -508,14 +501,13 @@ async function browseMarkets() {
 
 const marketCache = {};
 async function getMarket(marketId) {
-    return marketCache[marketId] || await activeContract.markets(marketId).then(([marketId, created, finished, creation, outcomeIndex, kind, requester, lockout, deadline, owner, commission, totalShares, commissionDenominator]) => marketCache[marketId] = {
+    return marketCache[marketId] || await activeContract.markets(marketId).then(([marketId, created, finished, creation, outcomeIndex, kind, lockout, deadline, owner, commission, totalShares, commissionDenominator]) => marketCache[marketId] = {
         marketId,
         created,
         finished,
         creation: Number(creation),
         outcomeIndex,
         kind,
-        requester,
         lockout: Number(lockout),
         deadline: Number(deadline),
         owner,
@@ -617,7 +609,7 @@ async function createBet() {
         activeMarketId = (marketId.value || "").toLowerCase().trim();
         newmarketId = activeMarketId;
         const initialPool = createBetInitialPool.value || "0";
-        const outcomes = createdoutcomeIndex;
+        const outcomes = createdOutcomes;
         triggerProcessing("Creating market");
         if (!window.ethereum) {
             triggerError("No Ethereum provider detected", undefined, () => window.location.href = "https://metamask.io/");
@@ -655,7 +647,7 @@ async function createBet() {
                 await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeMarketId, deadline, schedule, commissionDenominator, commission, initialPool, outcomes, odds, title, query).then(tx => tx.wait());
                 break;
         }
-        createdoutcomeIndex = [];
+        createdOutcomes = [];
     } catch (error) {
         newmarketId = null;
         console.error(error);
@@ -832,7 +824,6 @@ async function updateOrders() {
             ids.push(id.innerHTML);
         });
     const sanitizedOutcomes = outcomes.map(o => o.replaceAll("<div>", "").replaceAll("</div>", "").replaceAll("<br>", ""));
-    console.log(amounts, prices, sanitizedOutcomes, ids);
     const tx = await activeContract.changeOrder(amounts, prices, activeMarketId, sanitizedOutcomes, ids);
     await tx.wait();
     await fetchOrders(true);
@@ -903,19 +894,19 @@ async function addFreeBet() {
     }
 }
 
-let createdoutcomeIndex = [];
+let createdOutcomes = [];
 
 async function addBetChoice() {
     createBetChoice.value ||= "";
     if (!(createBetChoice.value.trim())) {
         return;
     }
-    if (!createdoutcomeIndex.includes(createBetChoice.value)) {
-        createdoutcomeIndex.push(createBetChoice.value);
+    if (!createdOutcomes.includes(createBetChoice.value)) {
+        createdOutcomes.push(createBetChoice.value);
     }
-    createoutcomeIndexList.innerHTML = createdoutcomeIndex.map(v => `<li>${v}</li>`).join("");
-    createBetOdds.innerHTML = createdoutcomeIndex.map(v => `<div><input oninput="renderCostMessages(false)" id="create-market-${v.replaceAll(" ", "-")}" style="width: 3rem; height: 1rem; margin: 1rem; placeholder="${v}">%</div>`).join("");
-    createBetOddsList.innerHTML = createdoutcomeIndex.map(v => `<li style="display: flex; justify-content: flex-start; margin: 1rem; width: 100%">${v}</li>`).join("");
+    createoutcomeIndexList.innerHTML = createdOutcomes.map(v => `<li>${v}</li>`).join("");
+    createBetOdds.innerHTML = createdOutcomes.map(v => `<div><input oninput="renderCostMessages(false)" id="create-market-${v.replaceAll(" ", "-")}" style="width: 3rem; height: 1rem; margin: 1rem; placeholder="${v}">%</div>`).join("");
+    createBetOddsList.innerHTML = createdOutcomes.map(v => `<li style="display: flex; justify-content: flex-start; margin: 1rem; width: 100%">${v}</li>`).join("");
     createBetChoice.value = "";
 }
 
