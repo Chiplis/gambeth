@@ -492,7 +492,7 @@ async function calculatePrice(result) {
 
 async function browseMarkets() {
     exploreMarkets.style.display = "flex";
-    exploreMarkets.innerHTML = "<div style='width: 100%; flex-wrap: wrap; display: flex; justify-content: space-around'>" + (await Promise.all((await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet()))
+    exploreMarkets.innerHTML = "<div style='color: #f3f9d2; margin-left: auto; margin-bottom: 0.25em; align-self: flex-start' onclick='exploreMarkets.style.display = \"none\"'>✖</div><div style='width: 100%; flex-wrap: wrap; display: flex; justify-content: space-around'>" + (await Promise.all((await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet()))
         .map(e => [e.args[1], e.args[2]])
         .map(async ([id, name]) => [await getMarket(id), name])))
         .map(([{marketId, totalShares}, name]) => `
@@ -502,7 +502,7 @@ async function browseMarkets() {
                 <div>${totalShares} shares</div>
             </div>        
         `)
-        .join("") + `<div style="color: #f3f9d2; margin-left: auto; margin-bottom: 0.25em; align-self: flex-start" onclick="exploreMarkets.style.display = 'none'">✖</div>`
+        .join("")
         + "</div>";
 }
 
