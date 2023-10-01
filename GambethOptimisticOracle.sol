@@ -115,7 +115,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             && !market.created, // Can't have duplicate bets
             "Unable to Create market, check arguments."
         );
-        _createBet(BetKind.OPTIMISTIC_ORACLE, msg.sender, currency, betId, commissionDenominator, commission, deadline, schedule, initialPool, query, results, ratios);
+        _createBet(BetKind.OPTIMISTIC_ORACLE, msg.sender, currency, betId, commissionDenominator, commission, deadline, schedule, initialPool, results, ratios);
         string memory request = performOracleRequest(betId, title, query);
         marketRequest[betId][keccak256(bytes(request))] = true;
         emit CreatedOptimisticBet(betId, betId, title, query, request);
@@ -223,7 +223,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         return results;
     }
 
-    function _createBet(BetKind kind, address sender, address token, string calldata betId, uint256 commissionDenominator, uint256 commission, uint64 deadline, uint64 schedule, uint256 initialPool, string calldata query, string[] calldata results, uint256[] calldata ratios) internal {
+    function _createBet(BetKind kind, address sender, address token, string calldata betId, uint256 commissionDenominator, uint256 commission, uint64 deadline, uint64 schedule, uint256 initialPool, string[] calldata results, uint256[] calldata ratios) internal {
         Market storage market = markets[betId];
         require(approvedTokens[token] && !market.created, "Unapproved token for creating bets.");
         require(commissionDenominator > 0, "Invalid commission denominator.");
