@@ -183,12 +183,12 @@ contract GambethOptimisticOracle is OptimisticRequester {
     }
 
     function changeOrder(uint[] calldata orderAmounts, uint[] calldata prices, string calldata betId, string[] calldata results, uint256[] calldata ids) public {
-        require(!markets[betId].finished && markets[betId].created, "Tried to fill order for finished market");
+        require(!markets[betId].finished && markets[betId].created, "Tried to change order for closed market");
         _changeOrder(msg.sender, orderAmounts, prices, betId, results, ids);
     }
 
     function fillOrder(uint[] calldata orderAmounts, uint[] calldata prices, OrderPosition[] calldata orderPositions, string calldata betId, string[] calldata results, uint[][] calldata idxs) public {
-        require(!markets[betId].finished && markets[betId].created && markets[betId].deadline < block.timestamp, "Tried to change order for finished market");
+        require(!markets[betId].finished && markets[betId].created && markets[betId].deadline > block.timestamp, "Tried to fill order for closed market");
         _fillOrder(msg.sender, orderAmounts, prices, orderPositions, betId, results, idxs);
     }
 
