@@ -536,7 +536,7 @@ async function searchBet(marketId = activeMarketId) {
         location.searchParams.set("id", activeMarketId);
         history.pushState({}, "", location.toString());
         betContainer.style.display = "flex";
-        const bets = await activeContract.queryFilter(activeContract.filters.CreatedBet(activeMarketId));
+        const bets = await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeMarketId));
         const createdFilter = bets[0];
         const query = createdFilter.args.slice(1).map(arg => arg.toString())[1];
         const {url, schema, path} = unpackQuery(query);
