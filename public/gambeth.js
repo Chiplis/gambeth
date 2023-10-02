@@ -480,20 +480,22 @@ async function calculatePrice(result) {
 async function browseMarkets() {
     exploreMarkets.style.display = "flex";
     exploreMarkets.innerHTML = "<div style='color: #f3f9d2; margin-left: auto; font-size: 2rem; margin-bottom: 0.25em; align-self: flex-start' onclick='exploreMarkets.style.display = \"none\"'>✖</div><div style='width: 100%; flex-wrap: wrap; display: flex; justify-content: space-around'>" + (await Promise.all((await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet()))
-        .map(e => [e.args[1], e.args[2]])
-        .map(async ([id, name]) => [await getMarket(id), name])))
-        .map(([{marketId, totalShares}, name]) => `
+            .map(e => [e.args[1], e.args[2]])
+            .map(async ([id, name]) => [await getMarket(id), name])))
+            .map(([{marketId, totalShares}, name]) => `
             <div onclick="searchBet('${marketId.replaceAll("'", "\\'")}').then(() => betContainer.scrollIntoView(false))" style="margin: 1rem; display: flex; flex-direction: column; justify-content: center; align-items: center">
                 <div style="min-width: 10vw; max-width: 10vw;"><canvas id="${marketId}">${renderBetChart(marketId, marketId, false)}</canvas></div>
                 <div>${name}</div>
                 <div>${totalShares} shares</div>
             </div>        
         `)
-        .join("")
+            .join("")
         + "</div>";
+    window.scrollTo({top: 0, behavior: "smooth"})
 }
 
 const marketCache = {};
+
 async function getMarket(marketId) {
     return marketCache[marketId] || await activeContract.markets(marketId).then(([marketId, created, finished, creation, outcomeIndex, kind, lockout, deadline, owner, commission, totalShares, commissionDenominator]) => marketCache[marketId] = {
         marketId,
@@ -1020,6 +1022,7 @@ async function renderBetPool(marketId = activeMarketId) {
 }
 
 const betCharts = {};
+
 async function renderBetChart(marketId = activeMarketId, elmId = betPool.id, showLegend = true) {
     const betOutcomes = await getOutcomes(marketId);
     const outcomes = await Promise.all(betOutcomes.map(o => activeContract.resultPools(marketId, o)));
