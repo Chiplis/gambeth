@@ -413,7 +413,7 @@ async function renderPlaceBet() {
     placeBetInputs.style.opacity = lockedPool ? 0 : "100%";
     placeBetInputs.style.visibility = lockedPool ? "hidden" : "visible";
 
-    placeBetDataContainer.style.display = deadlineReached ? "none" : "flex";
+    placeBetDataContainer.style.display = (deadlineReached || activeMarket.finished) ? "none" : "flex";
     placeBetChoiceContainer.style.display = deadlineReached ? "none" : "flex";
     placeBetPositionContainer.style.display = deadlineReached ? "none" : "flex";
     queueBuyOrder.style.display = deadlineReached ? "none" : "block";
