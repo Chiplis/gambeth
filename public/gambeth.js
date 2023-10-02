@@ -182,12 +182,6 @@ function triggerMessage(msg, add, remove, after = defaultMessageLocation, click,
     innerMessage.innerHTML = msg;
 }
 
-function addIntervalText(elm, innerHtmlText, interval) {
-    return setInterval(() => {
-        elm.innerHTML = innerHtmlText(elm.innerHTML);
-    });
-}
-
 function triggerError(msg, after = defaultMessageLocation, click) {
     console.error(msg);
     triggerMessage(msg, "error", ["info", "success"], after, click);
@@ -401,7 +395,7 @@ async function renderPlaceBet() {
     const lockout = activeMarket.lockout * 1000;
     const lockedPool = lockout <= Math.round(new Date().getTime());
     const deadline = activeMarket.deadline * 1000;
-    const scheduleReached = deadline <= new Date().getTime() + Number(await activeContract.BET_THRESHOLD() * 1000n);
+    const deadlineReached = deadline <= new Date().getTime() + Number(await activeContract.BET_THRESHOLD() * 1000n);
     const betKind = await marketKind();
 
     betDecision.style.display = betKind === "human"
@@ -410,19 +404,19 @@ async function renderPlaceBet() {
 
     placeBet.style.visibility = "visible";
     placeBet.style.opacity = "100%";
-    placeBet.innerHTML = lockedPool ? (scheduleReached ? "" : "Limit order") : "Place Orders";
-    placeBet.classList.remove(scheduleReached ? "link" : null);
-    placeBet.classList.add(!scheduleReached ? "link" : null);
-    placeBet.disabled = scheduleReached;
+    placeBet.innerHTML = lockedPool ? (deadlineReached ? "" : "Limit order") : "Place Orders";
+    placeBet.classList.remove(deadlineReached ? "link" : null);
+    placeBet.classList.add(!deadlineReached ? "link" : null);
+    placeBet.disabled = deadlineReached;
 
     placeBetInputs.style.display = lockedPool ? "none" : "flex";
     placeBetInputs.style.opacity = lockedPool ? 0 : "100%";
     placeBetInputs.style.visibility = lockedPool ? "hidden" : "visible";
 
-    placeBetDataContainer.style.display = scheduleReached ? "none" : "flex";
-    placeBetChoiceContainer.style.display = scheduleReached ? "none" : "flex";
-    placeBetPositionContainer.style.display = scheduleReached ? "none" : "flex";
-    queueBuyOrder.style.display = scheduleReached ? "none" : "block";
+    placeBetDataContainer.style.display = deadlineReached ? "none" : "flex";
+    placeBetChoiceContainer.style.display = deadlineReached ? "none" : "flex";
+    placeBetPositionContainer.style.display = deadlineReached ? "none" : "flex";
+    queueBuyOrder.style.display = deadlineReached ? "none" : "block";
 
     if (betKind === "oo") {
         placeBetInputs.style.display = "none";
@@ -489,7 +483,7 @@ async function browseMarkets() {
         .map(e => [e.args[1], e.args[2]])
         .map(async ([id, name]) => [await getMarket(id), name])))
         .map(([{marketId, totalShares}, name]) => `
-            <div onclick="searchBet('${marketId}').then(() => betContainer.scrollIntoView(false))" style="margin: 1rem; display: flex; flex-direction: column; justify-content: center; align-items: center">
+            <div onclick="searchBet('${marketId.replaceAll("'", "\\'")}').then(() => betContainer.scrollIntoView(false))" style="margin: 1rem; display: flex; flex-direction: column; justify-content: center; align-items: center">
                 <div style="min-width: 10vw; max-width: 10vw;"><canvas id="${marketId}">${renderBetChart(marketId, marketId, false)}</canvas></div>
                 <div>${name}</div>
                 <div>${totalShares} shares</div>
