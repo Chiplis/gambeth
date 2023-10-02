@@ -537,15 +537,17 @@ async function searchBet(marketId = activeMarketId) {
         history.pushState({}, "", location.toString());
         betContainer.style.display = "flex";
         const bets = await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeMarketId));
+
         const createdFilter = bets[0];
+        debugger;
         const query = createdFilter.args.slice(1).map(arg => arg.toString())[1];
         const {url, schema, path} = unpackQuery(query);
         const filter = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(marketId)))[0].args;
 
-        aboutBet.innerHTML = filter[filter.length - 3];
+        aboutBet.innerHTML = filter[2];
         ooBet.style.display = schema ? "none" : "flex";
         urlBet.style.display = schema ? "flex" : "none";
-        (schema ? betQuery : betOoQuery).innerHTML = query;
+        (schema ? betQuery : betOoQuery).innerHTML = createdFilter.args[3];
         urlSchema.innerHTML = schema || "Unknown";
         betUrl.innerHTML = url || query;
         schemaPath.innerHTML = path || "Unknown";

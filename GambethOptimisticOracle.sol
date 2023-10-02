@@ -395,10 +395,10 @@ contract GambethOptimisticOracle is OptimisticRequester {
         // Bet owner gets their commission
         int256 totalTransfers = userTransfers[betId][sender][result];
         uint256 ownerFee;
-        if (totalTransfers >= reward) {
+        if (totalTransfers >= 0 && uint(totalTransfers) >= reward) {
             ownerFee = 0;
         } else {
-            ownerFee = (reward - (totalTransfers <= 0) ? 0 : uint(totalTransfers)) / market.commissionDenominator * market.commission;
+            ownerFee = (reward - (totalTransfers <= 0 ? 0 : uint(totalTransfers))) / market.commissionDenominator * market.commission;
         }
         reward -= ownerFee;
         emit WonBet(sender, reward);
