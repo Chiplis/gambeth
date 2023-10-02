@@ -990,12 +990,12 @@ async function renderBetPool(marketId = activeMarketId) {
         const calcPrices = await Promise.all(outcomeIndex.map(async outcome => await calculateCost([{
             outcome,
             pricePerShare: 0,
-            amount: Math.min(1, Number(await activeContract.resultPools(marketId, outcome))) || 1,
+            amount: 1
         }], true).then(a => a.cost)));
         const prices = calcPrices.map(async (p, i) => {
             const outcome = outcomeIndex[i];
             const mktPrice = Math.round(p * 1000) / 1000;
-            const odds = (Math.pow(p, 2) * 100).toFixed(2);
+            const odds = (Math.pow(await calculatePrice(outcome), 2) * 100).toFixed(2);
             const pay = (await payout(outcomeIndex[i])).toFixed(3);
             const total = await activeContract.resultPools(marketId, outcome);
             const owned = await activeContract.userPools(marketId, owner, outcome);
