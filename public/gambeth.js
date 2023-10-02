@@ -946,7 +946,7 @@ async function claimReward() {
         if (await marketKind() === "oo") {
             const filter = (await activeContract.queryFilter(activeContract.filters.CreatedOptimisticBet(activeMarketId)))[0].args;
             const query = filter[filter.length - 1];
-            if (!(activeMarket.creation(activeMarketId))) {
+            if (!(activeMarket.creation)) {
                 triggerProcessing("Reward will be transferred after bet's been settled.");
                 await activeContract.requestBetResolution(activeMarketId, query);
             } else {
