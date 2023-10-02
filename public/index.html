@@ -194,7 +194,7 @@
                         <div class="info" style="color: #f3f9d2; background-color: transparent">%</div>
                     </div>
                     <label id="create-bet-commission-label" for="create-bet-commission">
-                        Will be taken when winners collect their earnings.
+                        Split 50/50 between you and the platform. Taken when winners collect their earnings or on any AMM sells.
                     </label>
                 </div>
                 <div class="create-bet-step"
@@ -202,11 +202,10 @@
                     <div class="" style="border: 0; margin: 0">Dates</div>
                     <input id="deadline-date" type="datetime-local" style="margin: 0.5rem;"
                            onfocus="this.min=new Date().toISOString();this.max=new Date(new Date().getTime() + 60 * 24 * 3600000).toISOString()"/>
-                    <label for="deadline-date">When will the pool be locked?</label>
-
+                    <label for="deadline-date">When will the pool be locked? After this date the AMM is disabled so users can only trade between each other without adding/removing liquidity.</label>
                     <input id="schedule-date" type="datetime-local" style="margin: 0.5rem;"
                            onfocus="this.min=new Date().toISOString().split('T')[0];this.max=new Date(new Date().getTime() + 60 * 24 * 3600000).toISOString().split('T')[0]"/>
-                    <label for="schedule-date">When is the bet able to be settled?</label>
+                    <label for="schedule-date">What's the deadline for the market? If unresolved after this date, users will be able to reclaim their funds.</label>
                     <button class="btn link" onclick="createBet()">Create</button>
                 </div>
             </div>
