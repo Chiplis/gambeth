@@ -512,6 +512,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
         }
     }
 
+    mapping(string => uint256) public orderStartIndexes;
+
     function getOrders(string calldata betId, uint256 start, uint256 amount) public view returns (Order[] memory) {
         Order[] memory list;
         if (start >= orders[betId].length) {
