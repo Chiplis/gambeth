@@ -10,31 +10,6 @@ window.ooAbi = [
             {
                 "indexed": true,
                 "internalType": "string",
-                "name": "_id",
-                "type": "string"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "initialPool",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "string",
-                "name": "description",
-                "type": "string"
-            }
-        ],
-        "name": "CreatedBet",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "string",
                 "name": "betIdIndexed",
                 "type": "string"
             },
@@ -157,6 +132,32 @@ window.ooAbi = [
     },
     {
         "inputs": [],
+        "name": "COMMISSION",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "COMMISSION_DENOMINATOR",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
         "name": "OO_ADDRESS",
         "outputs": [
             {
@@ -254,35 +255,6 @@ window.ooAbi = [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            },
-            {
-                "internalType": "string[]",
-                "name": "",
-                "type": "string[]"
-            },
-            {
-                "internalType": "uint256[]",
-                "name": "",
-                "type": "uint256[]"
-            }
-        ],
-        "name": "calculateContractCommission",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "pure",
         "type": "function"
     },
     {
@@ -404,7 +376,13 @@ window.ooAbi = [
         "type": "function"
     },
     {
-        "inputs": [],
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
         "name": "contractFees",
         "outputs": [
             {
@@ -437,16 +415,6 @@ window.ooAbi = [
                 "internalType": "uint64",
                 "name": "schedule",
                 "type": "uint64"
-            },
-            {
-                "internalType": "uint256",
-                "name": "commissionDenominator",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "commission",
-                "type": "uint256"
             },
             {
                 "internalType": "uint256",
@@ -749,18 +717,23 @@ window.ooAbi = [
             },
             {
                 "internalType": "uint256",
-                "name": "commission",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
                 "name": "totalShares",
                 "type": "uint256"
             },
             {
-                "internalType": "uint256",
-                "name": "commissionDenominator",
-                "type": "uint256"
+                "internalType": "string",
+                "name": "outcomes",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "shares",
+                "type": "string"
+            },
+            {
+                "internalType": "uint64",
+                "name": "resolution",
+                "type": "uint64"
             }
         ],
         "stateMutability": "view",
@@ -774,6 +747,25 @@ window.ooAbi = [
                 "internalType": "contract OptimisticOracleV2Interface",
                 "name": "",
                 "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "name": "orderStartIndexes",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
             }
         ],
         "stateMutability": "view",

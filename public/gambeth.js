@@ -1,5 +1,5 @@
 const usdcAddress = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
-const ooContractAddress = "0x878b399AdFd3dF46fBc1473C67A67Ac98a727ae0";
+const ooContractAddress = "0x4c327dE71B0da0B18342a3bAeEF6c3f1199EE82d";
 const provableContractAddress = "0x03Df3D511f18c8F49997d2720d3c33EBCd399e77";
 const humanContractAddress = "";
 
@@ -497,7 +497,7 @@ async function browseMarkets() {
 const marketCache = {};
 
 async function getMarket(marketId) {
-    return marketCache[marketId] || await activeContract.markets(marketId).then(([marketId, created, finished, creation, outcomeIndex, kind, lockout, deadline, owner, commission, totalShares, commissionDenominator]) => marketCache[marketId] = {
+    return marketCache[marketId] || await activeContract.markets(marketId).then(([marketId, created, finished, creation, outcomeIndex, kind, lockout, deadline, owner, totalShares, outcomes, shares, resolution]) => marketCache[marketId] = {
         marketId,
         created,
         finished,
@@ -507,9 +507,12 @@ async function getMarket(marketId) {
         lockout: Number(lockout),
         deadline: Number(deadline),
         owner,
-        commission: Number(commission),
+        commission: 5,
         totalShares: Number(totalShares),
-        commissionDenominator: Number(commissionDenominator),
+        outcomes,
+        shares,
+        resolution,
+        commissionDenominator: 100,
     });
 }
 
@@ -639,10 +642,10 @@ async function createBet() {
         }
         switch (schema) {
             case "bc":
-                await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeMarketId, deadline, schedule, commissionDenominator, commission, initialPool, query).then(tx => tx.wait());
+                await activeContract.createHumanBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeMarketId, deadline, schedule, initialPool, query).then(tx => tx.wait());
                 break;
             case "oo":
-                await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeMarketId, deadline, schedule, commissionDenominator, commission, initialPool, outcomes, odds, title, query).then(tx => tx.wait());
+                await activeContract.createOptimisticBet("0x07865c6E87B9F70255377e024ace6630C1Eaa37F", activeMarketId, deadline, schedule, initialPool, outcomes, odds, title, query).then(tx => tx.wait());
                 break;
         }
         createdOutcomes = [];
