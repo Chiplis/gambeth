@@ -64,12 +64,13 @@ contract GambethOptimisticOracle is OptimisticRequester {
         uint256 creation;
         uint256 outcomeIndex;
         BetKind kind;
-        uint64 resolution;
+        uint64 lockout;
         uint64 deadline;
         address owner;
         uint256 totalShares;
         string outcomes;
         string shares;
+        uint64 resolution;
     }
 
     mapping(string => Market) public markets;
@@ -149,7 +150,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             "Propose ",
             Strings.toString(betResults[betId].length),
             " if none of the previous options are a valid outcome by the following date (UNIX timestamp): ",
-            Strings.toString(market.resolution),
+            Strings.toString(market.lockout),
             ". "
         );
 
@@ -223,7 +224,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         return results;
     }
 
-    function _createBet(BetKind kind, address sender, address token, string calldata betId, uint64 resolution, uint64 schedule, uint256 initialPool, string[] calldata results, uint256[] calldata ratios) internal {
+    function _createBet(BetKind kind, address sender, address token, string calldata betId, uint64 deadline, uint64 schedule, uint256 initialPool, string[] calldata results, uint256[] calldata ratios) internal {
         Market storage market = markets[betId];
         require(approvedTokens[token] && !market.created);
         require(results.length == ratios.length);
@@ -238,7 +239,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         market.kind = kind;
         market.owner = sender;
         betTokens[betId] = token;
-        market.resolution = resolution;
+        market.lockout = deadline;
         market.deadline = schedule;
         market.betId = betId;
         betResults[betId] = results;
@@ -342,7 +343,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
             results.length > 0
             && results.length == amounts.length
             && market.created
-            && market.resolution >= block.timestamp
+            && market.lockout >= block.timestamp
         );
 
 
@@ -451,7 +452,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
         bool newOrder = order.index == orders[betId].length;
 
         // If before pool lockout, should always be able to buy from market
-        if (market.resolution >= block.timestamp) {
+        if (market.lockout >= block.timestamp) {
             uint[] memory amounts = new uint[](1);
             string[] memory results = new string[](1);
             if (order.orderPosition == OrderPosition.BUY && (order.pricePerShare > calculatePrice(betId, order.result) || fromMarket)) {

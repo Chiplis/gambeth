@@ -1,0 +1,250 @@
+html {
+    background-color: #02024b;
+    color: #f3f9d2;
+}
+
+* {
+    font-family: 'Merriweather Sans', sans-serif;
+}
+
+a, a:hover, a:link, a:visited {
+    font-weight: bold;
+    text-decoration: none;
+    color: inherit;
+}
+
+th {
+    text-align: center;
+}
+
+td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    white-space: nowrap;
+}
+
+label {
+    font-weight: bold;
+    color: #f3f9d2;
+    font-size: 0.85rem;
+}
+
+input {
+    padding: 12px 4px;
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+    border-style: none;
+    text-align: center;
+}
+
+span {
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+    text-align: center;
+}
+
+.create-bet-step {
+    transition: opacity 1000ms linear;
+}
+
+.msg {
+    box-sizing: border-box;
+    appearance: none;
+    background-color: transparent;
+    display: flex;
+    align-self: center;
+    line-height: 1;
+    margin: 1rem;
+    padding: 0.75rem;
+    text-decoration: none;
+    text-align: center;
+    font-weight: 700;
+    transition: width 200ms linear, background-color 300ms ease-in-out, box-shadow 300ms ease-in-out, color 300ms ease-in-out;
+}
+
+@font-face {
+    font-family: Telegraf;
+    src: url("PPTelegraf-Regular.otf") format("opentype");
+}
+
+.btn {
+    appearance: none;
+    border: 0;
+    font-family: Saira, sans-serif;
+    background-color: transparent;
+    border-radius: 0.6rem;
+    align-self: center;
+    font-size: 1em;
+    line-height: 1;
+    margin: 0.25rem;
+    padding: 0.75rem;
+    text-decoration: none;
+    text-align: center;
+    font-weight: 700;
+    color: #f3f9d2;
+    -webkit-appearance: none;
+    transition: opacity 200ms linear, background-color 300ms ease-in-out, box-shadow 300ms ease-in-out, color 300ms ease-in-out;
+}
+
+.search {
+    color: #f3f9d2;
+    border: 0;
+    background-color: transparent;
+}
+
+.search::placeholder {
+    color: #f3f9d2;
+    opacity: 1;
+}
+
+.info {
+    color: #f3f9d2;
+    background-color: #b50fc4;
+}
+
+.info:hover {
+    color: #f3f9d2;
+}
+
+.link {
+    cursor: pointer;
+    background-color: #ff5400;
+}
+
+.details {
+    color: #f3f9d2;
+}
+
+.btn:disabled:hover {
+    cursor: default;
+}
+
+.btn::placeholder {
+    opacity: 1;
+    color: #f3f9d2;
+}
+
+.btn:hover::placeholder {
+    color: #f3f9d2;
+}
+
+.error {
+    background-color: #f45977
+}
+
+
+.close:hover, .error:hover {
+    color: #f3f9d2;
+}
+
+.processing {
+    color: #f3f9d2;
+}
+
+.processing:hover {
+    color: #f3f9d2;
+}
+
+.success {
+    background-color: #2ca636;
+    color: #f3f9d2;
+}
+
+.styled-table {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+    margin: 25px 0;
+    color: #f3f9d2;
+    font-size: 0.9rem;
+    font-family: sans-serif;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.styled-table {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.9rem;
+    font-family: sans-serif;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+#place-bet-entries {
+    background-color: #fd9243;
+}
+
+.styled-table thead tr {
+    background-color: #6f75e5;
+    text-align: left;
+}
+
+.styled-table th {
+    padding: 0.5rem 0.5em;
+}
+
+.styled-table tbody tr {
+    border-bottom: thin solid #dddddd;
+}
+
+#bet-container {
+    flex-wrap: wrap;
+    flex-direction: column;
+    flex-grow: 0;
+    flex-shrink: 0;
+    opacity: 0;
+    display: none;
+    flex-basis: 40%;
+    visibility: hidden;
+    justify-content: center;
+    margin: 0 1rem;
+    align-items: center;
+    transition: opacity 200ms linear, visibility 200ms linear;
+}
+
+[onclick] {
+    cursor: pointer;
+}
+
+[contenteditable=true]:empty:before {
+    content: attr(placeholder);
+    pointer-events: none;
+    display: block; /* For Firefox */
+}
+
+
+select {
+    background-color: transparent;
+    border: none;
+    cursor: inherit;
+    line-height: inherit;
+}
+
+.lds-dual-ring {
+    display: inline-block;
+    width: 80px;
+    height: 80px;
+}
+.lds-dual-ring:after {
+    content: " ";
+    display: block;
+    width: 64px;
+    height: 64px;
+    margin: 8px;
+    border-radius: 50%;
+    border: 6px solid #fff;
+    border-color: #fff transparent #fff transparent;
+    animation: lds-dual-ring 1.2s linear infinite;
+}
+@keyframes lds-dual-ring {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
