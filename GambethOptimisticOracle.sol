@@ -331,10 +331,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
         return true;
     }
 
-    uint public COMMISSION_DENOMINATOR = 0;
+    uint public COMMISSION_DENOMINATOR = 1;
     uint public COMMISSION = 0;
-
-
 
     function marketBuy(string calldata betId, address sender, string[] memory results, uint256[] memory amounts, bool skipTransfer) private {
         Market storage market = markets[betId];
