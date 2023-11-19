@@ -107,7 +107,7 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
     address USDC = 0x07865c6E87B9F70255377e024ace6630C1Eaa37F;
 
-    function createOptimisticBet(address currency, string calldata betId, uint64 deadline, uint64 schedule, uint256 initialPool, string[] calldata results, uint256[] calldata ratios, string calldata title, string calldata query) public {
+    function createOptimisticBet(address currency, string calldata betId, uint64 deadline, uint64 schedule, uint256 initialPool, string[] calldata results, uint256[] calldata ratios, string calldata title, string calldata query, string calldata marketImage, string[] calldata outcomeImages) public {
         Market storage market = markets[betId];
         require(
             bytes(betId).length != 0
@@ -116,6 +116,14 @@ contract GambethOptimisticOracle is OptimisticRequester {
             && !market.created // Can't have duplicate bets
         );
         _createBet(BetKind.OPTIMISTIC_ORACLE, msg.sender, currency, betId, deadline, schedule, initialPool, results, ratios);
+        market.marketImage = marketImage;
+        for (uint i = 1; i < outcomeImages.length; i++) {
+            market.outcomeImages = string.concat(
+                market.outcomeImages,
+                " || ",
+                outcomeImages[i]
+            );
+        }
         string memory request = performOracleRequest(betId, title, query);
         marketRequest[betId][keccak256(bytes(request))] = true;
         emit CreatedOptimisticBet(betId, betId, title, query, request);
