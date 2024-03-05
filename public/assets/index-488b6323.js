@@ -1,4 +1,4 @@
-import{P as t,n,p as e,q as i,x as s,m as f,u as d,o as c,w as l}from"./index-95ad2a01.js";const a=`
+import{P as t,n,p as e,q as i,x as s,m as f,u as d,o as c,w as l}from"./index-5c33a22a.js";const a=`
 @font-face {
   font-family: 'Inter';
   font-style:  normal;
