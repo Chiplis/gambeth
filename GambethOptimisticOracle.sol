@@ -228,16 +228,8 @@ contract GambethOptimisticOracle is OptimisticRequester {
         tokenDecimals[token] = decimals;
     }
 
-    function getOutcomes(string calldata betId) public view returns (string[] memory) {
-        string[] memory results = new string[](betResults[betId].length);
-        for (uint i = 0; i < results.length; i++) {
-            results[i] = betResults[betId][i];
-        }
-        return results;
-    }
-
-    function _createBet(GambethEntity.BetKind kind, address sender, address token, string calldata betId, uint64 deadline, uint64 schedule, uint256 initialPool, string[] calldata results, uint256[] calldata ratios) internal {
-       GambethEntity.Market storage market = markets[betId];
+    function _createBet(GambethEntity.BetKind kind, address sender, address token, string calldata betId, uint64 deadline, uint64 schedule, uint256 initialPool, string[] calldata results, uint256[] calldata ratios) private {
+        GambethEntity.Market storage market = markets[betId];
         require(approvedTokens[token] && !market.created);
         require(results.length == ratios.length);
         uint totalRatio = 0;
@@ -295,13 +287,13 @@ contract GambethOptimisticOracle is OptimisticRequester {
         return sqrt(cost);
     }
 
-    function calculateSharesForCost(string calldata betId, string memory result, uint p) internal view returns (uint) {
+    function calculateSharesForCost(string calldata betId, string memory result, uint p) private view returns (uint) {
         return (sqrt(2 * p * calculateCost(betId) + resultPools[betId][result] ** 2 + p ** 2) - resultPools[betId][result]) / tokenDecimals[betTokens[betId]];
     }
 
-    function calculateSharesForPricePerShare(string calldata betId, string memory result, uint256 p) internal view returns (int) {
+    function calculateSharesForPricePerShare(string calldata betId, string memory result, uint256 p) public view returns (int) {
         uint r = 0;
-        string[] memory outcomes = getOutcomes(betId);
+        string[] memory outcomes = betResults[betId];
         for (uint i = 0; i < outcomes.length; i++) {
             r += (Strings.equal(outcomes[i], result) ? 0 : resultPools[betId][outcomes[i]]) ** 2;
         }
