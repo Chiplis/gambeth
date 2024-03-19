@@ -101,7 +101,9 @@ contract GambethOptimisticOracle is OptimisticRequester {
 
     mapping(address => uint) public contractFees;
 
-    address public constant OO_ADDRESS = 0xA5B9d8a0B0Fa04Ba71BDD68069661ED5C0848884;
+    address public constant OO_ADDRESS = 0x60E6140330F8FE31e785190F39C1B5e5e833c2a9;
+    address USDC = 0x0FA8781a83E46826621b3BC094Ea2A0212e71B23;
+
     OptimisticOracleV2Interface public oo = OptimisticOracleV2Interface(OO_ADDRESS);
     bytes32 public PRICE_ID = bytes32("NUMERICAL");
 
@@ -109,7 +111,6 @@ contract GambethOptimisticOracle is OptimisticRequester {
     string oracleDescriptionHeader = ", description: ";
     string oracleDescriptionIntro = '"This is a Gambeth multiple choice market. It should only resolve to one of the following outcomes, propose the number corresponding to it: ';
 
-    address USDC = 0x07865c6E87B9F70255377e024ace6630C1Eaa37F;
 
     function createOptimisticBet(address currency, string calldata betId, uint64 deadline, uint64 schedule, uint256 initialPool, string[] calldata results, uint256[] calldata ratios, string calldata title, string calldata query, string calldata marketImage, string[] calldata outcomeImages) public {
         GambethEntity.Market storage market = markets[betId];
